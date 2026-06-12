@@ -225,7 +225,7 @@
     <div class="session-title">Transformers &amp; Contrastive Learning</div>
     <div class="session-tag">Lectures 2 + 3</div>
     <div class="session-topics">The neuron, the forward pass, and the Universal Approximation Theorem. From RNNs to the transformer. <strong>Scaled dot-product attention</strong> — the full derivation. Why $\sqrt{d_k}$ (the variance argument). Multi-head attention ↔ CDR loops. Language models (BERT, GPT) and protein language models (ESM-2, AntiBERTy). Contrastive learning: CLIP → CALM. The <strong>InfoNCE loss</strong> from the Boltzmann selection probability; the symmetric loss; why other losses fail.</div>
-    <div class="links">
+    <div class="links" style="grid-template-columns: 1fr 1fr;">
       <a class="link" href="Session2_Transformers_Contrastive.html">
         <div class="lk">▶ Preview the deck</div>
         <div class="lt">Draft — work in progress</div>
@@ -236,12 +236,19 @@
         <div class="lt">After Session 2</div>
         <div class="ls">available after 17 June</div>
       </span>
-      <span class="link disabled">
-        <div class="lk">📥 Worksheets</div>
-        <div class="lt">Posted with the live deck</div>
-        <div class="ls">7 derivation guides (L2 + L3)</div>
-      </span>
     </div>
+    <details class="worksheets" open>
+      <summary>📥 Draft derivation worksheets (7 — preview · may evolve before 17 June · PDF)</summary>
+      <ul>
+        <li><a href="L2/derivations/L2_WB1_ForwardPass.pdf">L2 WB1 — The Neuron and the Forward Pass</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L2/derivations/L2_WB1_ForwardPass.docx">.docx</a>]</span></li>
+        <li><a href="L2/derivations/L2_WB2_ScaledDotProductAttention.pdf">L2 WB2 — Scaled Dot-Product Attention: full derivation</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L2/derivations/L2_WB2_ScaledDotProductAttention.docx">.docx</a>]</span></li>
+        <li><a href="L2/derivations/L2_WB3_VarianceScaling.pdf">L2 WB3 — The √dₖ scaling argument: why temperature is necessary</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L2/derivations/L2_WB3_VarianceScaling.docx">.docx</a>]</span></li>
+        <li><a href="L2/derivations/L2_WB4_MultiHeadAttention.pdf">L2 WB4 — Multi-Head Attention</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L2/derivations/L2_WB4_MultiHeadAttention.docx">.docx</a>]</span></li>
+        <li><a href="L3/derivations/L3_WB1_InfoNCE.pdf">L3 WB1 — The InfoNCE Loss: derivation from the Boltzmann selection probability</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L3/derivations/L3_WB1_InfoNCE.docx">.docx</a>]</span></li>
+        <li><a href="L3/derivations/L3_WB2_SymmetricLoss.pdf">L3 WB2 — The Symmetric Loss &amp; why other contrastive losses fail</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L3/derivations/L3_WB2_SymmetricLoss.docx">.docx</a>]</span></li>
+        <li><a href="L3/derivations/L3_WB3_NumericalInfoNCE.pdf">L3 WB3 — Numerical InfoNCE worked example</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L3/derivations/L3_WB3_NumericalInfoNCE.docx">.docx</a>]</span></li>
+      </ul>
+    </details>
     <div class="readings-label">Reading</div>
     <ul class="readings">
       <li>Vaswani A, et al. Attention is all you need. <em>NeurIPS</em> (2017). <a href="https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a></li>
