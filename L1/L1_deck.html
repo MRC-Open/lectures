@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC Lecture 1 — Linear Algebra for Machine Learning and Molecular Recognition</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../mrc_styles.css">
+<style>
+  /* ============================================================
+     L1 deck shell — navigable presentation for Lecture 1.
+     Extends mrc_styles.css. Adds slide-specific structure:
+       - Title card layout (slide 1)
+       - Bulleted content slides (the majority)
+       - Dark section dividers (whiteboard transitions)
+       - Demo slides (full-iframe to existing interactive demos)
+     ============================================================ */
+  body { padding: 0; }
+  .deck { position: relative; min-height: 100vh; }
+
+  /* base slide — each slide fills the viewport exactly (slideshow mode) */
+  .slide {
+    display: none;
+    height: 100vh;
+    overflow: auto;            /* graceful fallback if content is too tall */
+    padding: 60px 48px;
+  }
+  .slide.active {
+    display: flex;
+    flex-direction: column;
+  }
+  .slide-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .slide h2 {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    margin: 0 0 6px 0;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .slide .slide-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-bottom: 40px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  /* bulleted content */
+  .slide ul.bullets {
+    font-size: 19px;
+    line-height: 1.85;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .slide ul.bullets > li {
+    padding: 8px 0 8px 26px;
+    position: relative;
+  }
+  .slide ul.bullets > li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 19px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .slide ul.bullets ul {
+    margin: 6px 0 0 0;
+    padding-left: 0;
+    list-style: none;
+  }
+  .slide ul.bullets ul > li {
+    padding: 4px 0 4px 22px;
+    position: relative;
+    color: var(--text-muted);
+    font-size: 17px;
+  }
+  .slide ul.bullets ul > li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    color: var(--text-muted);
+    font-weight: 400;
+    background: none;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+  }
+  .slide strong { font-weight: 700; color: var(--text); }
+  .slide em { font-style: italic; color: var(--text); }
+
+  /* equation block within content slides */
+  .eq-block {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 16px 24px;
+    margin: 18px 0;
+    font-size: 22px;
+  }
+
+  /* title card (slide 1) */
+  .slide.title-card {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .slide.title-card.active { display: flex; }
+  .slide.title-card .title-main {
+    font-family: var(--font-sans);
+    font-size: 54px;
+    font-weight: 400;
+    letter-spacing: -0.6px;
+    margin: 0 0 14px 0;
+    line-height: 1.15;
+  }
+  .slide.title-card .title-sub {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    color: var(--text-muted);
+    margin-bottom: 64px;
+    font-style: italic;
+    font-weight: 300;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.4;
+  }
+  .slide.title-card .author {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .slide.title-card .affiliation {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.65;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .slide.title-card .term {
+    font-family: var(--font-sans);
+    margin-top: 36px;
+    color: var(--accent);
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* dark section dividers */
+  .slide.divider {
+    background: var(--text);
+    color: white;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .slide.divider.active { display: flex; }
+  .slide.divider .divider-eyebrow {
+    font-family: var(--font-sans);
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+  .slide.divider .divider-title {
+    font-family: var(--font-sans);
+    font-size: 44px;
+    font-weight: 400;
+    color: white;
+    max-width: 760px;
+    line-height: 1.25;
+    margin: 0;
+    letter-spacing: -0.4px;
+  }
+
+  /* demo slides — full iframe sized to the fixed slide viewport */
+  .slide.demo { padding: 0; }
+  .slide.demo iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    border: none;
+  }
+
+  /* table for slide 23 */
+  table.summary {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 16px;
+  }
+  table.summary th, table.summary td {
+    text-align: left;
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  table.summary th {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--text);
+  }
+  table.summary td:first-child {
+    color: var(--text);
+    font-weight: 500;
+    width: 32%;
+  }
+  table.summary td:nth-child(2) { width: 38%; color: var(--text-muted); }
+  table.summary td:nth-child(3) { color: var(--text); }
+
+  /* deck chrome — counter + nav hint + present button */
+  .deck-counter {
+    position: fixed;
+    bottom: 22px;
+    right: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-counter.on-dark { color: rgba(255,255,255,0.7); }
+  .deck-hint {
+    position: fixed;
+    bottom: 22px;
+    left: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-hint.on-dark { color: rgba(255,255,255,0.7); }
+  .deck-present {
+    position: fixed;
+    top: 22px;
+    right: 32px;
+    z-index: 100;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .deck-present:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  /* hide the Present button when already in fullscreen */
+  :fullscreen .deck-present { display: none; }
+
+  /* On big screens / projector / fullscreen, use more of the available
+     width and bump font sizes so content reads from the back of the room. */
+  @media (min-width: 1400px) {
+    .slide-inner { max-width: 900px; }
+    .slide h2 { font-size: 38px; }
+    .slide .slide-subtitle { font-size: 18px; }
+    .slide ul.bullets { font-size: 21px; line-height: 1.85; }
+    .slide ul.bullets ul > li { font-size: 19px; }
+    .slide.title-card .title-main { font-size: 60px; }
+    .slide.title-card .title-sub  { font-size: 24px; }
+    .eq-block { font-size: 25px; }
+    .identity-block .eq { font-size: 25px; }
+    table.summary { font-size: 18px; }
+  }
+
+  /* references / readings list at end of slide 24 */
+  .reading-list {
+    margin-top: 28px;
+    padding: 18px 22px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--text-muted);
+  }
+  .reading-list .label {
+    font-family: var(--font-sans);
+    color: var(--text);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* identity slide (19): two equations side-by-side feel */
+  .identity-block {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 22px;
+    margin: 12px 0;
+  }
+  .identity-block .heading {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .identity-block .eq {
+    font-size: 22px;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- ================== SLIDE 1 — title card ================== -->
+<section class="slide title-card active" data-slide="1">
+  <div>
+    <div class="title-main">Molecular Recognition Computing</div>
+    <div class="title-sub">Lecture 1 — Linear Algebra for Machine Learning and Molecular Recognition</div>
+    <div class="author">Sai T. Reddy</div>
+    <p class="affiliation">
+      ETH Zurich — Department of Biosystems Science and Engineering<br>
+      Botnar Institute of Immune Engineering (BIIE)
+    </p>
+    <div class="term">Spring 2026</div>
+  </div>
+</section>
+
+<!-- ================== SLIDE 2 — intro: neural network = giant function (UAT concept) ================== -->
+<section class="slide demo" data-slide="2">
+  <iframe src="interactive_demos/L1_demo_uat.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 3 — intro: UAT in action (equation flexibility) ================== -->
+<section class="slide demo" data-slide="3">
+  <iframe src="interactive_demos/L1_demo_uat_flexibility.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 4 — intro: parameter estimation in a known equation ================== -->
+<section class="slide demo" data-slide="4">
+  <iframe src="interactive_demos/L1_demo_known_equation.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 5 — intro: coverage beats count (span the range) ================== -->
+<section class="slide demo" data-slide="5">
+  <iframe src="interactive_demos/L1_demo_coverage.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 6 — intro: function approximation (the contrast) ================== -->
+<section class="slide demo" data-slide="6">
+  <iframe src="interactive_demos/L1_demo_function_approximation.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 7 — One Equation Governs Both ================== -->
+<section class="slide" data-slide="7">
+  <div class="slide-inner">
+    <h2>One Equation Governs Both</h2>
+    <ul class="bullets">
+      <li>The <strong>softmax attention mechanism</strong> in transformers (Vaswani et al., 2017)</li>
+      <li>is <strong>mathematically identical</strong> to</li>
+      <li>the <strong>Boltzmann distribution</strong> governing molecular binding (Boltzmann, 1877)</li>
+      <li>This identity is not approximate — it is <strong>algebraic</strong></li>
+      <li>This course will prove it, derive its consequences, and show it prescribes a complete neural architecture across ten biological domains</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 8 — The 12-Lecture Arc ================== -->
+<section class="slide" data-slide="8">
+  <div class="slide-inner">
+    <h2>The 12-Lecture Arc</h2>
+    <div class="slide-subtitle">From dot products to a complete theory of molecular recognition</div>
+    <ul class="bullets">
+      <li><strong>Lectures 1–3:</strong> Mathematical foundations — linear algebra, transformers, contrastive learning</li>
+      <li><strong>Lectures 4–5:</strong> Biophysics foundations — thermodynamics, bilinearity, SantaLucia model</li>
+      <li><strong>Lecture 6:</strong> The convergence equation — proof and uniqueness</li>
+      <li><strong>Lecture 7:</strong> Deriving the SFM architecture</li>
+      <li><strong>Lectures 8–11:</strong> Predictions, calibration, scaling, paradigm comparison</li>
+      <li><strong>Lecture 12:</strong> Failure conditions, falsification, synthesis</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 9 — Four Operations ================== -->
+<section class="slide" data-slide="9">
+  <div class="slide-inner">
+    <h2>Four Operations Build the Entire Course</h2>
+    <div class="slide-subtitle">Everything in Lectures 2–12 is constructed from these</div>
+    <ul class="bullets">
+      <li><strong>Dot product:</strong> measures compatibility between two vectors</li>
+      <li><strong>Matrix multiplication:</strong> computes all pairwise compatibilities simultaneously</li>
+      <li><strong>Cosine similarity:</strong> normalizes the comparison to a [−1, +1] scale</li>
+      <li><strong>Softmax:</strong> converts compatibility scores into a probability distribution</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 10 — three systems comparison ================== -->
+<section class="slide demo" data-slide="10">
+  <iframe src="interactive_demos/L1_demo_three_systems.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 11 — What Is a Compatibility Score? ================== -->
+<section class="slide" data-slide="11">
+  <div class="slide-inner">
+    <h2>What Is a Compatibility Score?</h2>
+    <div class="slide-subtitle">In every system, it is a dot product of feature vectors</div>
+    <ul class="bullets">
+      <li>Antibody surface features <strong>·</strong> Antigen surface features &nbsp;=&nbsp; binding compatibility</li>
+      <li>TF positional preferences <strong>·</strong> DNA nucleotide identities &nbsp;=&nbsp; binding energy</li>
+      <li>Transformer query vector <strong>·</strong> key vector &nbsp;=&nbsp; attention score</li>
+      <li>The dot product is the <strong>universal compatibility measure</strong></li>
+      <li>This is not a modeling choice — it follows from the <strong>bilinear decomposition of binding energy</strong> (Lecture 5)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 12 — animated whiteboard: dot product equivalence ================== -->
+<section class="slide demo" data-slide="12">
+  <iframe src="whiteboard_demos/L1_wb1_proof_dotproduct.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 13 — interactive dot-product demo ================== -->
+<section class="slide demo" data-slide="13">
+  <iframe src="interactive_demos/L1_demo_dotproduct.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 14 — animated whiteboard: S = QKᵀ proof ================== -->
+<section class="slide demo" data-slide="14">
+  <iframe src="whiteboard_demos/L1_wb2_proof_qkt.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 15 — interactive matrix multiplication demo ================== -->
+<section class="slide demo" data-slide="15">
+  <iframe src="interactive_demos/L1_demo_matmul.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 16 — The Magnitude Problem ================== -->
+<section class="slide" data-slide="16">
+  <div class="slide-inner">
+    <h2>The Magnitude Problem</h2>
+    <div class="slide-subtitle">Should longer vectors always mean higher compatibility?</div>
+    <div class="eq-block">$$\mathbf{a} \cdot \mathbf{b} = \|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$</div>
+    <ul class="bullets">
+      <li>The dot product conflates <strong>alignment</strong> ($\cos\theta$) and <strong>magnitude</strong> ($\|\mathbf{a}\|\,\|\mathbf{b}\|$)</li>
+      <li>A very "loud" vector dominates all dot products regardless of direction</li>
+      <li>In molecular binding: we care about <strong>direction</strong> (what features match), not magnitude</li>
+      <li>Solution: <strong>normalize to unit length</strong> → dot product = pure alignment</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 17 — animated whiteboard: L2 norm → cosine ================== -->
+<section class="slide demo" data-slide="17">
+  <iframe src="whiteboard_demos/L1_wb3_proof_l2norm.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 18 — interactive cosine similarity demo ================== -->
+<section class="slide demo" data-slide="18">
+  <iframe src="interactive_demos/L1_demo_cosine.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 19 — The Conversion Problem ================== -->
+<section class="slide" data-slide="19">
+  <div class="slide-inner">
+    <h2>The Conversion Problem</h2>
+    <div class="slide-subtitle">We have scores. We need probabilities.</div>
+    <ul class="bullets">
+      <li>Agent has compatibility scores with $M$ candidates: $\mathbf{s} = [s_1, s_2, \ldots, s_M]$</li>
+      <li>We need a probability distribution: $\mathbf{P} = [P_1, P_2, \ldots, P_M]$</li>
+      <li>Requirements:
+        <ul>
+          <li>All probabilities positive</li>
+          <li>Sum to 1</li>
+          <li>Accept any real-valued scores — including negatives (unrestricted domain)</li>
+          <li>Higher score → higher probability</li>
+          <li>Relative preference between two candidates shouldn't change when a third enters or leaves</li>
+        </ul>
+      </li>
+      <li>How many functions satisfy all five? &nbsp;→&nbsp; <strong>Exactly one</strong> (Lecture 6)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 20 — animated whiteboard: softmax worked example ================== -->
+<section class="slide demo" data-slide="20">
+  <iframe src="whiteboard_demos/L1_wb4_softmax_example.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 21 — interactive softmax demo ================== -->
+<section class="slide demo" data-slide="21">
+  <iframe src="interactive_demos/L1_demo_softmax.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 22 — animated whiteboard: probability ratio proof ================== -->
+<section class="slide demo" data-slide="22">
+  <iframe src="whiteboard_demos/L1_wb5_proof_ratio.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 23 — interactive temperature demo ================== -->
+<section class="slide demo" data-slide="23">
+  <iframe src="interactive_demos/L1_demo_temperature.html" loading="lazy"></iframe>
+</section>
+
+<!-- ================== SLIDE 24 — The Identity ================== -->
+<section class="slide" data-slide="24">
+  <div class="slide-inner">
+    <h2>The Identity</h2>
+    <div class="slide-subtitle">Boltzmann (1877) = Vaswani (2017)</div>
+
+    <div class="identity-block">
+      <div class="heading">Molecular binding — Boltzmann, 1877</div>
+      <div class="eq">$$P(\text{bind } j) = \frac{\exp(-\Delta G_j / k_B T)}{\sum_k \exp(-\Delta G_k / k_B T)}$$</div>
+    </div>
+
+    <div class="identity-block">
+      <div class="heading">Transformer attention — Vaswani et al., 2017</div>
+      <div class="eq">$$A_j = \frac{\exp(\mathbf{q} \cdot \mathbf{k}_j / \tau)}{\sum_k \exp(\mathbf{q} \cdot \mathbf{k}_k / \tau)}$$</div>
+    </div>
+
+    <div class="identity-block">
+      <div class="heading">Score identification</div>
+      <div class="eq">$$s_j = -\Delta G_j / k_B T = \mathbf{q} \cdot \mathbf{k}_j / \tau$$</div>
+    </div>
+
+    <p style="text-align:center; font-size:18px; margin-top:24px; color: var(--text);">
+      <strong>Same function. Same structure. Same parameter.</strong><br>
+      <em>Derived independently, 140 years apart.</em>
+    </p>
+  </div>
+</section>
+
+<!-- ================== SLIDE 25 — Why Vectors? ================== -->
+<section class="slide" data-slide="25">
+  <div class="slide-inner">
+    <h2>Why Represent Molecules as Vectors?</h2>
+    <div class="slide-subtitle">From one-hot encoding to distributed representations</div>
+    <ul class="bullets">
+      <li><strong>One-hot encoding:</strong> A = [1,0,0,0], C = [0,1,0,0], G = [0,0,1,0], T = [0,0,0,1]
+        <ul><li>Every pair has dot product = 0 — all biological information discarded</li></ul>
+      </li>
+      <li><strong>Distributed representation:</strong> each token → dense vector in $d$ dimensions
+        <ul>
+          <li>Tokens in similar contexts → similar vectors</li>
+          <li>Geometric relationships capture functional relationships</li>
+        </ul>
+      </li>
+      <li><strong>Mikolov et al. (2013):</strong> king − man + woman ≈ queen
+        <ul><li><em>Meaning is geometry</em></li></ul>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 26 — From Words to Molecules ================== -->
+<section class="slide" data-slide="26">
+  <div class="slide-inner">
+    <h2>From Words to Molecules</h2>
+    <div class="slide-subtitle">The lineage of representation learning</div>
+    <ul class="bullets">
+      <li><strong>2013 — Word2Vec</strong> (Mikolov et al.): words → vectors, similarity = dot product</li>
+      <li><strong>2019 — BERT</strong> (Devlin et al.): contextual word vectors via masked language modeling</li>
+      <li><strong>2021 — ESM-2</strong> (Lin et al.): protein sequences → contextual residue vectors</li>
+      <li><strong>2021 — CLIP</strong> (Radford et al.): two encoders (image + text), contrastive learning</li>
+      <li><strong>2026 — CALM</strong> (Lee et al.): two encoders (antibody + antigen), dot product = binding compatibility</li>
+      <li>The mathematical operation at every step: <strong>the dot product</strong></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 27 — What Makes a Good Representation? ================== -->
+<section class="slide" data-slide="27">
+  <div class="slide-inner">
+    <h2>What Makes a Good Representation?</h2>
+    <div class="slide-subtitle">Bengio, Courville &amp; Vincent, IEEE TPAMI 2013</div>
+    <ul class="bullets">
+      <li>A good representation <strong>disentangles the factors of variation</strong> relevant to the task</li>
+      <li>After disentangling: a linear classifier (the dot product) suffices</li>
+      <li><strong>Given bilinearity</strong> (Lecture 5): the energy IS a dot product in raw sequence space
+        <ul><li>Example: TF–DNA binding via position weight matrices</li></ul>
+      </li>
+      <li><strong>Emergent bilinearity</strong> (Lecture 5): the encoder must learn a representation where energy becomes a dot product
+        <ul><li>Example: antibody–antigen binding via contrastive co-embedding</li></ul>
+      </li>
+      <li>This distinction predicts measurably different scaling behavior</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================== SLIDE 28 — Toolkit table ================== -->
+<section class="slide" data-slide="28">
+  <div class="slide-inner">
+    <h2>Four Operations — The Complete Toolkit</h2>
+    <div class="slide-subtitle">Everything in Lectures 2–12 is built from these</div>
+    <table class="summary">
+      <thead>
+        <tr><th>Operation</th><th>What it computes</th><th>Role in MRC</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dot product: $\mathbf{a} \cdot \mathbf{b}$</td>
+          <td>Alignment between two vectors</td>
+          <td>Binding compatibility score</td>
+        </tr>
+        <tr>
+          <td>Matrix multiplication: $QK^\top$</td>
+          <td>All pairwise alignments</td>
+          <td>All pairwise binding scores</td>
+        </tr>
+        <tr>
+          <td>Cosine similarity</td>
+          <td>Normalized alignment $\in [-1, +1]$</td>
+          <td>L2-normalized embedding scores</td>
+        </tr>
+        <tr>
+          <td>Softmax($\mathbf{z}/\tau$)</td>
+          <td>Scores → probability distribution</td>
+          <td>Boltzmann selection probability</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================== SLIDE 29 — Next: Lecture 2 ================== -->
+<section class="slide" data-slide="29">
+  <div class="slide-inner">
+    <h2>Next: Neural Networks, Transformers, and Attention</h2>
+    <div class="slide-subtitle">Lecture 2</div>
+    <ul class="bullets">
+      <li>How neural networks approximate functions</li>
+      <li>From RNNs to the transformer architecture</li>
+      <li>Full derivation of <strong>scaled dot-product attention</strong> on the whiteboard</li>
+      <li>You will see exactly where today's four operations fit into the most powerful AI architecture ever built</li>
+    </ul>
+    <div class="reading-list">
+      <span class="label">Reading for Lecture 2</span>
+      Vaswani A, Shazeer N, Parmar N, et al. <em>Attention is all you need.</em> NeurIPS 30 (2017). Focus on §3.2 (Scaled Dot-Product Attention) and §3.2.2 (Multi-Head Attention).
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="deck-counter" id="counter">SLIDE 1 / 29</div>
+<div class="deck-hint" id="hint">← →  navigate · F  fullscreen</div>
+<button class="deck-present" id="presentBtn">▶ Present</button>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const hint = document.getElementById('hint');
+  let current = 1;
+
+  function show(n) {
+    n = Math.max(1, Math.min(total, n));
+    current = n;
+    // index-based: slide position in the DOM is the source of truth, so new
+    // slides can be inserted anywhere without renumbering data-slide attributes.
+    slides.forEach((s, i) => s.classList.toggle('active', i === n - 1));
+    counter.textContent = `SLIDE ${n} / ${total}`;
+
+    // tint counter/hint white if the slide is dark
+    const active = slides[n - 1];
+    const isDark = active && active.classList.contains('divider');
+    counter.classList.toggle('on-dark', isDark);
+    hint.classList.toggle('on-dark', isDark);
+
+    // re-typeset MathJax for the newly visible slide (it may not have rendered if hidden)
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([active]);
+    }
+
+    // If this slide hosts an iframe (animated whiteboard or interactive demo),
+    // focus the iframe so its keyboard handlers receive arrow-key presses.
+    // Otherwise focus the parent window so deck-level navigation works.
+    const iframe = active && active.querySelector('iframe');
+    if (iframe) {
+      // small delay to let the iframe finish loading on first reveal
+      setTimeout(() => { try { iframe.contentWindow.focus(); } catch (e) {} }, 80);
+    } else {
+      window.focus();
+    }
+
+    // keep URL hash in sync so reload preserves position
+    history.replaceState(null, '', `#slide=${n}`);
+  }
+
+  function next() { if (current < total) show(current + 1); }
+  function prev() { if (current > 1)     show(current - 1); }
+
+  // Listen for postMessage from embedded iframes (whiteboards + interactive
+  // demos). When the user arrows past the boundary of an iframe widget, the
+  // iframe escalates to us and we advance/retreat the deck.
+  window.addEventListener('message', (e) => {
+    if (!e.data || e.data.type !== 'mrc-deck-advance') return;
+    if (e.data.direction === 'next') next();
+    else if (e.data.direction === 'prev') prev();
+  });
+
+  // Fullscreen / slideshow mode
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) req.call(el);
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  }
+  document.getElementById('presentBtn').addEventListener('click', toggleFullscreen);
+
+  document.addEventListener('keydown', (e) => {
+    // ignore key presses inside form fields (keep typing safe)
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+      case ' ':
+      case 'PageDown':
+        e.preventDefault(); next(); break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+      case 'PageUp':
+        e.preventDefault(); prev(); break;
+      case 'Home':
+        e.preventDefault(); show(1); break;
+      case 'End':
+        e.preventDefault(); show(total); break;
+      case 'f':
+      case 'F':
+        e.preventDefault(); toggleFullscreen(); break;
+    }
+  });
+
+  // click anywhere (except inside iframes/buttons) to advance
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.tagName === 'IFRAME' || t.tagName === 'BUTTON' || t.tagName === 'INPUT' || t.tagName === 'A') return;
+    if (t.closest('iframe') || t.closest('.deck-counter') || t.closest('.deck-hint') || t.closest('.deck-present')) return;
+    next();
+  });
+
+  // restore from hash on load
+  const m = location.hash.match(/slide=(\d+)/);
+  if (m) show(parseInt(m[1])); else show(1);
+</script>
+
+</body>
+</html>

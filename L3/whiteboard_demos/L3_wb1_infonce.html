@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 Whiteboard — InfoNCE from Boltzmann</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Deriving the InfoNCE Loss</h1>
+  <div class="subtitle">MRC LECTURE 3 · WHITEBOARD · FROM THE BOLTZMANN SELECTION PROBABILITY</div>
+
+  <div class="claim">
+    <span class="label">Goal — derive the training objective</span>
+    <div class="eq">$$\mathcal{L}_{\text{InfoNCE}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$</div>
+  </div>
+
+  <div class="setup">
+    An agent (e.g. an antibody) must select its cognate target from a pool of competitors — exactly clonal selection. We do not invent a loss; we write the Boltzmann probability of <em>correct</em> selection and ask the model to maximise it. That single requirement produces InfoNCE.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · The Boltzmann selection probability</div>
+    <div class="step-eq">
+      $$P(f\mid\mathbf{q}) = \frac{\exp(s_f)}{\exp(s_f) + \sum_{i=1}^{M}\exp(s_{c_i})}, \qquad s = \text{sim}(\mathbf{q},\mathbf{k})/\tau$$
+    </div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Maximum likelihood → negative log-likelihood loss</div>
+    <div class="step-eq">
+      $$L = \prod_{i=1}^{N} P(f_i\mid\mathbf{q}_i) \;\;\Rightarrow\;\; \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N}\log P(f_i\mid\mathbf{q}_i)$$
+    </div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-label">Step 3 · In a batch, the competitors are the other targets</div>
+    <div class="step-eq">
+      $$S_{ij} = \text{sim}(\mathbf{q}_i,\mathbf{k}_j)/\tau, \qquad \text{correct pair} = \text{diagonal } S_{ii}$$
+    </div>
+  </div>
+
+  <div class="step qed" data-step="4">
+    <div class="step-label">Step 4 · Substitute &nbsp;∎</div>
+    <div class="step-eq">
+      $$\mathcal{L}_{\text{InfoNCE}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$
+    </div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to derive InfoNCE.",
+    "<strong>Step 1.</strong> The convergence equation gives the probability that the agent picks the correct target $f$ from a pool: a softmax over compatibility scores. The numerator is the correct pair; the denominator sums the correct pair plus every competitor. <em>This is the only modelling assumption.</em>",
+    "<strong>Step 2.</strong> Across $N$ training pairs, the likelihood of all correct selections is the product of these probabilities. Maximum-likelihood estimation: take the log, negate, average — the standard move that turns a probability into a loss to minimise.",
+    "<strong>Step 3.</strong> The trick that makes it cheap: use the other targets in the same mini-batch as the competitor pool. Collect all scores into a matrix $S_{ij}$. The correct pair for agent $i$ is target $i$ — the diagonal $S_{ii}$.",
+    "<strong>Step 4.</strong> Substitute the batched selection probability into the loss. The result is InfoNCE — not chosen from a menu, but the maximum-likelihood estimator of the Boltzmann selection probability. The training objective <em>is</em> the physics. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

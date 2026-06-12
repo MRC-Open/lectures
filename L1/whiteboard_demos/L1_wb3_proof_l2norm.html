@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 Whiteboard 3 — Proof: After L2 Normalization, Dot Product = Cosine Similarity</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Proof — L2-Normalized Dot Product = Cosine Similarity</h1>
+  <div class="subtitle">MRC LECTURE 1 · WHITEBOARD 3 · STEP-BY-STEP DERIVATION</div>
+
+  <div class="claim">
+    <span class="label">Claim to prove</span>
+    <div class="eq">$$\hat{\mathbf{a}} \cdot \hat{\mathbf{b}} \;=\; \cos\theta$$</div>
+  </div>
+
+  <div class="setup">
+    Let $\hat{\mathbf{a}} = \mathbf{a}/\|\mathbf{a}\|$ and $\hat{\mathbf{b}} = \mathbf{b}/\|\mathbf{b}\|$ be the L2-normalized (unit-length) versions of $\mathbf{a}$ and $\mathbf{b}$. We will show that their dot product equals the cosine similarity of the original vectors. This is the identity that justifies why CLIP and CALM L2-normalize their embeddings before computing pairwise similarities.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · Substitute the unit vectors</div>
+    <div class="step-eq">$$\hat{\mathbf{a}} \cdot \hat{\mathbf{b}} \;=\; \frac{\mathbf{a}}{\|\mathbf{a}\|} \cdot \frac{\mathbf{b}}{\|\mathbf{b}\|}$$</div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Pull the scalars out using bilinearity of the dot product</div>
+    <div class="step-eq">$$\frac{\mathbf{a}}{\|\mathbf{a}\|} \cdot \frac{\mathbf{b}}{\|\mathbf{b}\|} \;=\; \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\|\,\|\mathbf{b}\|}$$</div>
+  </div>
+
+  <div class="step qed" data-step="3">
+    <div class="step-label">Step 3 · Recognise the cosine similarity formula &nbsp;∎</div>
+    <div class="step-eq">$$\frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\|\,\|\mathbf{b}\|} \;=\; \mathrm{sim}(\mathbf{a},\mathbf{b}) \;=\; \cos\theta$$</div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin the proof.",
+    "We start by writing the dot product of the unit vectors $\\hat{\\mathbf{a}}$ and $\\hat{\\mathbf{b}}$ in terms of the originals.",
+    "Bilinearity says $(c\\mathbf{a}) \\cdot \\mathbf{b} = c(\\mathbf{a} \\cdot \\mathbf{b})$ — scalars factor out of dot products. The two scalar denominators $\\|\\mathbf{a}\\|$ and $\\|\\mathbf{b}\\|$ pull out and combine.",
+    "This expression is exactly the definition of <strong>cosine similarity</strong>, which from Whiteboard 1 we know equals $\\cos\\theta$. So <strong>after L2 normalization, a simple dot product gives cosine similarity</strong> — at zero extra computational cost. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

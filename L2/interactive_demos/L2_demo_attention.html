@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Self-Attention, Live</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Interactive self-attention: click a token (query), see where it attends. */
+
+  .tokens-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 8px 0 6px 0;
+  }
+  .token {
+    font-family: var(--font-serif);
+    font-size: 21px;
+    padding: 12px 20px;
+    border: 1.5px solid var(--rule);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    color: var(--text);
+    position: relative;
+  }
+  .token:hover { border-color: var(--accent); }
+  .token.query {
+    border-color: var(--accent);
+    border-width: 2.5px;
+    font-weight: 700;
+  }
+  .token .wt {
+    position: absolute;
+    top: -10px; right: -8px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    padding: 1px 6px;
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+  .token.show-wt .wt { opacity: 1; }
+  .hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 14px;
+    margin-bottom: 22px;
+  }
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    align-items: start;
+    margin-bottom: 18px;
+  }
+  .panel-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  /* attention weight bars */
+  .bar-row {
+    display: grid;
+    grid-template-columns: 86px 1fr 56px;
+    gap: 12px;
+    align-items: center;
+    padding: 7px 0;
+    font-size: 15px;
+  }
+  .bar-row .tk { font-family: var(--font-serif); color: var(--text); text-align: right; }
+  .bar-row .tk.self { color: var(--accent); font-weight: 700; }
+  .bar-track { height: 22px; background: var(--rail); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); transition: width 0.22s ease-out; }
+  .bar-row .wv { font-family: var(--font-serif); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; text-align: right; }
+  .score-note { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+
+  /* attention heatmap */
+  .heatmap { display: inline-block; }
+  .hm-grid { display: grid; gap: 3px; }
+  .hm-cell {
+    width: 46px; height: 34px;
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-sans); font-size: 10px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .hm-rowlabel, .hm-collabel {
+    font-family: var(--font-serif); font-size: 12px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hm-rowlabel.qrow { color: var(--accent); font-weight: 700; }
+
+  .ctrl-row {
+    display: flex; align-items: center; gap: 16px;
+    margin: 8px 0 22px 0;
+    padding: 14px 18px;
+    border: 1px solid var(--rule); border-radius: 4px;
+    max-width: 560px;
+  }
+  .ctrl-row label { font-family: var(--font-serif); font-style: italic; font-size: 16px; min-width: 200px; }
+  .ctrl-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .ctrl-row .val { font-family: var(--font-serif); font-weight: 700; color: var(--accent); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .bridge {
+    border-top: 1px solid var(--rule);
+    padding-top: 16px; margin-top: 8px;
+    font-size: 16px; line-height: 1.7; color: var(--text); text-align: center;
+  }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Self-Attention, Live</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTERACTIVE DEMO</div>
+
+  <div class="formula">$$\text{Attention}(Q,K,V) \;=\; \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
+
+  <div class="tokens-row" id="tokens"></div>
+  <div class="hint">Click a word to make it the <em>query</em> — see how much it attends to every other word.</div>
+
+  <div class="main-row">
+    <div>
+      <div class="panel-label">Attention from the selected query</div>
+      <div id="bars"></div>
+      <div class="score-note" id="scoreNote"></div>
+    </div>
+    <div>
+      <div class="panel-label">All pairwise attention — the QKᵀ matrix</div>
+      <div class="heatmap" id="heatmap"></div>
+    </div>
+  </div>
+
+  <div class="ctrl-row">
+    <label>temperature τ &nbsp;(= √dₖ)</label>
+    <input type="range" id="tau" min="0.12" max="1.6" step="0.02" value="0.4">
+    <div class="val" id="tauVal">0.40</div>
+  </div>
+
+  <div class="bridge">
+    Each token builds a query and compares it — by <strong>dot product</strong> — against every token's key. <strong>Softmax</strong> turns those scores into attention weights. Lower the temperature and attention sharpens onto the single best match; raise it and attention spreads out. <strong>This is the same softmax-over-scores you saw in Lecture 1 — and the Boltzmann distribution in Lecture 4.</strong>
+  </div>
+
+</div>
+
+<script>
+  // 5-token sentence; 2D illustrative embeddings (Q = K = V = embedding).
+  const TOKENS = ["The", "antibody", "binds", "the", "antigen"];
+  const EMB = [
+    [-0.30, 0.85],  // The
+    [ 0.95, 0.25],  // antibody
+    [ 0.75, 0.55],  // binds
+    [-0.30, 0.85],  // the
+    [ 0.90, 0.15],  // antigen
+  ];
+  const N = TOKENS.length;
+  let query = 2;     // "binds"
+  let tau = 0.4;
+
+  function dot(a, b) { return a[0]*b[0] + a[1]*b[1]; }
+  function softmax(arr, t) {
+    const m = Math.max(...arr);
+    const ex = arr.map(s => Math.exp((s - m) / t));
+    const Z = ex.reduce((a,b)=>a+b, 0);
+    return ex.map(e => e / Z);
+  }
+  function attnRow(i, t) {
+    const scores = EMB.map(k => dot(EMB[i], k));
+    return { scores, weights: softmax(scores, t) };
+  }
+
+  const tokensEl = document.getElementById('tokens');
+  const barsEl = document.getElementById('bars');
+  const heatmapEl = document.getElementById('heatmap');
+  const scoreNote = document.getElementById('scoreNote');
+  const tauSlider = document.getElementById('tau');
+  const tauVal = document.getElementById('tauVal');
+
+  function buildTokens() {
+    tokensEl.innerHTML = TOKENS.map((t, i) =>
+      `<div class="token" data-i="${i}">${t}<span class="wt" id="wt-${i}"></span></div>`
+    ).join('');
+    tokensEl.querySelectorAll('.token').forEach(el => {
+      el.addEventListener('click', () => { query = parseInt(el.dataset.i); render(); });
+    });
+  }
+
+  function render() {
+    const { scores, weights } = attnRow(query, tau);
+
+    // token chips: tint by attention weight, mark query
+    tokensEl.querySelectorAll('.token').forEach((el, j) => {
+      el.classList.toggle('query', j === query);
+      el.classList.add('show-wt');
+      const a = weights[j];
+      el.style.background = `rgba(94, 58, 163, ${(0.08 + 0.82 * a).toFixed(3)})`;
+      el.style.color = a > 0.5 ? 'white' : 'var(--text)';
+      document.getElementById(`wt-${j}`).textContent = (a*100).toFixed(0) + '%';
+    });
+
+    // bars
+    barsEl.innerHTML = TOKENS.map((t, j) =>
+      `<div class="bar-row">
+         <div class="tk ${j===query?'self':''}">${t}</div>
+         <div class="bar-track"><div class="bar-fill" style="width:${(weights[j]*100).toFixed(1)}%"></div></div>
+         <div class="wv">${weights[j].toFixed(2)}</div>
+       </div>`
+    ).join('');
+    scoreNote.textContent =
+      `raw scores q·kⱼ = [${scores.map(s=>s.toFixed(2)).join(', ')}] → ÷τ → softmax → weights above`;
+
+    // heatmap (all queries × all keys)
+    let html = `<div class="hm-grid" style="grid-template-columns: 64px repeat(${N}, 46px);">`;
+    html += `<div class="hm-collabel"></div>`;
+    TOKENS.forEach(t => { html += `<div class="hm-collabel">${t.slice(0,4)}</div>`; });
+    for (let i = 0; i < N; i++) {
+      const w = attnRow(i, tau).weights;
+      html += `<div class="hm-rowlabel ${i===query?'qrow':''}">${TOKENS[i].slice(0,5)}</div>`;
+      for (let j = 0; j < N; j++) {
+        const a = w[j];
+        const txt = a >= 0.10 ? a.toFixed(2).slice(1) : '';
+        html += `<div class="hm-cell" style="background: rgba(94,58,163,${(0.06+0.9*a).toFixed(3)}); color:${a>0.5?'#fff':'var(--text-muted)'};">${txt}</div>`;
+      }
+    }
+    html += `</div>`;
+    heatmapEl.innerHTML = html;
+
+    tauVal.textContent = tau.toFixed(2);
+  }
+
+  tauSlider.addEventListener('input', e => { tau = parseFloat(e.target.value); render(); });
+
+  buildTokens();
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (prevKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

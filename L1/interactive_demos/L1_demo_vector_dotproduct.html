@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — The Dot Product, Step by Step</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Two vectors as lists of numbers; compute the dot product element-by-element.
+     Mirrors the matrix-multiplication demo, but for a single pair of vectors. */
+
+  .vec-grid {
+    display: grid;
+    grid-template-columns: 150px repeat(4, 1fr);
+    gap: 10px;
+    max-width: 720px;
+    margin: 10px auto 6px auto;
+    align-items: center;
+  }
+  .gcell { text-align: center; }
+  .feat-label {
+    font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.4px;
+    text-transform: uppercase; color: var(--text-muted); font-weight: 500; padding-bottom: 4px;
+  }
+  .row-label {
+    font-family: var(--font-serif); font-size: 17px; color: var(--text); text-align: right; padding-right: 6px;
+  }
+  .row-label .sub { font-size: 12px; color: var(--text-muted); display: block; font-style: italic; }
+  .num {
+    font-family: var(--font-serif); font-size: 24px; font-variant-numeric: tabular-nums;
+    border: 1.5px solid var(--rule); border-radius: 6px; padding: 12px 0; cursor: pointer;
+    transition: all 0.18s; color: var(--text);
+  }
+  .num:hover { border-color: var(--accent); }
+  .num.lit { border-color: var(--accent); border-width: 2.5px; background: var(--accent-faint); color: var(--accent); font-weight: 700; }
+  .prod {
+    font-family: var(--font-serif); font-size: 17px; font-variant-numeric: tabular-nums;
+    color: var(--accent); font-weight: 700; min-height: 24px;
+  }
+  .prod .mul { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  .times-col { font-family: var(--font-serif); color: var(--text-muted); font-size: 14px; font-style: italic; }
+
+  .result {
+    text-align: center; font-family: var(--font-serif); font-size: 26px;
+    margin: 22px auto 8px auto; min-height: 40px; max-width: 760px;
+  }
+  .result .lhs { font-style: italic; }
+  .result .val { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .result .placeholder { font-size: 17px; color: var(--text-muted); font-style: italic; }
+
+  .ctrls { display: flex; gap: 10px; justify-content: center; margin: 14px 0 8px 0; }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 18px; font-size: 16px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>The Dot Product, Step by Step</h1>
+  <div class="subtitle">MRC LECTURE 1 · INTERACTIVE DEMO · TWO LISTS OF NUMBERS → ONE NUMBER</div>
+
+  <div class="formula">$$\mathbf{a}\cdot\mathbf{b} \;=\; a_1 b_1 + a_2 b_2 + a_3 b_3 + a_4 b_4 \;=\; \sum_{i} a_i b_i$$</div>
+
+  <div class="setup">
+    Two feature vectors — an antibody $\mathbf{a}$ and an antigen $\mathbf{b}$, each a list of four numbers. Click a feature (or "Compute all") to multiply the matching components and add them up. The single number that comes out is the <em>compatibility score</em>.
+  </div>
+
+  <div class="vec-grid" id="grid"></div>
+
+  <div class="result" id="result"></div>
+
+  <div class="ctrls">
+    <button class="preset-btn" id="allBtn">Compute all</button>
+    <button class="preset-btn" id="resetBtn">Reset</button>
+  </div>
+
+  <div class="bridge">
+    Two lists of numbers in, <strong>one number out</strong>. Matching features (the $3\times2$ on hydrophobicity) add compatibility; a <em>clashing</em> feature (the $-1\times2$) subtracts it. That one number is exactly what the next slides analyse — first algebraically, then geometrically.
+  </div>
+
+</div>
+
+<script>
+  const FEATURES = ["electrostatic", "shape", "hydrophobic", "H-bond"];
+  const a = [2, -1, 3, 1];
+  const b = [1,  2, 2, 0];
+  const N = a.length;
+  let done = [false, false, false, false];
+
+  const gridEl = document.getElementById('grid');
+  const resultEl = document.getElementById('result');
+
+  function fmt(n){ return n < 0 ? '−'+Math.abs(n) : ''+n; }
+
+  function buildGrid() {
+    let h = '';
+    // row 1: feature labels
+    h += `<div class="gcell"></div>`;
+    FEATURES.forEach(f => h += `<div class="gcell feat-label">${f}</div>`);
+    // row 2: a
+    h += `<div class="row-label"><em>a</em> &nbsp;<span class="sub">antibody</span></div>`;
+    a.forEach((v,i) => h += `<div class="gcell"><div class="num" data-col="${i}" id="a-${i}">${fmt(v)}</div></div>`);
+    // row 3: b
+    h += `<div class="row-label"><em>b</em> &nbsp;<span class="sub">antigen</span></div>`;
+    b.forEach((v,i) => h += `<div class="gcell"><div class="num" data-col="${i}" id="b-${i}">${fmt(v)}</div></div>`);
+    // row 4: products
+    h += `<div class="row-label" style="font-size:13px;color:var(--text-muted);">product<br><span class="sub">aᵢ × bᵢ</span></div>`;
+    a.forEach((v,i) => h += `<div class="gcell"><div class="prod" id="p-${i}"></div></div>`);
+    gridEl.innerHTML = h;
+    gridEl.querySelectorAll('.num').forEach(el =>
+      el.addEventListener('click', () => { done[parseInt(el.dataset.col)] = true; render(); }));
+  }
+
+  function render() {
+    for (let i = 0; i < N; i++) {
+      document.getElementById(`a-${i}`).classList.toggle('lit', done[i]);
+      document.getElementById(`b-${i}`).classList.toggle('lit', done[i]);
+      const p = document.getElementById(`p-${i}`);
+      p.innerHTML = done[i] ? `<span class="mul">(${fmt(a[i])})(${fmt(b[i])}) =</span> ${fmt(a[i]*b[i])}` : '';
+    }
+    const allDone = done.every(Boolean);
+    const anyDone = done.some(Boolean);
+    if (!allDone) {
+      const partial = a.reduce((s,_,i)=> s + (done[i]? a[i]*b[i] : 0), 0);
+      resultEl.innerHTML = anyDone
+        ? `<span class="lhs">running sum</span> = <span class="val">${fmt(partial)}</span> <span class="placeholder">&nbsp; (${done.filter(Boolean).length} of ${N} terms)</span>`
+        : `<span class="placeholder">— click a feature, or "Compute all" —</span>`;
+    } else {
+      const terms = a.map((_,i) => fmt(a[i]*b[i])).join(' + ').replace(/\+ −/g, '− ');
+      const total = a.reduce((s,_,i)=> s + a[i]*b[i], 0);
+      resultEl.innerHTML = `<span class="lhs">a · b</span> = ${terms} = <span class="val">${fmt(total)}</span>`;
+    }
+  }
+
+  document.getElementById('allBtn').addEventListener('click', () => {
+    for (let i = 0; i < N; i++) setTimeout(() => { done[i] = true; render(); }, i * 380);
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => { done = [false,false,false,false]; render(); });
+
+  buildGrid();
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (prevKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

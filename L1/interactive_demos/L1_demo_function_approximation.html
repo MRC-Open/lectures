@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Without the Equation, You Must Learn the Whole Shape</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Contrast demo: function approximation (no known form) — the wiggly,
+     data-hungry alternative to parameter estimation. Sibling of
+     L1_demo_known_equation.html. */
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 32px;
+    align-items: start;
+    margin: 10px 0 22px 0;
+  }
+  .plot-col, .control-col { min-width: 0; }
+  .control-col { display: flex; flex-direction: column; gap: 16px; }
+
+  .plot-wrap { background: white; }
+  svg.plot { display: block; width: 100%; height: auto; }
+  .grid-line  { stroke: var(--rail); stroke-width: 1; }
+  .axis-line  { stroke: var(--rule); stroke-width: 1.4; }
+  .axis-tick  { font-family: var(--font-serif); font-size: 12px; fill: var(--text-muted); }
+  .axis-title { font-family: var(--font-serif); font-style: italic; font-size: 18px; fill: var(--text-muted); }
+  .data-point { fill: var(--text); }
+  .extrap-zone { fill: #f6f3fb; }
+  .extrap-label { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.6px; fill: var(--text-muted); text-transform: uppercase; }
+  .ref-line   { stroke: var(--text-muted); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; opacity: 0.8; }
+  .fit-curve  { stroke: var(--accent); stroke-width: 2.6; fill: none; }
+  .aside {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .aside em { font-style: normal; color: var(--text); }
+
+  .slider-box { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; }
+  .slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-row label {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    min-width: 120px;
+    color: var(--text);
+  }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-val {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 30px;
+    text-align: right;
+  }
+  .error-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rail);
+    font-size: 15px;
+  }
+  .error-row .k { color: var(--text-muted); font-style: italic; }
+  .error-row .v {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .check-row input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .check-row label { font-style: italic; color: var(--text-muted); }
+
+  .predict-box {
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 18px;
+    background: var(--rail);
+  }
+  .predict-box .pb-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .predict-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    padding: 5px 0;
+    border-bottom: 1px solid #e3ddef;
+  }
+  .predict-row:last-child { border-bottom: none; }
+  .predict-row .pr-key { color: var(--text-muted); font-style: italic; }
+  .predict-row .pr-out { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .predict-row .pr-out.flex { color: var(--accent); }
+  .predict-row .pr-out.line { color: var(--text); }
+
+  .bridge {
+    border-top: 1px solid var(--rule);
+    margin-top: 26px;
+    padding-top: 18px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    text-align: center;
+  }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Without the Equation, You Must Learn the Whole Shape</h1>
+  <div class="subtitle">MRC LECTURE 1 · INTRO · FUNCTION APPROXIMATION — THE DATA-HUNGRY ALTERNATIVE</div>
+
+  <div class="formula">$$y \;=\; f(x) \qquad (\text{form unknown})$$</div>
+
+  <div class="setup">
+    Same ten points — but now suppose you <em>don't</em> know the form. A flexible model can be made to thread every training point. Increase its flexibility and watch: it fits the data perfectly, yet it has no idea what happens <em>between</em> the points or <em>beyond</em> them. To pin it down you would need far more data.
+  </div>
+
+  <div class="main-row">
+
+    <div class="plot-col">
+      <div class="plot-wrap">
+        <svg class="plot" viewBox="0 0 560 420" id="plot">
+          <defs>
+            <clipPath id="plotClip"><rect x="56" y="24" width="488" height="336"/></clipPath>
+          </defs>
+          <g id="extrap"></g>
+          <g id="grid"></g>
+          <g id="axes"></g>
+          <g clip-path="url(#plotClip)">
+            <line id="refLine" class="ref-line" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+            <path id="fitCurve" class="fit-curve" d=""/>
+          </g>
+          <g id="points"></g>
+          <text class="axis-title" x="300" y="412" text-anchor="middle">x</text>
+          <text class="axis-title" x="15" y="210" text-anchor="middle" transform="rotate(-90 15 210)">y</text>
+        </svg>
+      </div>
+      <div class="aside">Same data as the previous slide — but here the governing form is treated as <em>unknown</em>.</div>
+    </div>
+
+    <div class="control-col">
+
+      <div class="slider-box">
+        <div class="slider-row">
+          <label>model flexibility</label>
+          <input type="range" id="degSlider" min="1" max="9" step="1" value="8">
+          <div class="slider-val" id="degVal">8</div>
+        </div>
+        <div class="error-row">
+          <span class="k">training error (RMSE)</span>
+          <span class="v" id="errVal">—</span>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <input type="checkbox" id="refToggle">
+        <label for="refToggle">show the simple known-form line for comparison</label>
+      </div>
+
+      <div class="predict-box">
+        <div class="pb-label">Predict at x = 13 — beyond the data</div>
+        <div class="predict-row">
+          <span class="pr-key">flexible model</span>
+          <span class="pr-out flex" id="predFlex">—</span>
+        </div>
+        <div class="predict-row">
+          <span class="pr-key">known-form line</span>
+          <span class="pr-out line" id="predLine">—</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="bridge">
+    A flexible model with <strong>no known form</strong> can fit the points — but it cannot tell you what happens between or beyond them without much more data. This is <strong>function approximation</strong>: standard deep learning lives here, which is why it needs millions of examples. An SFM does the other thing — <strong>parameter estimation in a known equation</strong> — and needs only thousands.
+  </div>
+
+</div>
+
+<script>
+  // Same ten points as the parameter-estimation slide.
+  const data = [
+    { d: 1.5,  fare: 8.20  },
+    { d: 2.2,  fare: 11.10 },
+    { d: 3.0,  fare: 12.05 },
+    { d: 4.1,  fare: 16.00 },
+    { d: 5.0,  fare: 17.10 },
+    { d: 6.3,  fare: 21.40 },
+    { d: 7.0,  fare: 21.90 },
+    { d: 8.4,  fare: 27.10 },
+    { d: 9.1,  fare: 26.90 },
+    { d: 10.5, fare: 32.40 }
+  ];
+
+  const PX0 = 56, PX1 = 544, PY0 = 24, PY1 = 360;
+  const D_MAX = 14, F_MAX = 40;
+  const mapX = d => PX0 + (d / D_MAX) * (PX1 - PX0);
+  const mapY = f => PY1 - (f / F_MAX) * (PY1 - PY0);
+
+  // data x-range, for marking the extrapolation zones
+  const dLo = Math.min(...data.map(p => p.d));
+  const dHi = Math.max(...data.map(p => p.d));
+
+  // normalize x for numerically-stable polynomial fitting
+  const U_MID = 6, U_SCALE = 6;
+  const toU = d => (d - U_MID) / U_SCALE;
+
+  let degree = 8;
+
+  const gridG  = document.getElementById('grid');
+  const axesG  = document.getElementById('axes');
+  const extrapG= document.getElementById('extrap');
+  const pointsG= document.getElementById('points');
+  const fitCurve = document.getElementById('fitCurve');
+  const refLine  = document.getElementById('refLine');
+  const degSlider= document.getElementById('degSlider');
+  const degVal   = document.getElementById('degVal');
+  const errVal   = document.getElementById('errVal');
+  const refToggle= document.getElementById('refToggle');
+
+  // ---- linear algebra: solve A x = b (Gaussian elimination, partial pivot) ----
+  function gaussSolve(A, b) {
+    const n = b.length;
+    const M = A.map((row, i) => row.slice().concat(b[i]));
+    for (let col = 0; col < n; col++) {
+      let piv = col;
+      for (let r = col + 1; r < n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+      [M[col], M[piv]] = [M[piv], M[col]];
+      const d = M[col][col];
+      if (Math.abs(d) < 1e-12) continue;
+      for (let r = 0; r < n; r++) {
+        if (r === col) continue;
+        const factor = M[r][col] / d;
+        for (let c = col; c <= n; c++) M[r][c] -= factor * M[col][c];
+      }
+    }
+    return M.map((row, i) => row[n] / (M[i][i] || 1));
+  }
+
+  function polyfit(deg) {
+    const n = deg + 1;
+    const A = Array.from({ length: n }, () => new Array(n).fill(0));
+    const B = new Array(n).fill(0);
+    data.forEach(pt => {
+      const u = toU(pt.d), y = pt.fare;
+      const powers = []; let up = 1;
+      for (let k = 0; k <= 2 * deg; k++) { powers.push(up); up *= u; }
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) A[i][j] += powers[i + j];
+        B[i] += y * powers[i];
+      }
+    });
+    return gaussSolve(A, B);
+  }
+
+  function polyEval(coeffs, d) {
+    const u = toU(d);
+    let y = 0, up = 1;
+    for (let k = 0; k < coeffs.length; k++) { y += coeffs[k] * up; up *= u; }
+    return y;
+  }
+
+  // simple least-squares line (the "known form" reference)
+  function linearFit() {
+    const N = data.length;
+    let sx = 0, sy = 0, sxy = 0, sxx = 0;
+    data.forEach(pt => { sx += pt.d; sy += pt.fare; sxy += pt.d * pt.fare; sxx += pt.d * pt.d; });
+    const m = (N * sxy - sx * sy) / (N * sxx - sx * sx);
+    const b = (sy - m * sx) / N;
+    return { m, b };
+  }
+  const LINE = linearFit();
+
+  function drawStatic() {
+    // extrapolation zones (left of data, right of data)
+    let ez = '';
+    ez += `<rect class="extrap-zone" x="${mapX(0)}" y="${PY0}" width="${mapX(dLo) - mapX(0)}" height="${PY1 - PY0}"/>`;
+    ez += `<rect class="extrap-zone" x="${mapX(dHi)}" y="${PY0}" width="${mapX(D_MAX) - mapX(dHi)}" height="${PY1 - PY0}"/>`;
+    ez += `<text class="extrap-label" x="${(mapX(dHi) + mapX(D_MAX)) / 2}" y="${PY0 + 14}" text-anchor="middle">extrapolation</text>`;
+    extrapG.innerHTML = ez;
+
+    let g = '';
+    for (let d = 2; d <= D_MAX; d += 2) { const x = mapX(d); g += `<line class="grid-line" x1="${x}" y1="${PY0}" x2="${x}" y2="${PY1}"/>`; }
+    for (let f = 10; f <= F_MAX; f += 10) { const y = mapY(f); g += `<line class="grid-line" x1="${PX0}" y1="${y}" x2="${PX1}" y2="${y}"/>`; }
+    gridG.innerHTML = g;
+
+    let a = '';
+    a += `<line class="axis-line" x1="${PX0}" y1="${PY1}" x2="${PX1}" y2="${PY1}"/>`;
+    a += `<line class="axis-line" x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}"/>`;
+    for (let d = 2; d <= D_MAX; d += 2) { const x = mapX(d); a += `<text class="axis-tick" x="${x}" y="${PY1 + 18}" text-anchor="middle">${d}</text>`; }
+    for (let f = 10; f <= F_MAX; f += 10) { const y = mapY(f); a += `<text class="axis-tick" x="${PX0 - 10}" y="${y + 4}" text-anchor="end">${f}</text>`; }
+    axesG.innerHTML = a;
+
+    pointsG.innerHTML = data.map(pt => `<circle class="data-point" cx="${mapX(pt.d)}" cy="${mapY(pt.fare)}" r="4.5"/>`).join('');
+  }
+
+  function render() {
+    const coeffs = polyfit(degree);
+
+    // dense path across the whole plot x-range (incl. extrapolation)
+    let path = '';
+    const STEPS = 260;
+    for (let i = 0; i <= STEPS; i++) {
+      const d = (i / STEPS) * D_MAX;
+      const y = polyEval(coeffs, d);
+      const px = mapX(d), py = mapY(y);
+      path += (i === 0 ? 'M' : 'L') + px.toFixed(1) + ' ' + py.toFixed(1) + ' ';
+    }
+    fitCurve.setAttribute('d', path);
+
+    // reference known-form line
+    if (refToggle.checked) {
+      refLine.style.display = '';
+      refLine.setAttribute('x1', mapX(0));  refLine.setAttribute('y1', mapY(LINE.b));
+      refLine.setAttribute('x2', mapX(D_MAX)); refLine.setAttribute('y2', mapY(LINE.m * D_MAX + LINE.b));
+    } else {
+      refLine.style.display = 'none';
+    }
+
+    // training RMSE
+    let sse = 0;
+    data.forEach(pt => { const e = pt.fare - polyEval(coeffs, pt.d); sse += e * e; });
+    errVal.textContent = Math.sqrt(sse / data.length).toFixed(2);
+
+    // predictions at x = 13 (beyond data)
+    const flexY = polyEval(coeffs, 13);
+    document.getElementById('predFlex').textContent = flexY.toFixed(1);
+    document.getElementById('predLine').textContent = (LINE.m * 13 + LINE.b).toFixed(1);
+
+    degVal.textContent = degree;
+  }
+
+  degSlider.addEventListener('input', e => { degree = parseInt(e.target.value); render(); });
+  refToggle.addEventListener('change', render);
+
+  drawStatic();
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

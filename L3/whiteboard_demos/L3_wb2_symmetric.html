@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 Whiteboard — The Symmetric Loss</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>The Symmetric Loss</h1>
+  <div class="subtitle">MRC LECTURE 3 · WHITEBOARD · BIDIRECTIONAL TRAINING FROM BINDING SYMMETRY</div>
+
+  <div class="claim">
+    <span class="label">Claim</span>
+    <div class="eq">$$\mathcal{L}_{\text{sym}} = \tfrac{1}{2}\big(\mathcal{L}_{\text{agent}\to\text{target}} + \mathcal{L}_{\text{target}\to\text{agent}}\big)$$</div>
+  </div>
+
+  <div class="setup">
+    InfoNCE applied to the rows of the similarity matrix asks "for each agent, which target?" But binding is symmetric — the free energy of a complex doesn't care which partner you call the agent. The loss must reflect that. We add the column-wise direction and average.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · Agent → target (softmax over each row)</div>
+    <div class="step-eq">
+      $$\mathcal{L}_{\text{agent}\to\text{target}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$
+    </div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Target → agent (softmax over each column)</div>
+    <div class="step-eq">
+      $$\mathcal{L}_{\text{target}\to\text{agent}} = -\frac{1}{N}\sum_{j=1}^{N}\log\frac{\exp(S_{jj})}{\sum_{i=1}^{N}\exp(S_{ij})}$$
+    </div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-label">Step 3 · The physical constraint</div>
+    <div class="step-eq">
+      $$\Delta G_{AB} = \Delta G_{BA} \;\;\Rightarrow\;\; \text{sim}(\mathbf{q}_A,\mathbf{k}_B) = \text{sim}(\mathbf{q}_B,\mathbf{k}_A)$$
+    </div>
+  </div>
+
+  <div class="step qed" data-step="4">
+    <div class="step-label">Step 4 · Average both directions &nbsp;∎</div>
+    <div class="step-eq">
+      $$\mathcal{L}_{\text{sym}} = \tfrac{1}{2}\big(\mathcal{L}_{\text{agent}\to\text{target}} + \mathcal{L}_{\text{target}\to\text{agent}}\big)$$
+    </div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin.",
+    "<strong>Step 1.</strong> Softmax over each <em>row</em> of the similarity matrix: for agent $i$, which target wins? This is the InfoNCE loss from the previous derivation — it constrains the embedding from the agent's point of view only.",
+    "<strong>Step 2.</strong> Now softmax over each <em>column</em>: for target $j$, which agent wins? Same matrix, perpendicular direction. This constrains the embedding from the target's point of view — a constraint the row-wise loss never imposed.",
+    "<strong>Step 3.</strong> Why we need both: binding free energy is a property of the complex, $\\Delta G_{AB} = \\Delta G_{BA}$. So the embedding must score the pair the same in either direction. Only training both directions enforces that symmetry.",
+    "<strong>Step 4.</strong> Average the two. CLIP introduced this symmetric loss empirically because it gave better embeddings; the MRC framework <em>derives</em> it — binding symmetry requires bidirectional training. (Triplet, BCE, and margin losses each violate one of the five axioms — see the reference worksheet.) ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

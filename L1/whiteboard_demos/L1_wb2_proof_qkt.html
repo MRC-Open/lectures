@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 Whiteboard 2 — Proof: S = QKᵀ Computes All Pairwise Dot Products</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Proof — $S = QK^\top$ is the Pairwise Similarity Matrix</h1>
+  <div class="subtitle">MRC LECTURE 1 · WHITEBOARD 2 · STEP-BY-STEP DERIVATION</div>
+
+  <div class="claim">
+    <span class="label">Claim to prove</span>
+    <div class="eq">$$S_{ij} = \mathbf{q}_i \cdot \mathbf{k}_j \quad\text{for all } i, j$$</div>
+  </div>
+
+  <div class="setup">
+    Let $\mathbf{Q} \in \mathbb{R}^{m \times d}$ be a matrix of agent embeddings (row $i$ is agent $i$'s embedding $\mathbf{q}_i$). Let $\mathbf{K} \in \mathbb{R}^{n \times d}$ be a matrix of target embeddings (row $j$ is target $j$'s embedding $\mathbf{k}_j$). We will show that one matrix product $S = QK^\top$ produces an $m \times n$ matrix whose entry $(i, j)$ is the dot product of agent $i$ with target $j$.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · Apply the definition of matrix multiplication</div>
+    <div class="step-eq">$$S_{ij} \;=\; \big(QK^\top\big)_{ij} \;=\; \sum_{l=1}^{d} Q_{il} \,(K^\top)_{lj} \;=\; \sum_{l=1}^{d} Q_{il}\, K_{jl}$$</div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Identify the components</div>
+    <div class="step-eq">
+      $$Q_{il} = (\mathbf{q}_i)_l \quad\text{(} l\text{-th component of agent } i\text{'s embedding)}$$
+      $$K_{jl} = (\mathbf{k}_j)_l \quad\text{(} l\text{-th component of target } j\text{'s embedding)}$$
+    </div>
+  </div>
+
+  <div class="step qed" data-step="3">
+    <div class="step-label">Step 3 · Substitute &nbsp;∎</div>
+    <div class="step-eq">$$S_{ij} \;=\; \sum_{l=1}^{d} (\mathbf{q}_i)_l \,(\mathbf{k}_j)_l \;=\; \mathbf{q}_i \cdot \mathbf{k}_j$$</div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin the proof.",
+    "Apply the <strong>definition of matrix multiplication</strong>: entry $(i,j)$ of $QK^\\top$ is the inner product of row $i$ of $Q$ and column $j$ of $K^\\top$. The transpose swaps row and column, so $(K^\\top)_{lj} = K_{jl}$.",
+    "By construction, the $l$-th column of $Q$ holds the $l$-th component of every agent's embedding; the $l$-th column of $K$ holds the $l$-th component of every target's embedding. Substitute these labels.",
+    "The sum $\\sum_l (\\mathbf{q}_i)_l(\\mathbf{k}_j)_l$ is exactly the dot product of agent $i$ with target $j$. So <strong>one matrix multiplication computes all $m \\times n$ pairwise compatibility scores at once</strong>. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

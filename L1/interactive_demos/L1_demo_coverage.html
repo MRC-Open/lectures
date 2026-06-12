@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — To Pin the Line, Cover the Range</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Coverage demo: same line, big range. Slope uncertainty depends on how
+     well the points span the x-range — not on how many there are. Sibling of
+     L1_demo_known_equation.html. */
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 32px;
+    align-items: start;
+    margin: 10px 0 22px 0;
+  }
+  .plot-col, .control-col { min-width: 0; }
+  .control-col { display: flex; flex-direction: column; gap: 16px; }
+
+  .plot-wrap { background: white; }
+  svg.plot { display: block; width: 100%; height: auto; }
+  .grid-line  { stroke: var(--rail); stroke-width: 1; }
+  .axis-line  { stroke: var(--rule); stroke-width: 1.4; }
+  .axis-tick  { font-family: var(--font-serif); font-size: 11px; fill: var(--text-muted); }
+  .axis-title { font-family: var(--font-serif); font-style: italic; font-size: 18px; fill: var(--text-muted); }
+  .data-point { fill: var(--text); }
+  .true-line  { stroke: var(--text-muted); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; opacity: 0.85; }
+  .fit-line   { stroke: var(--accent); stroke-width: 2.6; fill: none; }
+  .band       { fill: var(--accent); opacity: 0.13; stroke: none; }
+
+  .aside {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .aside em { font-style: normal; color: var(--text); }
+
+  .slider-box { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; }
+  .slider-row { display: flex; align-items: center; gap: 14px; }
+  .slider-row label {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    min-width: 120px;
+    color: var(--text);
+  }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-val {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 78px;
+    text-align: right;
+    letter-spacing: 0.4px;
+  }
+
+  .readout-box {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 18px;
+  }
+  .readout-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--rail);
+    font-size: 16px;
+  }
+  .readout-row:last-child { border-bottom: none; }
+  .readout-row .k { color: var(--text-muted); font-style: italic; }
+  .readout-row .v {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .readout-row .v .pm { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+
+  .status {
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  .status.bad  { background: #f3eef9; color: var(--accent); }
+  .status.good { background: #eef3ee; color: #3a6b3a; }
+
+  .check-row { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+  .check-row input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .check-row label { font-style: italic; color: var(--text-muted); }
+
+  .bridge {
+    border-top: 1px solid var(--rule);
+    margin-top: 26px;
+    padding-top: 18px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    text-align: center;
+  }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>To Pin the Line, Cover the Range</h1>
+  <div class="subtitle">MRC LECTURE 1 · INTRO · COVERAGE, NOT COUNT</div>
+
+  <div class="formula">$$y \;=\; m\,x \;+\; b \qquad (x, y \text{ run to } 1000)$$</div>
+
+  <div class="setup">
+    Same equation, same eight points — but now the axes run to 1000. You can still predict any value from the line. But to <em>pin the slope</em>, your points have to <em>span the range</em>. Drag the coverage slider: watch the shaded uncertainty band fan out when the points bunch together, and collapse when they spread across the range.
+  </div>
+
+  <div class="main-row">
+
+    <div class="plot-col">
+      <div class="plot-wrap">
+        <svg class="plot" viewBox="0 0 560 420" id="plot">
+          <defs>
+            <clipPath id="plotClip"><rect x="56" y="24" width="488" height="336"/></clipPath>
+          </defs>
+          <g id="grid"></g>
+          <g id="axes"></g>
+          <g clip-path="url(#plotClip)">
+            <path id="band" class="band" d=""/>
+            <line id="trueLine" class="true-line" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+            <line id="fitLine" class="fit-line" x1="0" y1="0" x2="0" y2="0"/>
+          </g>
+          <g id="points"></g>
+          <text class="axis-title" x="300" y="412" text-anchor="middle">x</text>
+          <text class="axis-title" x="15" y="210" text-anchor="middle" transform="rotate(-90 15 210)">y</text>
+        </svg>
+      </div>
+      <div class="aside">Same <em>eight</em> points throughout — only their spread along <em>x</em> changes, never their count.</div>
+    </div>
+
+    <div class="control-col">
+
+      <div class="slider-box">
+        <div class="slider-row">
+          <label>coverage</label>
+          <input type="range" id="spreadSlider" min="20" max="480" step="2" value="40">
+          <div class="slider-val" id="spreadVal">clustered</div>
+        </div>
+      </div>
+
+      <div class="readout-box">
+        <div class="readout-row">
+          <span class="k">fitted slope <em>m</em></span>
+          <span class="v" id="slopeVal">—</span>
+        </div>
+        <div class="readout-row">
+          <span class="k">predict <em>y</em> at <em>x</em> = 1000</span>
+          <span class="v" id="predVal">—</span>
+        </div>
+      </div>
+
+      <div class="status bad" id="status">slope poorly constrained</div>
+
+      <div class="check-row">
+        <input type="checkbox" id="trueToggle">
+        <label for="trueToggle">show the true line</label>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="bridge">
+    You can predict any value from the line — but to <strong>pin the slope</strong> you need points that <strong>span the range</strong>, not many points in one spot. <strong>Coverage, not count.</strong> This is the SFM scaling law in miniature: recover training pairs that span the recognition space, and the whole line — every prediction — follows. CALM's ~4,000 pairs work because they are <em>diverse</em>, not because they are <em>many</em>.
+  </div>
+
+</div>
+
+<script>
+  const TRUE_M = 0.8, TRUE_B = 50;
+  // eight fixed point templates: offsets along x (·spread) and fixed y-noise
+  const T = [-1, -0.68, -0.42, -0.14, 0.14, 0.42, 0.68, 1];
+  const NOISE = [28, -20, 14, -30, 22, -12, 30, -32];
+  const CENTER = 500;
+  const K = 2;           // band half-width multiplier (visual ~95% mean band)
+
+  let spread = 40;
+  let showTrue = false;
+
+  // plot geometry
+  const PX0 = 56, PX1 = 544, PY0 = 24, PY1 = 360;
+  const AX_MAX = 1000;
+  const mapX = x => PX0 + (x / AX_MAX) * (PX1 - PX0);
+  const mapY = y => PY1 - (y / AX_MAX) * (PY1 - PY0);
+
+  const gridG = document.getElementById('grid');
+  const axesG = document.getElementById('axes');
+  const pointsG = document.getElementById('points');
+  const bandEl = document.getElementById('band');
+  const fitEl  = document.getElementById('fitLine');
+  const trueEl = document.getElementById('trueLine');
+  const spreadSlider = document.getElementById('spreadSlider');
+  const spreadVal = document.getElementById('spreadVal');
+
+  function drawStatic() {
+    let g = '';
+    for (let v = 200; v <= AX_MAX; v += 200) {
+      const x = mapX(v), y = mapY(v);
+      g += `<line class="grid-line" x1="${x}" y1="${PY0}" x2="${x}" y2="${PY1}"/>`;
+      g += `<line class="grid-line" x1="${PX0}" y1="${y}" x2="${PX1}" y2="${y}"/>`;
+    }
+    gridG.innerHTML = g;
+
+    let a = '';
+    a += `<line class="axis-line" x1="${PX0}" y1="${PY1}" x2="${PX1}" y2="${PY1}"/>`;
+    a += `<line class="axis-line" x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}"/>`;
+    for (let v = 200; v <= AX_MAX; v += 200) {
+      const x = mapX(v), y = mapY(v);
+      a += `<text class="axis-tick" x="${x}" y="${PY1 + 16}" text-anchor="middle">${v}</text>`;
+      a += `<text class="axis-tick" x="${PX0 - 8}" y="${y + 4}" text-anchor="end">${v}</text>`;
+    }
+    axesG.innerHTML = a;
+  }
+
+  function makePoints() {
+    return T.map((t, i) => {
+      const x = CENTER + spread * t;
+      const y = TRUE_M * x + TRUE_B + NOISE[i];
+      return { x, y };
+    });
+  }
+
+  function fit(pts) {
+    const n = pts.length;
+    const xbar = pts.reduce((s, p) => s + p.x, 0) / n;
+    const ybar = pts.reduce((s, p) => s + p.y, 0) / n;
+    let Sxx = 0, Sxy = 0;
+    pts.forEach(p => { Sxx += (p.x - xbar) ** 2; Sxy += (p.x - xbar) * (p.y - ybar); });
+    const m = Sxy / Sxx;
+    const b = ybar - m * xbar;
+    let sse = 0;
+    pts.forEach(p => { const e = p.y - (m * p.x + b); sse += e * e; });
+    const s2 = sse / (n - 2);
+    const seM = Math.sqrt(s2 / Sxx);
+    const seMean = xs => Math.sqrt(s2 * (1 / n + (xs - xbar) ** 2 / Sxx));
+    return { m, b, seM, seMean };
+  }
+
+  function render() {
+    const pts = makePoints();
+    const F = fit(pts);
+
+    // confidence band across the full range
+    const STEPS = 80;
+    let up = '', lo = '';
+    for (let i = 0; i <= STEPS; i++) {
+      const x = (i / STEPS) * AX_MAX;
+      const yc = F.m * x + F.b;
+      const half = K * F.seMean(x);
+      const ux = mapX(x), uy = mapY(yc + half), ly = mapY(yc - half);
+      up += (i === 0 ? 'M' : 'L') + ux.toFixed(1) + ' ' + uy.toFixed(1) + ' ';
+      lo = 'L' + ux.toFixed(1) + ' ' + ly.toFixed(1) + ' ' + lo;
+    }
+    bandEl.setAttribute('d', up + lo + 'Z');
+
+    // fit line
+    fitEl.setAttribute('x1', mapX(0));      fitEl.setAttribute('y1', mapY(F.b));
+    fitEl.setAttribute('x2', mapX(AX_MAX)); fitEl.setAttribute('y2', mapY(F.m * AX_MAX + F.b));
+
+    // true line
+    if (showTrue) {
+      trueEl.style.display = '';
+      trueEl.setAttribute('x1', mapX(0));      trueEl.setAttribute('y1', mapY(TRUE_B));
+      trueEl.setAttribute('x2', mapX(AX_MAX)); trueEl.setAttribute('y2', mapY(TRUE_M * AX_MAX + TRUE_B));
+    } else {
+      trueEl.style.display = 'none';
+    }
+
+    // points
+    pointsG.innerHTML = pts.map(p => `<circle class="data-point" cx="${mapX(p.x)}" cy="${mapY(p.y)}" r="4.5"/>`).join('');
+
+    // readouts
+    document.getElementById('slopeVal').innerHTML =
+      `${F.m.toFixed(2)} <span class="pm">± ${F.seM.toFixed(2)}</span>`;
+    const predY = F.m * 1000 + F.b;
+    const predHalf = K * F.seMean(1000);
+    document.getElementById('predVal').innerHTML =
+      `${Math.round(predY)} <span class="pm">± ${Math.round(predHalf)}</span>`;
+
+    // status + slider label
+    const status = document.getElementById('status');
+    if (F.seM > 0.12) {
+      status.className = 'status bad';
+      status.textContent = 'slope poorly constrained';
+    } else {
+      status.className = 'status good';
+      status.textContent = 'slope pinned down';
+    }
+    const frac = (spread * 2) / AX_MAX; // approx fraction of range covered
+    spreadVal.textContent = frac < 0.15 ? 'clustered'
+                          : frac > 0.8  ? 'full range'
+                          : `${Math.round(frac * 100)}% of range`;
+  }
+
+  spreadSlider.addEventListener('input', e => { spread = parseFloat(e.target.value); render(); });
+  document.getElementById('trueToggle').addEventListener('change', e => { showTrue = e.target.checked; render(); });
+
+  drawStatic();
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

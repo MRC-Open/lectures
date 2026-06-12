@@ -1,0 +1,141 @@
+/* ============================================================
+   MRC Course — Whiteboard derivation styles
+   ------------------------------------------------------------
+   Shared style sheet for animated step-by-step derivation pages
+   (L*_wb*_*.html). Builds on mrc_styles.css design tokens.
+
+   To use: in <head> after mrc_styles.css link,
+     <link rel="stylesheet" href="../../mrc_whiteboard.css">
+   ============================================================ */
+
+/* leave room for the sticky control bar at the bottom */
+body { padding-bottom: 140px; }
+
+/* Claim banner — what we're about to prove */
+.claim {
+  background: white;
+  border-left: 3px solid var(--accent);
+  padding: 18px 26px;
+  margin: 0 0 32px 0;
+}
+.claim .label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 500;
+}
+.claim .eq { font-size: 22px; }
+
+/* Setup paragraph — context before the proof begins */
+.setup {
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 36px 0;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Steps — hidden by default, fade in cumulatively as the
+   lecturer clicks Next. Past steps stay visible. */
+.step {
+  display: none;
+  margin-bottom: 22px;
+  padding: 20px 26px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: white;
+}
+.step.revealed {
+  display: block;
+  animation: stepIn 0.45s ease-out;
+}
+.step.current {
+  border-color: var(--accent);
+  background: var(--accent-faint);
+}
+.step.qed { border-width: 2px; }
+.step.qed.revealed { border-color: var(--accent); }
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.step-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.step-eq { font-size: 19px; line-height: 1.4; }
+
+/* Sticky control bar at the bottom */
+.control-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-top: 1px solid var(--rule);
+  padding: 18px 32px;
+  z-index: 100;
+}
+.control-bar .stage-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+.step-caption {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+.step-counter {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.step-buttons { display: flex; gap: 8px; flex-shrink: 0; }
+.step-buttons button {
+  font-family: var(--font-sans);
+  padding: 8px 16px;
+  border: 1px solid var(--rule);
+  background: white;
+  color: var(--text);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  transition: all 0.15s;
+}
+.step-buttons button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.step-buttons button:disabled {
+  color: var(--rule);
+  border-color: var(--rule);
+  cursor: not-allowed;
+}
+.step-buttons .primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.step-buttons .primary:hover:not(:disabled) {
+  background: #4d2f87;
+  border-color: #4d2f87;
+  color: white;
+}

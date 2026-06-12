@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 Whiteboard 1 — Proof: Dot Product Equivalence</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Proof — Algebraic = Geometric</h1>
+  <div class="subtitle">MRC LECTURE 1 · WHITEBOARD 1 · STEP-BY-STEP DERIVATION</div>
+
+  <div class="claim">
+    <span class="label">Claim to prove</span>
+    <div class="eq">$$\mathbf{a} \cdot \mathbf{b} \;=\; \|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$</div>
+  </div>
+
+  <div class="setup">
+    Consider vectors $\mathbf{a}$ and $\mathbf{b}$ in $\mathbb{R}^n$ with angle $\theta$ between them. The vector from the tip of $\mathbf{b}$ to the tip of $\mathbf{a}$ is $\mathbf{a} - \mathbf{b}$. We will show that the algebraic dot product (sum of component products) and the geometric dot product (product of norms times $\cos\theta$) describe the same quantity.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · Apply the law of cosines</div>
+    <div class="step-eq">$$\|\mathbf{a} - \mathbf{b}\|^2 \;=\; \|\mathbf{a}\|^2 + \|\mathbf{b}\|^2 - 2\,\|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$</div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Expand the left side using the algebraic definition</div>
+    <div class="step-eq">
+      $$\|\mathbf{a} - \mathbf{b}\|^2 \;=\; (\mathbf{a} - \mathbf{b}) \cdot (\mathbf{a} - \mathbf{b})$$
+      $$=\; \mathbf{a}\cdot\mathbf{a} \;-\; 2\,(\mathbf{a}\cdot\mathbf{b}) \;+\; \mathbf{b}\cdot\mathbf{b}$$
+      $$=\; \|\mathbf{a}\|^2 \;-\; 2\,(\mathbf{a}\cdot\mathbf{b}) \;+\; \|\mathbf{b}\|^2$$
+    </div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-label">Step 3 · Set the two expressions for ‖a − b‖² equal</div>
+    <div class="step-eq">
+      $$\|\mathbf{a}\|^2 - 2\,(\mathbf{a}\cdot\mathbf{b}) + \|\mathbf{b}\|^2 \;=\; \|\mathbf{a}\|^2 + \|\mathbf{b}\|^2 - 2\,\|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$
+    </div>
+  </div>
+
+  <div class="step" data-step="4">
+    <div class="step-label">Step 4 · Cancel ‖a‖² + ‖b‖² from both sides</div>
+    <div class="step-eq">$$-2\,(\mathbf{a}\cdot\mathbf{b}) \;=\; -2\,\|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$</div>
+  </div>
+
+  <div class="step qed" data-step="5">
+    <div class="step-label">Step 5 · Divide by −2 &nbsp;&nbsp;∎</div>
+    <div class="step-eq">$$\mathbf{a}\cdot\mathbf{b} \;=\; \|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$</div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin the proof.",
+    "We invoke the <strong>law of cosines</strong> on the triangle formed by vectors a, b, and a−b. This connects the geometric quantity ‖a−b‖² to the angle θ between the vectors.",
+    "We rewrite the same quantity ‖a−b‖² using the <strong>algebraic definition</strong>. Distributivity (a property of the dot product) lets us expand (a−b)·(a−b) into three terms.",
+    "Both expressions are valid descriptions of the same thing — ‖a−b‖² — so they must be <strong>equal</strong>.",
+    "‖a‖² + ‖b‖² appears on both sides — <strong>cancel it</strong>.",
+    "Divide by −2. The algebraic and geometric definitions are now <strong>identical</strong>. The algebraic form is what you compute. The geometric form is what it means. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

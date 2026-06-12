@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Knowing the Equation Is a Superpower</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Intro demo: parameter estimation in a known equation (taxi fare). */
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 32px;
+    align-items: start;
+    margin: 10px 0 22px 0;
+  }
+  .plot-col, .control-col { min-width: 0; }
+  .control-col { display: flex; flex-direction: column; gap: 16px; }
+
+  .plot-wrap { background: white; }
+  svg.plot { display: block; width: 100%; height: auto; }
+  .grid-line  { stroke: var(--rail); stroke-width: 1; }
+  .axis-line  { stroke: var(--rule); stroke-width: 1.4; }
+  .axis-tick  { font-family: var(--font-serif); font-size: 12px; fill: var(--text-muted); }
+  .axis-title { font-family: var(--font-serif); font-style: italic; font-size: 18px; fill: var(--text-muted); }
+  .aside {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .aside em { font-style: normal; color: var(--text); }
+  .data-point { fill: var(--text); }
+  .fit-line   { stroke: var(--accent); stroke-width: 2.6; fill: none; }
+  .pred-guide { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 3 3; fill: none; opacity: 0.7; }
+  .pred-point { fill: white; stroke: var(--accent); stroke-width: 2.6; }
+
+  /* sliders */
+  .slider-box {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 18px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-row label {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 17px;
+    min-width: 96px;
+    color: var(--text);
+  }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-val {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 58px;
+    text-align: right;
+  }
+  .error-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rail);
+    font-size: 15px;
+  }
+  .error-row .k { color: var(--text-muted); font-style: italic; }
+  .error-row .v {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .preset-row { justify-content: flex-start; margin: 0; }
+
+  /* predict box */
+  .predict-box {
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 18px;
+    background: var(--rail);
+  }
+  .predict-box .pb-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .predict-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .predict-row:last-child { margin-bottom: 0; }
+  .predict-row .pr-key { color: var(--text-muted); font-style: italic; min-width: 78px; }
+  .predict-row input[type=number] {
+    width: 70px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    padding: 4px 8px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    text-align: right;
+  }
+  .predict-row .arrow { color: var(--text-muted); }
+  .predict-row .pr-out {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 64px;
+  }
+
+  .bridge {
+    border-top: 1px solid var(--rule);
+    margin-top: 26px;
+    padding-top: 18px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    text-align: center;
+  }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+  .bridge .small { display:block; margin-top: 8px; font-size: 13px; color: var(--text-muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Knowing the Equation Is a Superpower</h1>
+  <div class="subtitle">MRC LECTURE 1 · INTRO · PARAMETER ESTIMATION IN A KNOWN EQUATION</div>
+
+  <div class="formula">$$y \;=\; m\,x \;+\; b$$</div>
+
+  <div class="setup">
+    Here are ten data points. You don't know the slope <em>m</em> or the intercept <em>b</em> — but you <em>do</em> know the form: <em>y</em> is a straight line in <em>x</em>. With a known form and only ten points, you can recover both numbers, then predict <em>y</em> for any <em>x</em> (or <em>x</em> for any <em>y</em>) — forever.
+  </div>
+
+  <div class="main-row">
+
+    <div class="plot-col">
+      <div class="plot-wrap">
+        <svg class="plot" viewBox="0 0 560 420" id="plot">
+          <g id="grid"></g>
+          <g id="axes"></g>
+          <line id="fitLine" class="fit-line" x1="0" y1="0" x2="0" y2="0"/>
+          <g id="points"></g>
+          <line id="predGuideV" class="pred-guide" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+          <line id="predGuideH" class="pred-guide" x1="0" y1="0" x2="0" y2="0" style="display:none"/>
+          <circle id="predPoint" class="pred-point" cx="0" cy="0" r="6" style="display:none"/>
+          <text class="axis-title" x="300" y="412" text-anchor="middle">x</text>
+          <text class="axis-title" x="15" y="210" text-anchor="middle" transform="rotate(-90 15 210)">y</text>
+        </svg>
+      </div>
+      <div class="aside">Concrete instance: <em>x</em> = trip distance (km), <em>y</em> = taxi fare ($). The lesson is general — it holds for any known equation.</div>
+    </div>
+
+    <div class="control-col">
+
+      <div class="slider-box">
+        <div class="slider-row">
+          <label>slope <em>m</em></label>
+          <input type="range" id="mSlider" min="0" max="5" step="0.05" value="1.20">
+          <div class="slider-val" id="mVal">1.20</div>
+        </div>
+        <div class="slider-row">
+          <label>intercept <em>b</em></label>
+          <input type="range" id="bSlider" min="0" max="15" step="0.1" value="10.0">
+          <div class="slider-val" id="bVal">10.0</div>
+        </div>
+        <div class="error-row">
+          <span class="k">total fit error</span>
+          <span class="v" id="errVal">—</span>
+        </div>
+      </div>
+
+      <div class="preset-row preset-row-flex">
+        <button class="preset-btn" id="solveBtn">Solve (least squares)</button>
+        <button class="preset-btn" id="resetBtn">Reset</button>
+      </div>
+
+      <div class="predict-box">
+        <div class="pb-label">Predict — one number in, one out</div>
+        <div class="predict-row">
+          <span class="pr-key">given <em>x</em></span>
+          <input type="number" id="predDist" min="0" max="20" step="0.5" value="13">
+          <span class="arrow">→ <em>y</em></span>
+          <span class="pr-out" id="predFareOut">—</span>
+        </div>
+        <div class="predict-row">
+          <span class="pr-key">given <em>y</em></span>
+          <input type="number" id="predFare" min="0" max="60" step="1" value="40">
+          <span class="arrow">→ <em>x</em></span>
+          <span class="pr-out" id="predDistOut">—</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="bridge">
+    <strong>Two parameters. Ten points. Predict anything, forever.</strong> Standard deep learning has to learn the whole shape from millions of examples — <em>function approximation</em>. An SFM already knows the shape (Boltzmann = softmax); it only estimates parameters — <em>parameter estimation</em>. That is why CALM needed ~4,000 pairs, not CLIP's ~400,000,000.
+    <span class="small">Every standard curve you run — ELISA, Bradford, qPCR — is this exact move: known linear form, a few standards, then read off unknowns.</span>
+  </div>
+
+</div>
+
+<script>
+  // Ten taxi rides. True law ~ fare = 2.5*d + 5, with realistic noise.
+  const data = [
+    { d: 1.5,  fare: 8.20  },
+    { d: 2.2,  fare: 11.10 },
+    { d: 3.0,  fare: 12.05 },
+    { d: 4.1,  fare: 16.00 },
+    { d: 5.0,  fare: 17.10 },
+    { d: 6.3,  fare: 21.40 },
+    { d: 7.0,  fare: 21.90 },
+    { d: 8.4,  fare: 27.10 },
+    { d: 9.1,  fare: 26.90 },
+    { d: 10.5, fare: 32.40 }
+  ];
+
+  // plot geometry
+  const PX0 = 56, PX1 = 544, PY0 = 24, PY1 = 360;
+  const D_MAX = 14, F_MAX = 40;
+  const mapX = d => PX0 + (d / D_MAX) * (PX1 - PX0);
+  const mapY = f => PY1 - (f / F_MAX) * (PY1 - PY0);
+
+  const M_INIT = 1.20, B_INIT = 10.0;
+  let m = M_INIT, b = B_INIT;
+  let lastPredict = null; // {x, y}
+
+  const gridG = document.getElementById('grid');
+  const axesG = document.getElementById('axes');
+  const fitLine = document.getElementById('fitLine');
+  const pointsG = document.getElementById('points');
+  const mSlider = document.getElementById('mSlider');
+  const bSlider = document.getElementById('bSlider');
+  const mVal = document.getElementById('mVal');
+  const bVal = document.getElementById('bVal');
+  const errVal = document.getElementById('errVal');
+
+  function drawStatic() {
+    // gridlines + ticks
+    let g = '';
+    for (let d = 2; d <= D_MAX; d += 2) {
+      const x = mapX(d);
+      g += `<line class="grid-line" x1="${x}" y1="${PY0}" x2="${x}" y2="${PY1}"/>`;
+    }
+    for (let f = 10; f <= F_MAX; f += 10) {
+      const y = mapY(f);
+      g += `<line class="grid-line" x1="${PX0}" y1="${y}" x2="${PX1}" y2="${y}"/>`;
+    }
+    gridG.innerHTML = g;
+
+    let a = '';
+    a += `<line class="axis-line" x1="${PX0}" y1="${PY1}" x2="${PX1}" y2="${PY1}"/>`;
+    a += `<line class="axis-line" x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}"/>`;
+    for (let d = 2; d <= D_MAX; d += 2) {
+      const x = mapX(d);
+      a += `<text class="axis-tick" x="${x}" y="${PY1 + 18}" text-anchor="middle">${d}</text>`;
+    }
+    for (let f = 10; f <= F_MAX; f += 10) {
+      const y = mapY(f);
+      a += `<text class="axis-tick" x="${PX0 - 10}" y="${y + 4}" text-anchor="end">${f}</text>`;
+    }
+    axesG.innerHTML = a;
+
+    // data points
+    pointsG.innerHTML = data.map(pt =>
+      `<circle class="data-point" cx="${mapX(pt.d)}" cy="${mapY(pt.fare)}" r="4.5"/>`
+    ).join('');
+  }
+
+  function totalError() {
+    return data.reduce((s, pt) => s + Math.abs(pt.fare - (m * pt.d + b)), 0);
+  }
+
+  function render() {
+    // fit line across the plot
+    const x0 = 0, x1 = D_MAX;
+    let y0 = m * x0 + b, y1 = m * x1 + b;
+    fitLine.setAttribute('x1', mapX(x0)); fitLine.setAttribute('y1', mapY(Math.max(0, Math.min(F_MAX, y0))));
+    fitLine.setAttribute('x2', mapX(x1)); fitLine.setAttribute('y2', mapY(Math.max(0, Math.min(F_MAX, y1))));
+
+    mVal.textContent = m.toFixed(2);
+    bVal.textContent = b.toFixed(1);
+    errVal.textContent = totalError().toFixed(2);
+
+    // predicted point
+    const gv = document.getElementById('predGuideV');
+    const gh = document.getElementById('predGuideH');
+    const pp = document.getElementById('predPoint');
+    if (lastPredict && lastPredict.x >= 0 && lastPredict.x <= D_MAX && lastPredict.y >= 0 && lastPredict.y <= F_MAX) {
+      const px = mapX(lastPredict.x), py = mapY(lastPredict.y);
+      gv.setAttribute('x1', px); gv.setAttribute('y1', PY1); gv.setAttribute('x2', px); gv.setAttribute('y2', py);
+      gh.setAttribute('x1', PX0); gh.setAttribute('y1', py); gh.setAttribute('x2', px); gh.setAttribute('y2', py);
+      pp.setAttribute('cx', px); pp.setAttribute('cy', py);
+      gv.style.display = gh.style.display = pp.style.display = '';
+    } else {
+      gv.style.display = gh.style.display = pp.style.display = 'none';
+    }
+
+    updatePredictOutputs();
+  }
+
+  function updatePredictOutputs() {
+    const d = parseFloat(document.getElementById('predDist').value);
+    const f = parseFloat(document.getElementById('predFare').value);
+    document.getElementById('predFareOut').textContent =
+      isNaN(d) ? '—' : (m * d + b).toFixed(2);
+    document.getElementById('predDistOut').textContent =
+      (isNaN(f) || m === 0) ? '—' : ((f - b) / m).toFixed(2);
+  }
+
+  mSlider.addEventListener('input', e => { m = parseFloat(e.target.value); render(); });
+  bSlider.addEventListener('input', e => { b = parseFloat(e.target.value); render(); });
+
+  // least squares solve, animated
+  function leastSquares() {
+    const N = data.length;
+    let sx = 0, sy = 0, sxy = 0, sxx = 0;
+    data.forEach(pt => { sx += pt.d; sy += pt.fare; sxy += pt.d * pt.fare; sxx += pt.d * pt.d; });
+    const mm = (N * sxy - sx * sy) / (N * sxx - sx * sx);
+    const bb = (sy - mm * sx) / N;
+    return { mm, bb };
+  }
+
+  function tween(toM, toB) {
+    const fromM = m, fromB = b;
+    const dur = 600;
+    const start = performance.now();
+    function frame(now) {
+      let t = Math.min(1, (now - start) / dur);
+      const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      m = fromM + (toM - fromM) * e;
+      b = fromB + (toB - fromB) * e;
+      mSlider.value = m; bSlider.value = b;
+      render();
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  document.getElementById('solveBtn').addEventListener('click', () => {
+    const { mm, bb } = leastSquares();
+    tween(mm, bb);
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    lastPredict = null;
+    tween(M_INIT, B_INIT);
+    setTimeout(() => { mSlider.value = M_INIT; bSlider.value = B_INIT; }, 620);
+  });
+
+  document.getElementById('predDist').addEventListener('input', e => {
+    const d = parseFloat(e.target.value);
+    if (!isNaN(d)) lastPredict = { x: d, y: m * d + b };
+    render();
+  });
+  document.getElementById('predFare').addEventListener('input', e => {
+    const f = parseFloat(e.target.value);
+    if (!isNaN(f) && m !== 0) lastPredict = { x: (f - b) / m, y: f };
+    render();
+  });
+
+  drawStatic();
+  render();
+
+  // escalate nav keys to the deck when embedded
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

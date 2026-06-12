@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC Tutorial Course — Syllabus</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="mrc_styles.css">
+<style>
+  body { padding: 56px 32px 100px; }
+  .doc { max-width: 820px; margin: 0 auto; }
+
+  /* title block */
+  .doc h1 { font-size: 36px; margin-bottom: 4px; }
+  .doc .subtitle { font-size: 15px; margin-bottom: 6px; }
+  .meta {
+    font-family: var(--font-sans); font-size: 13px; color: var(--text-muted);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 12px 0; margin: 22px 0 40px 0; display: flex; gap: 26px; flex-wrap: wrap;
+  }
+  .meta b { color: var(--text); font-weight: 600; }
+
+  /* section headings */
+  h2.sec {
+    font-family: var(--font-sans); font-size: 22px; font-weight: 500; color: var(--text);
+    letter-spacing: -0.2px; margin: 44px 0 14px 0; padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+  h2.sec .num { color: var(--accent); font-weight: 600; margin-right: 10px; }
+
+  p.lead { font-size: 19px; line-height: 1.7; }
+  .doc p { line-height: 1.7; }
+  .doc strong { font-weight: 700; color: var(--text); }
+  .doc em { font-style: italic; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
+  a:hover { border-bottom-color: var(--accent); }
+
+  /* four pillars */
+  .pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; }
+  .pillar { border: 1px solid var(--rule); border-radius: 5px; padding: 14px 18px; }
+  .pillar .yr { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .pillar .nm { font-weight: 700; margin: 2px 0; }
+  .pillar .ds { font-size: 15px; color: var(--text-muted); line-height: 1.5; }
+  .conv-eq { text-align: center; font-size: 22px; margin: 8px 0 6px 0; }
+  .conv-cap { text-align: center; font-family: var(--font-sans); font-size: 13px; color: var(--text-muted); font-style: italic; margin-bottom: 8px; }
+
+  /* capabilities */
+  .caps { counter-reset: cap; margin: 14px 0; }
+  .cap { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--rail); }
+  .cap:last-child { border-bottom: none; }
+  .cap .n { font-family: var(--font-sans); font-size: 28px; font-weight: 300; color: var(--accent); line-height: 1; }
+  .cap .t { font-size: 16px; line-height: 1.6; }
+  .cap .t b { color: var(--text); }
+
+  /* sessions */
+  .session { border: 1px solid var(--rule); border-radius: 6px; padding: 22px 26px; margin: 16px 0; }
+  .session-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .session-head .sn { font-family: var(--font-sans); font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .session-head .dt { font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); }
+  .session-head .tag { font-family: var(--font-sans); font-size: 11px; color: var(--accent); border: 1px solid #d9cdee; border-radius: 3px; padding: 1px 7px; font-weight: 600; }
+  .session-title { font-size: 21px; font-weight: 700; margin: 2px 0 10px 0; }
+  .session-topics { font-size: 16px; line-height: 1.7; color: var(--text); margin-bottom: 14px; }
+  .readings-label { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+  ul.readings { list-style: none; padding: 0; margin: 0; font-size: 15px; line-height: 1.55; }
+  ul.readings li { padding: 5px 0 5px 18px; position: relative; color: var(--text); }
+  ul.readings li::before { content: ""; position: absolute; left: 2px; top: 13px; width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+  ul.readings li.supp::before { background: var(--text-muted); }
+  ul.readings .supp-tag { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+  .project { border: 2px solid var(--accent); background: var(--accent-faint); }
+  .closing { font-size: 17px; line-height: 1.75; font-style: italic; color: var(--text); margin: 18px 0; }
+
+  /* infrastructure block — federation diagram + pipeline */
+  .infra-callout { border-left: 3px solid var(--accent); padding: 14px 18px; background: var(--accent-faint); margin: 20px 0; border-radius: 0 4px 4px 0; }
+  .infra-callout .il { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+  .infra-callout .ib { font-size: 16px; line-height: 1.65; }
+  pre.tree { font-family: "SF Mono", "Menlo", monospace; font-size: 13px; line-height: 1.55; background: white; border: 1px solid var(--rule); border-radius: 4px; padding: 16px 20px; overflow-x: auto; color: var(--text); margin: 14px 0; }
+  pre.tree .acc { color: var(--accent); font-weight: 600; }
+  pre.tree .mut { color: var(--text-muted); }
+  .pipeline { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .ppl { border: 1px solid var(--rule); border-radius: 5px; padding: 14px 16px; }
+  .ppl .ph { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+  .ppl .pt { font-weight: 700; margin-bottom: 4px; font-size: 15px; }
+  .ppl .pd { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+  .deliverables { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+  .delv { border: 1px solid var(--rule); border-radius: 4px; padding: 12px 16px; font-size: 15px; line-height: 1.5; }
+  .delv b { color: var(--text); }
+  .delv .lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 600; display: block; margin-bottom: 4px; }
+  @media (min-width: 1400px) { .doc { max-width: 900px; } body { font-size: 20px; } }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <h1>Molecular Recognition Computing</h1>
+  <div class="subtitle">A Tutorial Course for the Reddy Lab — Sai T. Reddy · ETH Zurich · Botnar Institute of Immune Engineering</div>
+
+  <div class="meta">
+    <span><b>Format</b> &nbsp;4 sessions · ~2 hours each · informal</span>
+    <span><b>Dates</b> &nbsp;12 Jun · 17 Jun · 19 Jun · 1 Jul 2026</span>
+    <span><b>Assessment</b> &nbsp;Final project — build your own SFM</span>
+  </div>
+
+  <p class="lead">
+    This course proves a single idea and follows it to its consequences: the <strong>softmax attention mechanism</strong> in modern AI is the same equation as the <strong>Boltzmann distribution</strong> that governs molecular binding. From that identity — plus five physical conditions any recognition system at thermal equilibrium satisfies — a complete neural architecture is prescribed: a <strong>Specificity Foundation Model (SFM)</strong>. The goal is for each of you to learn <em>enough</em> to build one on your own data.
+  </p>
+
+  <h2 class="sec"><span class="num">1</span>Why This Course Exists</h2>
+  <p>The course rests on four concepts that are <strong>settled science</strong> — textbook material in their fields, not new claims:</p>
+
+  <div class="pillars">
+    <div class="pillar"><div class="yr">1877 · Physics</div><div class="nm">Boltzmann distribution</div><div class="ds">The probability of an energy state at thermal equilibrium ∝ $\exp(-E/k_BT)$.</div></div>
+    <div class="pillar"><div class="yr">1948–57 · Information theory</div><div class="nm">Maximum entropy</div><div class="ds">Shannon &amp; Jaynes: the most-rational distribution under partial information is the exponential family.</div></div>
+    <div class="pillar"><div class="yr">1959 · Choice theory</div><div class="nm">Luce's choice axiom</div><div class="ds">Independence of irrelevant alternatives forces the softmax form — a uniqueness theorem.</div></div>
+    <div class="pillar"><div class="yr">2017 · Machine learning</div><div class="nm">Softmax attention</div><div class="ds">Vaswani et al.: the operational core of every transformer and language model.</div></div>
+  </div>
+
+  <div class="conv-eq">$$P(j) \;=\; \frac{\exp(s_j)}{\sum_k \exp(s_k)}$$</div>
+  <div class="conv-cap">The same function, derived independently in four fields. We call it the convergence equation.</div>
+
+  <p>The one genuinely new contribution — the only thing here that is not already textbook material — is <strong>the bridge</strong>: the convergence equation, combined with five physical conditions, prescribes a complete neural architecture for predicting binding. The proof is in <a href="https://www.biorxiv.org/content/10.64898/2026.02.03.703525v1"><em>Computational Convergence of Adaptive Immunity and Artificial Intelligence</em></a> (Reddy, 2026); the architectural derivation in <a href="https://www.biorxiv.org/content/10.64898/2026.04.03.716328v1"><em>Methods for Molecular Recognition Computing</em></a> (Reddy, 2026); the first SFM — CALM, for antibody–antigen specificity — in <a href="https://www.biorxiv.org/content/10.64898/2026.02.25.707916v1">Lee et al. (2026)</a>.</p>
+
+  <h2 class="sec"><span class="num">2</span>An Identity, Not an Analogy</h2>
+  <p>Synthetic biology is full of useful analogies — genetic circuits are <em>like</em> electronic circuits; neural networks are <em>inspired by</em> neurons. What is claimed here is different. The convergence equation is not analogous to the Boltzmann distribution; under the appropriate identification of variables, it <strong>is</strong> the Boltzmann distribution. To our knowledge there is no other case in the history of computer science where a computational mechanism has been shown to be a literal mathematical identity with a physical one.</p>
+
+  <h2 class="sec"><span class="num">3</span>Why No Existing Training Prepares You</h2>
+  <p>This is structural, not a gap in anyone's background. ML courses teach attention but not its identity with Boltzmann; biophysics courses teach Boltzmann but not its identity with attention; information-theory courses teach maximum entropy but not its consequences for neural architectures. No curriculum stitches these together — so the implications of <strong>Level 3 alignment</strong> (where the architecture <em>is</em> the governing equation, not an approximation of it) have to be taught explicitly. The math used here is at the level of <strong>college algebra and basic calculus</strong> — dot products, exponentials, derivatives. Anyone in the lab can take this course; wet-lab, computational, and hybrid researchers all start from the same place. Detailed written derivation guides are provided for every key result, and the most important ones we work through together in class.</p>
+
+  <h2 class="sec"><span class="num">4</span>What You Will Learn</h2>
+  <div class="caps">
+    <div class="cap"><div class="n">1</div><div class="t"><b>The mathematical foundations of modern AI.</b> Linear algebra at the level needed to read transformer papers; the transformer architecture; contrastive learning and the InfoNCE loss. Enough to read the relevant papers and understand them.</div></div>
+    <div class="cap"><div class="n">2</div><div class="t"><b>The physics that governs molecular binding.</b> The Boltzmann distribution and binding probability; the dissociation constant and free energy ($\Delta G = RT\ln K_d$); why competitive binding is softmax; given vs. emergent bilinearity.</div></div>
+    <div class="cap"><div class="n">3</div><div class="t"><b>A new paradigm — physics-derived AI architectures.</b> Luce's proof; the SFM architecture derived from physics; <strong>parameter estimation in a known equation</strong> vs. function approximation — and the measurably different training behaviour it predicts (exponential data scaling, fast convergence, OOD robustness).</div></div>
+    <div class="cap"><div class="n">4</div><div class="t"><b>The ability to build, validate, and implement your own SFM.</b> The final project: build an SFM on your own molecular-recognition data with Claude Code and the CALM codebase. You make the domain-expert decisions; the architecture is prescribed.</div></div>
+  </div>
+
+  <h2 class="sec"><span class="num">5</span>Course Structure — Four Sessions</h2>
+  <p>The six lectures of the full ETH semester course are condensed into four sittings. Each session draws its <strong>slides and written derivation guides directly from the corresponding ETH semester lectures</strong> (L1–L6), and is run as interactive slides plus live whiteboard derivations. Sessions are flexible — overstuffed is fine; we add follow-ups as needed.</p>
+
+  <div class="session">
+    <div class="session-head"><span class="sn">Session 1</span><span class="dt">12 June</span><span class="tag">Lecture 1</span></div>
+    <div class="session-title">Linear Algebra for Machine Learning and Molecular Recognition</div>
+    <div class="session-topics">A molecule as a vector — a list of its properties. The dot product in two equivalent forms (algebraic and geometric) as a compatibility score. Matrix multiplication as parallel dot products: $S = QK^\top$. Cosine similarity and L2 normalization. Softmax with temperature.</div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Mikolov T, et al. Efficient estimation of word representations in vector space. <em>ICLR Workshop</em> (2013). <a href="https://arxiv.org/abs/1301.3781">arXiv:1301.3781</a></li>
+      <li>Bengio Y, Courville A, Vincent P. Representation learning: a review and new perspectives. <em>IEEE TPAMI</em> (2013). <a href="https://arxiv.org/abs/1206.5538">arXiv:1206.5538</a></li>
+      <li class="supp">Strang G. <em>Introduction to Linear Algebra</em>, 6th ed. (2023), Ch. 1 &amp; 7. <span class="supp-tag">supplementary · textbook</span></li>
+    </ul>
+  </div>
+
+  <div class="session">
+    <div class="session-head"><span class="sn">Session 2</span><span class="dt">17 June</span><span class="tag">Lectures 2 + 3</span></div>
+    <div class="session-title">Transformers &amp; Contrastive Learning</div>
+    <div class="session-topics">The neuron, the forward pass, and the Universal Approximation Theorem. From RNNs to the transformer. <strong>Scaled dot-product attention</strong> — the full derivation. Why $\sqrt{d_k}$ (the variance argument). Multi-head attention ↔ CDR loops. Language models (BERT, GPT) and protein language models (ESM-2, AntiBERTy). Contrastive learning: CLIP → CALM. The <strong>InfoNCE loss</strong> from the Boltzmann selection probability; the symmetric loss; why other losses fail.</div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Vaswani A, et al. Attention is all you need. <em>NeurIPS</em> (2017). <a href="https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a></li>
+      <li>Radford A, et al. Learning transferable visual models from natural language supervision (CLIP). <em>ICML</em> (2021). <a href="https://arxiv.org/abs/2103.00020">arXiv:2103.00020</a></li>
+      <li>Rives A, et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences (ESM). <em>PNAS</em> (2021). <a href="https://www.pnas.org/doi/10.1073/pnas.2016239118">10.1073/pnas.2016239118</a></li>
+      <li>Lin Z, et al. Evolutionary-scale prediction of atomic-level protein structure (ESM-2). <em>Science</em> (2023). <a href="https://www.science.org/doi/10.1126/science.ade2574">10.1126/science.ade2574</a></li>
+      <li>LeCun Y, Bengio Y, Hinton G. Deep learning. <em>Nature</em> (2015). <a href="https://www.nature.com/articles/nature14539">nature14539</a></li>
+      <li class="supp">Ruffolo J, et al. AntiBERTy — antibody language model (2022). <a href="https://arxiv.org/abs/2112.07782">arXiv:2112.07782</a> <span class="supp-tag">supplementary</span></li>
+      <li class="supp">Bahdanau D, Cho K, Bengio Y. Neural machine translation by jointly learning to align and translate. <em>ICLR</em> (2015). <a href="https://arxiv.org/abs/1409.0473">arXiv:1409.0473</a> <span class="supp-tag">supplementary</span></li>
+      <li class="supp">van den Oord A, Li Y, Vinyals O. Representation learning with contrastive predictive coding (2018). <a href="https://arxiv.org/abs/1807.03748">arXiv:1807.03748</a> <span class="supp-tag">supplementary</span></li>
+    </ul>
+  </div>
+
+  <div class="session">
+    <div class="session-head"><span class="sn">Session 3</span><span class="dt">19 June</span><span class="tag">Lectures 4 + 5</span></div>
+    <div class="session-title">Thermodynamics &amp; Bilinearity</div>
+    <div class="session-topics">Free energy $\Delta G = \Delta H - T\Delta S$, the second law, the Boltzmann factor. The Boltzmann distribution from maximum entropy (full derivation). From Boltzmann to $K_d$: $\Delta G = RT\ln K_d$. Competitive binding as softmax — the identity moment. Measurement: SPR, ITC, BLI. <strong>Given vs. emergent bilinearity</strong>: the SantaLucia nearest-neighbor model; position weight matrices (PWM = the convergence equation); the encoding problem for antibody–antigen.</div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Jaynes ET. Information theory and statistical mechanics. <em>Phys. Rev.</em> (1957). <a href="https://doi.org/10.1103/PhysRev.106.620">10.1103/PhysRev.106.620</a></li>
+      <li>SantaLucia J Jr. A unified view of polymer, dumbbell, and oligonucleotide DNA nearest-neighbor thermodynamics. <em>PNAS</em> (1998). <a href="https://www.pnas.org/doi/10.1073/pnas.95.4.1460">10.1073/pnas.95.4.1460</a></li>
+      <li>Stormo GD. DNA binding sites: representation and discovery. <em>Bioinformatics</em> (2000). <a href="https://doi.org/10.1093/bioinformatics/16.1.16">10.1093/bioinformatics/16.1.16</a></li>
+      <li class="supp">Dill KA, Bromberg S. <em>Molecular Driving Forces</em>, 2nd ed. (2010), Ch. 10–11. <span class="supp-tag">supplementary · textbook</span></li>
+      <li class="supp">Bartel DP. MicroRNAs: target recognition and regulatory functions. <em>Cell</em> (2009). <a href="https://doi.org/10.1016/j.cell.2009.01.002">10.1016/j.cell.2009.01.002</a> <span class="supp-tag">supplementary</span></li>
+      <li class="supp">Nelson DL, Cox MM. <em>Lehninger Principles of Biochemistry</em>, 8th ed. (2021), Ch. 5. <span class="supp-tag">supplementary · textbook</span></li>
+    </ul>
+  </div>
+
+  <div class="session">
+    <div class="session-head"><span class="sn">Session 4</span><span class="dt">1 July</span><span class="tag">Lecture 6</span></div>
+    <div class="session-title">The Convergence Equation, the SFM Architecture &amp; the Ten Domains</div>
+    <div class="session-topics">Luce's choice axiom and the five axioms of competitive selection. The elimination proof — why sigmoid, ReLU, and polynomials all fail, and only the exponential survives. The identity written twice (Boltzmann = attention). Deriving the SFM architecture from five physical conditions: dual encoders, dot-product cross-attention, InfoNCE, symmetric loss, learned temperature. The Level 1/2/3 classification and the ten SFM domains.</div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Reddy ST. Computational convergence of adaptive immunity and artificial intelligence. <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.02.03.703525v1">biorxiv.org</a></li>
+      <li>Reddy ST. Methods for molecular recognition computing. <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.04.03.716328v1">biorxiv.org</a></li>
+      <li class="supp">Luce RD. <em>Individual Choice Behavior: A Theoretical Analysis.</em> Wiley (1959), Ch. 1–3. <span class="supp-tag">supplementary · book</span></li>
+      <li class="supp">Ramsauer H, et al. Hopfield networks is all you need. <em>ICLR</em> (2021). <a href="https://arxiv.org/abs/2008.02217">arXiv:2008.02217</a> <span class="supp-tag">supplementary</span></li>
+    </ul>
+  </div>
+
+  <div class="session project">
+    <div class="session-head"><span class="sn">Final Project</span><span class="dt">after Session 4</span></div>
+    <div class="session-title">Build, Validate &amp; Publish Your SFM</div>
+    <div class="session-topics">Each of you builds an SFM on your own molecular-recognition data — antibody–antigen, TCR–pMHC, peptide–MHC, cytokine–receptor, transcription factor–DNA, drug–target, microRNA–mRNA, CRISPR off-target, enzyme–substrate, whatever fits your project — using <strong>Claude Code</strong> with the <strong><code>mrc-sfm-template</code></strong> as your starting scaffold. You decide the domain-expert questions: encoder selection, data curation, masking, train/test split and leakage prevention, hard-negative strategy, evaluation. The architecture itself does not change — it is prescribed by the convergence equation. The finished project is the <strong>direct equivalent</strong> of a published SFM like dtSFM or GenLoop: a permanent, citable research artifact, with a Zenodo DOI, archived in the <strong>MRC-Open</strong> community for future cohorts to build on. Realistic outcomes include a co-authored preprint, an independent publication, or — for novel SFM architectures or downstream applications — an invention disclosure.</div>
+    <div class="readings-label">Reading for the build</div>
+    <ul class="readings">
+      <li>Reddy ST. Methods for molecular recognition computing. <em>bioRxiv</em> (2026) — the full framework. <a href="https://www.biorxiv.org/content/10.64898/2026.04.03.716328v1">biorxiv.org</a></li>
+      <li>Reddy ST. Vibe Coding Specificity Foundation Models. <em>bioRxiv</em> (2026) — six SFMs built by a domain expert with no programming, via AI coding agents; the closest blueprint for your project. <a href="https://www.biorxiv.org/content/10.64898/2026.06.04.730134v1">biorxiv.org</a></li>
+      <li>Lee H, et al. Contrastive learning for antibody–antigen sequence-to-specificity prediction (CALM). <em>bioRxiv</em> (2026) — the reference SFM implementation. <a href="https://www.biorxiv.org/content/10.64898/2026.02.25.707916v1">biorxiv.org</a></li>
+      <li class="supp">Reddy ST. A Drug–Target Specificity Foundation Model for off-target prediction, repurposing, and generative design (dtSFM). <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">biorxiv.org</a> <span class="supp-tag">worked example — encoder + decoder</span></li>
+      <li class="supp">Reddy ST. Generative Drug Design in a Loop with dtSFM (GenLoop). <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">biorxiv.org</a> <span class="supp-tag">worked example — generative loop + AF3 verifier</span></li>
+      <li>The <code>mrc-sfm-template</code> repository — <code>README.md</code> + <code>CLAUDE.md</code> + audit protocol.</li>
+    </ul>
+  </div>
+
+  <h2 class="sec"><span class="num">6</span>Course Infrastructure — MRC-Open</h2>
+  <p class="lead">Your final project is built on dedicated open-source infrastructure designed so the work outlives the course. The infrastructure does three things at once: it gives you a clean, paper-grade starting point; it archives every finished SFM as a permanent, citable artifact; and it accumulates across cohorts so the field grows from year to year.</p>
+
+  <div class="infra-callout">
+    <div class="il">The big idea</div>
+    <div class="ib">A community space for Specificity Foundation Models. <strong>MRC-Open</strong> is the grand open-source organization for all MRC programs — built so today's tutorial is the first of many. Your work is hosted in the program node <strong>MRC-ETHZ-BIIE</strong>, a sibling to future programs at other institutions, all federated under MRC-Open.</div>
+  </div>
+
+  <pre class="tree"><span class="acc">MRC-Open</span>                            <span class="mut">← the grand open-source org · shared template, registry, standards</span>
+ └─ federates ─┐
+<span class="acc">MRC-ETHZ-BIIE</span>                       <span class="mut">← this program — your cohort's SFMs live here (GitHub + Hugging Face)</span>
+ │   └─ <span class="acc">tcrSFM-jdoe-2026t1</span>          <span class="mut">← example: your SFM, your name, your cohort</span>
+ │        ├─ CITATION.cff             <span class="mut">renders a "Cite this repository" button</span>
+ │        ├─ → Zenodo DOI             <span class="mut">permanent, citable, version-pinned</span>
+ │        └─ → Hugging Face weights   <span class="mut">model + datasets at MRC-ETHZ-BIIE on HF</span>
+ └─ <span class="mut">future programs — same rails, all indexed in MRC-Open</span></pre>
+
+  <h3 style="font-family: var(--font-sans); font-size: 17px; font-weight: 600; margin-top: 28px;">From template to publication — the pipeline</h3>
+  <div class="pipeline">
+    <div class="ppl">
+      <div class="ph">1 · Start</div>
+      <div class="pt">Use the template</div>
+      <div class="pd">Click <em>"Use this template"</em> on <code>MRC-Open/mrc-sfm-template</code>. You get your own independent repo — fresh-minimal scaffold with the architecture, the evaluation, and a <code>CLAUDE.md</code> that tells the AI coding agent the architecture rules.</div>
+    </div>
+    <div class="ppl">
+      <div class="ph">2 · Build</div>
+      <div class="pt">Build with Claude Code</div>
+      <div class="pd">You direct; the agent codes. Adapt the five domain-specific things (encoders ×2, data, pooling, OOD splits). Standardized pool-512 retrieval evaluation + MMseqs2 OOD splits at 40/60/80 % identity. Orthogonal-verifier audit (AlphaFold-3 / Boltz-2) of every numerical claim.</div>
+    </div>
+    <div class="ppl">
+      <div class="ph">3 · Publish</div>
+      <div class="pt">Archive &amp; publish</div>
+      <div class="pd">Submit to <code>MRC-ETHZ-BIIE/&lt;domain&gt;SFM-&lt;you&gt;-&lt;cohort&gt;</code>. Tag a release → <strong>Zenodo mints a DOI</strong>. Weights go to Hugging Face. Your entry joins the MRC-Open registry. Eligible projects proceed to preprint, paper, and/or invention disclosure.</div>
+    </div>
+  </div>
+
+  <h3 style="font-family: var(--font-sans); font-size: 17px; font-weight: 600; margin-top: 28px;">Your final project is a real publication</h3>
+  <p>Every finished SFM has the same shape and same rigor as <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">dtSFM</a> and <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">GenLoop</a> — those papers <em>are</em> what a strong final project looks like. The infrastructure makes that possibility concrete:</p>
+
+  <div class="deliverables">
+    <div class="delv"><span class="lbl">Citable artifact</span><b>A permanent DOI</b> via the GitHub → Zenodo integration. Cite your own SFM the way you cite any other paper.</div>
+    <div class="delv"><span class="lbl">Public model</span><b>Hugging Face weights</b> in <code>MRC-ETHZ-BIIE</code>. Anyone can download and use your SFM.</div>
+    <div class="delv"><span class="lbl">Preprint &amp; paper potential</span><b>Project report</b> written in methods-paper format. The strongest projects become preprints (bioRxiv) and, with further work, full publications.</div>
+    <div class="delv"><span class="lbl">Invention disclosure</span><b>Patent-eligible</b> if your SFM, generative loop, or downstream design is genuinely novel. We'll evaluate together and route via the ETH technology transfer office.</div>
+    <div class="delv"><span class="lbl">Discoverability</span><b>Standardized GitHub topics</b> + the MRC-Open registry mean your SFM is findable among many SFMs by domain, author, cohort, or headline metric.</div>
+    <div class="delv"><span class="lbl">Cumulative research</span><b>Future cohorts build on yours.</b> Your repo and DOI become reference material; next year someone may extend it with a decoder, a generative loop, or a new evaluation.</div>
+  </div>
+
+  <p>The infrastructure is built around two simple principles. <strong>Paper-grade by default</strong>: standardized evaluation, OOD splits at all thresholds, an orthogonal-verifier audit of every numerical claim, and a structured report — the same standard applied to the lab's own published SFMs. <strong>Cumulative by design</strong>: every cohort's SFMs join the same archive, so 2027's students see 2026's work as reference material and build on it. The course is not a re-run; it is a growing body of research.</p>
+
+  <h2 class="sec"><span class="num">7</span>Why SFMs Become a Method Like PCR or CRISPR</h2>
+  <p><strong>Broad applicability:</strong> the framework prescribes an SFM for any molecular recognition system at thermal equilibrium — antibodies, TCRs, MHC, transcription factors, microRNAs, CRISPR guides, enzymes, drug–target pairs. <strong>Low resource:</strong> SFMs train on tens of thousands of pairs on a single GPU node using pretrained encoders — CALM achieved its results with ~4,000 pairs where CLIP needed ~400,000,000. The bottleneck is data curation by a domain expert, not compute. <strong>Open source:</strong> CALM, the SFM template, the pipelines, and the pretrained encoders are all public. PCR and CRISPR became foundational because they were broadly applicable, low-resource, and open — and unlike them, building an SFM needs no wet-lab step, only a domain expert who understands their own data.</p>
+
+  <h2 class="sec"><span class="num">8</span>SFMs as Infrastructure</h2>
+  <p>AlphaFold solved structure prediction. ESM and the protein language models solved sequence representation. Neither solves <strong>specificity</strong> — given a molecule and a pool of candidates, which partner does it actually recognize? Specificity is the central question of immunology, drug discovery, and synthetic biology, and it is what SFMs are built to answer. The natural division of labour: structure predictors provide structure, language models provide sequence representations, and <strong>SFMs sit on top and produce the specificity prediction itself</strong>. AlphaFold and ESM are tools you use; SFMs are the framework you build in.</p>
+
+  <p class="closing">Ten years from now, every recognition problem in biology has an SFM — for antibody and TCR repertoires, kinase families, viral escape. Each lab builds and maintains the SFMs it needs, on the data it has. The model you build at the end of this course is the prototype of what will be used across academia, biotech, and pharma in the coming years.</p>
+
+</div>
+
+</body>
+</html>

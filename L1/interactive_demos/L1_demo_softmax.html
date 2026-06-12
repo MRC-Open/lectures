@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Softmax: Adjust Scores, Watch Probabilities</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Each row: candidate name | score slider | score value | bar | prob value */
+  .softmax-rows {
+    margin: 18px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .softmax-row {
+    display: grid;
+    grid-template-columns: 130px 200px 60px 1fr 70px;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rail);
+    font-size: 17px;
+  }
+  .sm-name {
+    font-style: italic;
+    color: var(--text);
+  }
+  .sm-name .sub { font-size: 14px; color: var(--text-muted); display: block; font-style: normal; }
+  .sm-slider input { width: 100%; accent-color: var(--accent); }
+  .sm-score {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .sm-bar-track {
+    height: 24px;
+    background: var(--rail);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .sm-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.18s ease-out;
+  }
+  .sm-prob {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    font-weight: 700;
+    text-align: right;
+  }
+  .softmax-header {
+    display: grid;
+    grid-template-columns: 130px 200px 60px 1fr 70px;
+    gap: 16px;
+    padding-bottom: 6px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .softmax-header .right { text-align: right; }
+  .softmax-z {
+    text-align: center;
+    font-size: 17px;
+    color: var(--text-muted);
+    margin: 16px 0 28px 0;
+    font-style: italic;
+  }
+  .softmax-z .z-val {
+    font-family: var(--font-serif);
+    color: var(--text);
+    font-style: normal;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Softmax — Adjust Scores, Watch Probabilities</h1>
+  <div class="subtitle">MRC LECTURE 1 · SLIDE 16 · INTERACTIVE DEMO</div>
+
+  <div class="formula">$$P_j \;=\; \frac{\exp(z_j)}{\sum_k \exp(z_k)}$$</div>
+
+  <div class="setup">
+    Three candidate antigens with adjustable scores. Drag any slider to change a score and watch how all three output probabilities re-balance. Scores can be any real number — softmax always returns a valid probability distribution.
+  </div>
+
+  <div class="softmax-header">
+    <div>Candidate</div>
+    <div></div>
+    <div class="right">$z_j$</div>
+    <div>Probability $P_j$</div>
+    <div class="right">value</div>
+  </div>
+  <div class="softmax-rows" id="rows"></div>
+
+  <div class="softmax-z">Partition function: <span class="z-val">Z = <span id="zVal">—</span></span></div>
+
+  <div class="preset-row">
+    <button class="preset-btn" data-preset="default">Default</button>
+    <button class="preset-btn" data-preset="tied">All tied</button>
+    <button class="preset-btn" data-preset="winner">Sharp winner</button>
+    <button class="preset-btn" data-preset="close">Two-way close</button>
+  </div>
+
+  <div class="footnote">
+    <span class="label">Why exp?</span>
+    The exponential maps any real number to a positive number — that's what guarantees the output probabilities are positive. The exponential also amplifies differences: a score gap of 1 becomes a probability ratio of $e \approx 2.7$, a gap of 2 becomes $e^2 \approx 7.4$. This is why softmax behaves like a "soft argmax" — it concentrates on the winner without ignoring the rest.
+  </div>
+
+</div>
+
+<script>
+  const candidates = [
+    { name: "Antigen 1", detail: "cognate target",   score: 2.0 },
+    { name: "Antigen 2", detail: "close mutant",     score: 1.0 },
+    { name: "Antigen 3", detail: "off-target",       score: 0.1 }
+  ];
+
+  const presets = {
+    default: [2.0, 1.0, 0.1],
+    tied:    [1.0, 1.0, 1.0],
+    winner:  [3.0, 0.0, 0.0],
+    close:   [2.0, 1.9, 0.0]
+  };
+
+  function softmax(scores) {
+    const maxS = Math.max(...scores);
+    const exps = scores.map(s => Math.exp(s - maxS));
+    const sum  = exps.reduce((a, b) => a + b, 0);
+    return { probs: exps.map(e => e / sum), Z: sum * Math.exp(maxS) };
+  }
+
+  function buildRows() {
+    const html = candidates.map((c, i) => `
+      <div class="softmax-row">
+        <div class="sm-name">${c.name}<span class="sub">${c.detail}</span></div>
+        <div class="sm-slider"><input type="range" min="-3" max="5" step="0.1" value="${c.score}" id="slider-${i}"></div>
+        <div class="sm-score" id="score-${i}">${c.score.toFixed(1)}</div>
+        <div class="sm-bar-track"><div class="sm-bar-fill" id="bar-${i}" style="width:0%"></div></div>
+        <div class="sm-prob" id="prob-${i}">—</div>
+      </div>
+    `).join('');
+    document.getElementById('rows').innerHTML = html;
+    candidates.forEach((c, i) => {
+      document.getElementById(`slider-${i}`).addEventListener('input', (e) => {
+        candidates[i].score = parseFloat(e.target.value);
+        update();
+      });
+    });
+  }
+
+  function update() {
+    const scores = candidates.map(c => c.score);
+    const { probs, Z } = softmax(scores);
+    candidates.forEach((c, i) => {
+      document.getElementById(`score-${i}`).textContent = c.score.toFixed(1);
+      document.getElementById(`bar-${i}`).style.width  = `${(probs[i] * 100).toFixed(2)}%`;
+      document.getElementById(`prob-${i}`).textContent  = probs[i].toFixed(3);
+    });
+    document.getElementById('zVal').textContent = Z.toFixed(2);
+  }
+
+  function applyPreset(name) {
+    const vals = presets[name];
+    candidates.forEach((c, i) => {
+      c.score = vals[i];
+      document.getElementById(`slider-${i}`).value = vals[i];
+    });
+    update();
+  }
+
+  document.querySelectorAll('.preset-btn[data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+  });
+
+  buildRows();
+  update();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

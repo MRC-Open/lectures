@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — The InfoNCE Matrix, Live</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Interactive InfoNCE: an N×N similarity matrix; slide 'training' to pull
+     correct pairs (the diagonal) together and watch the loss fall. */
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+    margin: 14px 0 20px 0;
+  }
+  .panel-label {
+    font-family: var(--font-sans); font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-muted); font-weight: 500; margin-bottom: 14px;
+  }
+
+  /* matrix heatmap */
+  .matrix-wrap { display: inline-block; }
+  .mx-grid { display: grid; gap: 4px; }
+  .mx-cell {
+    width: 64px; height: 46px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 15px; font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+  .mx-cell.diag { outline: 2.5px solid var(--accent); outline-offset: -2.5px; }
+  .mx-corner, .mx-collabel, .mx-rowlabel {
+    font-family: var(--font-sans); font-size: 11px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center; letter-spacing: 0.4px;
+  }
+  .mx-note { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 12px; }
+  .mx-note .pos { color: var(--accent); font-weight: 600; }
+
+  /* readouts */
+  .readout-box { border: 1px solid var(--rule); border-radius: 4px; padding: 18px 22px; margin-bottom: 16px; }
+  .readout-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 8px 0; border-bottom: 1px solid var(--rail); font-size: 16px;
+  }
+  .readout-row:last-child { border-bottom: none; }
+  .readout-row .k { color: var(--text-muted); font-style: italic; }
+  .readout-row .v { font-family: var(--font-serif); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .readout-row .v.big { font-size: 26px; color: var(--accent); }
+  .readout-row .v.good { color: #3a6b3a; }
+
+  .ctrl-box { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; margin-bottom: 16px; }
+  .slider-row { display: flex; align-items: center; gap: 14px; }
+  .slider-row label { font-family: var(--font-serif); font-style: italic; font-size: 16px; min-width: 130px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-row .val { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--text-muted); min-width: 70px; text-align: right; }
+
+  .bridge {
+    border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 6px;
+    font-size: 16px; line-height: 1.7; color: var(--text); text-align: center;
+  }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>The InfoNCE Matrix, Live</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTERACTIVE DEMO</div>
+
+  <div class="formula">$$\mathcal{L}_{\text{InfoNCE}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$</div>
+
+  <div class="setup">
+    Four antibody–antigen pairs in a mini-batch. The matrix holds every similarity $S_{ij}$; the <span style="color:var(--accent);font-weight:600;">outlined diagonal</span> is the correct pairs. Drag "training" to pull each agent toward its true target and watch the loss fall as the diagonal lights up.
+  </div>
+
+  <div class="main-row">
+
+    <div>
+      <div class="panel-label">Similarity matrix Sᵢⱼ (rows = antibodies, cols = antigens)</div>
+      <div class="matrix-wrap" id="matrix"></div>
+      <div class="mx-note">Each row is softmaxed → the probability agent <em>i</em> picks each antigen. We want all the mass on the <span class="pos">diagonal</span>.</div>
+    </div>
+
+    <div>
+      <div class="ctrl-box">
+        <div class="slider-row">
+          <label>training</label>
+          <input type="range" id="train" min="0" max="5" step="0.1" value="0.4">
+          <div class="val" id="trainVal">early</div>
+        </div>
+      </div>
+
+      <div class="readout-box">
+        <div class="readout-row">
+          <span class="k">InfoNCE loss</span>
+          <span class="v big" id="lossVal">—</span>
+        </div>
+        <div class="readout-row">
+          <span class="k">diagonal hit-rate (R@1)</span>
+          <span class="v" id="r1Val">—</span>
+        </div>
+        <div class="readout-row">
+          <span class="k">avg. P(correct pair)</span>
+          <span class="v" id="pVal">—</span>
+        </div>
+      </div>
+
+      <div style="font-size:14px;line-height:1.6;color:var(--text-muted);font-style:italic;">
+        Minimising this loss is what training does: it reshapes the encoders so binding partners land close in the shared space.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bridge">
+    The loss is small only when every agent puts its probability on the correct target. <strong>Minimising InfoNCE = maximising the Boltzmann probability of correct selection</strong> — the embedding space becomes a binding-energy landscape.
+  </div>
+
+</div>
+
+<script>
+  const N = 4;
+  const LABELS = ["Ab1", "Ab2", "Ab3", "Ab4"];
+  const COLS = ["Ag1", "Ag2", "Ag3", "Ag4"];
+  // fixed baseline off-diagonal "confusion" (illustrative), diagonal grows with training
+  const BASE = [
+    [0.0, 0.6, 0.3, 0.5],
+    [0.4, 0.0, 0.7, 0.2],
+    [0.5, 0.3, 0.0, 0.6],
+    [0.2, 0.5, 0.4, 0.0],
+  ];
+  let train = 0.4;
+
+  function matrixS() {
+    const S = [];
+    for (let i = 0; i < N; i++) {
+      S.push([]);
+      for (let j = 0; j < N; j++) {
+        S[i][j] = (i === j) ? train : BASE[i][j];
+      }
+    }
+    return S;
+  }
+  function rowSoftmax(row) {
+    const m = Math.max(...row);
+    const ex = row.map(s => Math.exp(s - m));
+    const Z = ex.reduce((a,b)=>a+b,0);
+    return ex.map(e => e / Z);
+  }
+
+  const matrixEl = document.getElementById('matrix');
+  const trainSlider = document.getElementById('train');
+
+  function render() {
+    const S = matrixS();
+    const probs = S.map(rowSoftmax);
+
+    // matrix heatmap
+    let html = `<div class="mx-grid" style="grid-template-columns: 52px repeat(${N}, 64px);">`;
+    html += `<div class="mx-corner"></div>`;
+    COLS.forEach(c => { html += `<div class="mx-collabel">${c}</div>`; });
+    for (let i = 0; i < N; i++) {
+      html += `<div class="mx-rowlabel">${LABELS[i]}</div>`;
+      for (let j = 0; j < N; j++) {
+        const s = S[i][j];
+        const a = Math.max(0, Math.min(1, s / 5)); // tint by raw similarity
+        const diag = i === j ? ' diag' : '';
+        const col = a > 0.55 ? '#fff' : 'var(--text-muted)';
+        html += `<div class="mx-cell${diag}" style="background: rgba(94,58,163,${(0.05+0.9*a).toFixed(3)}); color:${col};">${s.toFixed(1)}</div>`;
+      }
+    }
+    html += `</div>`;
+    matrixEl.innerHTML = html;
+
+    // metrics
+    let loss = 0, hits = 0, pSum = 0;
+    for (let i = 0; i < N; i++) {
+      const p = probs[i][i];
+      loss += -Math.log(p);
+      pSum += p;
+      if (probs[i].indexOf(Math.max(...probs[i])) === i) hits++;
+    }
+    loss /= N;
+    document.getElementById('lossVal').textContent = loss.toFixed(3);
+    const r1 = document.getElementById('r1Val');
+    r1.textContent = `${hits} / ${N}`;
+    r1.classList.toggle('good', hits === N);
+    document.getElementById('pVal').textContent = (pSum / N).toFixed(2);
+
+    const tv = document.getElementById('trainVal');
+    tv.textContent = train < 1 ? 'early' : train < 3 ? 'training…' : 'converged';
+  }
+
+  trainSlider.addEventListener('input', e => { train = parseFloat(e.target.value); render(); });
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (prevKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

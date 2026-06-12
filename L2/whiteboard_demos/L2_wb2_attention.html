@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 Whiteboard — Scaled Dot-Product Attention</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Deriving Scaled Dot-Product Attention</h1>
+  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD · THREE STAGES, THREE OPERATIONS FROM LECTURE 1</div>
+
+  <div class="claim">
+    <span class="label">Goal — build this equation</span>
+    <div class="eq">$$\text{Attention}(Q,K,V) \;=\; \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
+  </div>
+
+  <div class="setup">
+    Each of $n$ tokens carries three learned vectors: a query $\mathbf{q}_i$ ("what am I looking for?"), a key $\mathbf{k}_i$ ("what do I offer?"), and a value $\mathbf{v}_i$ ("what information do I carry?"). Stacked as rows, they form matrices $Q, K, V$. We build attention in three stages — each one an operation from Lecture 1.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Stage 1 · All pairwise compatibility scores (matrix multiplication)</div>
+    <div class="step-eq">
+      $$S = QK^\top \in \mathbb{R}^{n\times n}, \qquad S_{ij} = \sum_{l=1}^{d_k} Q_{il}K_{jl} = \mathbf{q}_i \cdot \mathbf{k}_j$$
+    </div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Stage 2a · Scale by √dₖ (the temperature)</div>
+    <div class="step-eq">$$\tilde{S} = \frac{QK^\top}{\sqrt{d_k}}$$</div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-label">Stage 2b · Softmax each row → a probability distribution</div>
+    <div class="step-eq">
+      $$A = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right), \qquad A_{ij} = \frac{\exp(\mathbf{q}_i\cdot\mathbf{k}_j/\sqrt{d_k})}{\sum_{k}\exp(\mathbf{q}_i\cdot\mathbf{k}_k/\sqrt{d_k})}$$
+    </div>
+  </div>
+
+  <div class="step" data-step="4">
+    <div class="step-label">Stage 3 · Aggregate values, weighted by attention (weighted sum)</div>
+    <div class="step-eq">$$O = AV, \qquad \mathbf{o}_i = \sum_{j=1}^{n} A_{ij}\,\mathbf{v}_j$$</div>
+  </div>
+
+  <div class="step qed" data-step="5">
+    <div class="step-label">Assemble the three stages &nbsp;∎</div>
+    <div class="step-eq">$$\text{Attention}(Q,K,V) \;=\; \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to build the attention equation.",
+    "<strong>Stage 1.</strong> Multiply $Q$ by $K^\\top$. By the definition of matrix multiplication (Lecture 1), entry $(i,j)$ is exactly the dot product $\\mathbf{q}_i\\cdot\\mathbf{k}_j$ — the compatibility of token $i$'s query with token $j$'s key. One matrix product gives <em>all</em> pairwise scores.",
+    "<strong>Stage 2a.</strong> Divide every score by $\\sqrt{d_k}$. This is the temperature — the next derivation shows why it keeps softmax in its sensitive regime. It is the same $\\tau$ as $k_BT$ in the Boltzmann distribution.",
+    "<strong>Stage 2b.</strong> Apply softmax to each row. Each row of $A$ becomes a probability distribution: for token $i$, how much does it attend to every other token? Positivity, normalization, rank-preservation — all inherited from softmax.",
+    "<strong>Stage 3.</strong> Multiply the attention weights $A$ by the values $V$. Each output $\\mathbf{o}_i$ is a weighted average of all value vectors, weighted by how much token $i$ attends to each. Information flows along attention.",
+    "Three stages — matrix multiply, temperature-scaled softmax, weighted sum — assemble into the attention equation. Every piece came from Lecture 1. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

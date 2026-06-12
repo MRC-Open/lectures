@@ -1,0 +1,17 @@
+# Large media — recordings live on Google Drive (linked from index.html)
+*.mp4
+*.mov
+*.m4v
+*.webm
+
+# OS / editor cruft
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build / caches (just in case)
+node_modules/
+__pycache__/
+*.pyc

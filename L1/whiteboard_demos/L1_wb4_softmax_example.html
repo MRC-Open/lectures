@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 Whiteboard 4 — Softmax: Worked Computation</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>The Softmax — A Worked Computation</h1>
+  <div class="subtitle">MRC LECTURE 1 · WHITEBOARD 4 · STEP-BY-STEP DERIVATION</div>
+
+  <div class="claim">
+    <span class="label">Compute softmax for</span>
+    <div class="eq">$$\mathbf{z} \;=\; (2.0,\; 1.0,\; 0.1)$$</div>
+  </div>
+
+  <div class="setup">
+    The softmax function takes a real-valued score vector and returns a probability distribution: $\mathrm{softmax}(\mathbf{z})_j \;=\; \exp(z_j) \big/ \sum_k \exp(z_k)$. We will compute it step by step for a small example, watch how the exponential amplifies score differences, and verify that the output sums to one.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · Exponentiate each score</div>
+    <div class="step-eq">
+      $$\exp(2.0) \;=\; 7.389$$
+      $$\exp(1.0) \;=\; 2.718$$
+      $$\exp(0.1) \;=\; 1.105$$
+    </div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Compute the partition function (sum of exponentials)</div>
+    <div class="step-eq">$$Z \;=\; 7.389 \;+\; 2.718 \;+\; 1.105 \;=\; 11.212$$</div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-label">Step 3 · Divide each exponential by Z</div>
+    <div class="step-eq">
+      $$P_1 \;=\; \frac{7.389}{11.212} \;=\; 0.659$$
+      $$P_2 \;=\; \frac{2.718}{11.212} \;=\; 0.242$$
+      $$P_3 \;=\; \frac{1.105}{11.212} \;=\; 0.099$$
+    </div>
+  </div>
+
+  <div class="step qed" data-step="4">
+    <div class="step-label">Step 4 · Verify the probabilities sum to 1 &nbsp;✓</div>
+    <div class="step-eq">$$P_1 + P_2 + P_3 \;=\; 0.659 + 0.242 + 0.099 \;=\; 1.000$$</div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin the computation.",
+    "Take the exponential of every score. The exponential function maps real numbers to positive numbers — this is what guarantees positivity of the output probabilities.",
+    "Sum the exponentials to get the <strong>partition function</strong> $Z$. This is the same $Z$ that appears in Boltzmann statistical mechanics — it is the normalising constant.",
+    "Divide each exponential by $Z$. Notice the rank order is preserved: $z_1 > z_2 > z_3$ gives $P_1 > P_2 > P_3$. But the score gap of 1.9 between $z_1$ and $z_3$ becomes a <strong>probability gap of 6.7×</strong> — the exponential amplifies differences.",
+    "The probabilities sum to 1 by construction (we divided by their sum). The output is a valid probability distribution. ✓"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 Whiteboard — Why √dₖ</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Why Divide by √dₖ?</h1>
+  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD · THE VARIANCE ARGUMENT</div>
+
+  <div class="claim">
+    <span class="label">Claim to prove</span>
+    <div class="eq">$$\text{Var}\!\left(\frac{\mathbf{q}\cdot\mathbf{k}}{\sqrt{d_k}}\right) = 1 \quad\text{for any } d_k$$</div>
+  </div>
+
+  <div class="setup">
+    Take a query $\mathbf{q}$ and key $\mathbf{k}$ in $\mathbb{R}^{d_k}$ whose components are independent, mean-0, variance-1 random numbers. We will show the raw dot product has standard deviation $\sqrt{d_k}$ — which makes softmax saturate as $d_k$ grows — and that dividing by $\sqrt{d_k}$ fixes it exactly.
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · The mean of the dot product is zero</div>
+    <div class="step-eq">
+      $$\mathbb{E}[\mathbf{q}\cdot\mathbf{k}] = \sum_{l=1}^{d_k}\mathbb{E}[q_l]\,\mathbb{E}[k_l] = \sum_{l=1}^{d_k} 0\cdot 0 = 0$$
+    </div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · The variance equals dₖ</div>
+    <div class="step-eq">
+      $$\text{Var}(\mathbf{q}\cdot\mathbf{k}) = \sum_{l=1}^{d_k}\text{Var}(q_l k_l) = \sum_{l=1}^{d_k}\mathbb{E}[q_l^2]\,\mathbb{E}[k_l^2] = \sum_{l=1}^{d_k} 1\cdot 1 = d_k$$
+      $$\Rightarrow\quad \text{std} = \sqrt{d_k}$$
+    </div>
+  </div>
+
+  <div class="step" data-step="3">
+    <div class="step-label">Step 3 · The saturation problem</div>
+    <div class="step-eq">
+      $$d_k = 512 \;\Rightarrow\; \text{typical scores} \approx \pm 23,\quad \text{gaps} \sim 46$$
+      $$\frac{P_A}{P_B} = \exp(46) \approx 10^{20} \;\Rightarrow\; \text{softmax} \to \text{one-hot},\ \text{gradients} \to 0$$
+    </div>
+  </div>
+
+  <div class="step qed" data-step="4">
+    <div class="step-label">Step 4 · Scaling restores unit variance &nbsp;∎</div>
+    <div class="step-eq">
+      $$\text{Var}\!\left(\frac{\mathbf{q}\cdot\mathbf{k}}{\sqrt{d_k}}\right) = \frac{1}{d_k}\,\text{Var}(\mathbf{q}\cdot\mathbf{k}) = \frac{d_k}{d_k} = 1$$
+    </div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin.",
+    "<strong>Step 1.</strong> The dot product is a sum of products $q_l k_l$. Since $q_l$ and $k_l$ are independent with mean 0, each term has expectation $0\\cdot 0 = 0$. On average a random query and key are <em>orthogonal</em> — neither compatible nor incompatible.",
+    "<strong>Step 2.</strong> Variance of a sum of independent terms is the sum of variances. Each $\\text{Var}(q_l k_l) = \\mathbb{E}[q_l^2]\\mathbb{E}[k_l^2] = 1$. Summing over $d_k$ components gives variance $d_k$ — so the standard deviation <strong>grows as $\\sqrt{d_k}$</strong>.",
+    "<strong>Step 3.</strong> The problem. At $d_k = 512$ typical scores are $\\pm 23$, so gaps between candidates are $\\sim 46$. Exponentiate that and one candidate gets a $10^{20}$ advantage — softmax collapses to one-hot and the gradient vanishes. The model can't learn.",
+    "<strong>Step 4.</strong> Divide by $\\sqrt{d_k}$. Variance scales by $1/d_k$, giving exactly 1 — for <em>any</em> dimension. Scores stay order $\\pm 1$, softmax stays graded, gradients stay alive. $\\sqrt{d_k}$ <strong>is the temperature</strong> $\\tau = k_BT$. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

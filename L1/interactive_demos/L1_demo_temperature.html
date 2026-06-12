@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Temperature Controls Specificity</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Demo-specific styles for the temperature softmax visualisation.
+     Shared design tokens + base typography live in mrc_styles.css. */
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 0 18px 0;
+    padding: 14px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  .slider-row label {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 18px;
+    min-width: 140px;
+    color: var(--text);
+  }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .tau-value {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 700;
+    min-width: 80px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  /* score + bar combined rows */
+  .results { margin: 0 0 36px 0; }
+  .row {
+    display: grid;
+    grid-template-columns: 220px 70px 1fr 70px;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rail);
+    font-size: 17px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .name { color: var(--text); }
+  .row .name .detail { display: block; font-size: 13px; color: var(--text-muted); font-style: italic; }
+  .row .score {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .bar-track {
+    height: 22px;
+    background: var(--rail);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.25s ease-out;
+  }
+  .row .prob {
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .row-header {
+    display: grid;
+    grid-template-columns: 220px 70px 1fr 70px;
+    gap: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .row-header .right { text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Temperature Controls Specificity</h1>
+  <div class="subtitle">MRC LECTURE 1 · SLIDE 18 · INTERACTIVE DEMO</div>
+
+  <div class="formula">
+    $$P(\text{bind } j) \;=\; \frac{\exp(s_j / \tau)}{\sum_k \exp(s_k / \tau)}$$
+  </div>
+
+  <div class="setup">
+    An antibody faces four candidate antigens. Each has a fixed compatibility score $s_j$ (a dot product of CDR features and epitope features). Vary the temperature $\tau$ to see how the same scores become a different probability distribution.
+  </div>
+
+  <div class="slider-row">
+    <label for="tauSlider">Temperature τ</label>
+    <input type="range" id="tauSlider" min="0.05" max="10" step="0.01" value="1.0">
+    <div class="tau-value" id="tauValue">1.00</div>
+  </div>
+
+  <div class="preset-row">
+    <button class="preset-btn" data-tau="0.1">Cold (τ = 0.1)</button>
+    <button class="preset-btn active" data-tau="1.0">Physiological (τ = 1.0)</button>
+    <button class="preset-btn" data-tau="10">Hot (τ = 10)</button>
+  </div>
+
+  <div class="row-header">
+    <div>Candidate</div>
+    <div class="right">$s_j$</div>
+    <div>Probability</div>
+    <div class="right">$P_j$</div>
+  </div>
+  <div class="results" id="results"></div>
+
+  <div class="interpretation" id="interpretation">—</div>
+
+  <div class="footnotes">
+    <p><span class="label">Physics</span> In molecular binding, $\tau = k_B T$ — the thermal energy. At physiological temperature (310 K), $k_B T \approx 0.6$ kcal/mol. Cooling makes selection sharper; heating makes it promiscuous.</p>
+    <p><span class="label">AI</span> In transformers, $\tau = \sqrt{d_k}$ (Vaswani et al., 2017). In SFMs, $\tau$ is <em>learned</em> — and the value it converges to should equal $k_B T$ in the appropriate units (Lecture 7).</p>
+  </div>
+
+</div>
+
+<script>
+  const candidates = [
+    { name: "HEL",       detail: "cognate target — hen egg lysozyme",  score: 3.0 },
+    { name: "HEL mutant", detail: "1 CDR-contact residue swap",          score: 2.0 },
+    { name: "BSA",       detail: "off-target serum protein",            score: 0.5 },
+    { name: "GFP",       detail: "unrelated control",                   score: -0.5 }
+  ];
+
+  const tauSlider     = document.getElementById('tauSlider');
+  const tauValue      = document.getElementById('tauValue');
+  const resultsBox    = document.getElementById('results');
+  const interpretation= document.getElementById('interpretation');
+  const presetBtns    = document.querySelectorAll('.preset-btn');
+
+  function softmax(scores, tau) {
+    const scaled = scores.map(s => s / tau);
+    const maxS = Math.max(...scaled);
+    const exps = scaled.map(s => Math.exp(s - maxS));
+    const sum = exps.reduce((a, b) => a + b, 0);
+    return exps.map(e => e / sum);
+  }
+
+  function buildRows() {
+    resultsBox.innerHTML = candidates.map((c, i) => `
+      <div class="row">
+        <div class="name">${c.name}<span class="detail">${c.detail}</span></div>
+        <div class="score">${c.score.toFixed(2)}</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-${i}" style="width:0%"></div></div>
+        <div class="prob" id="prob-${i}">—</div>
+      </div>
+    `).join('');
+  }
+
+  function describeRegime(tau, probs) {
+    const top = Math.max(...probs);
+    const bot = Math.min(...probs);
+    if (tau <= 0.2) {
+      return `<strong>Cold regime.</strong> The cognate target captures essentially all the probability (${(top*100).toFixed(1)}%). Selection is sharp — the high-specificity limit. <em>Biologically: a fully affinity-matured antibody.</em>`;
+    } else if (tau <= 2) {
+      return `<strong>Physiological regime.</strong> The cognate target wins (${(top*100).toFixed(1)}%) but the close mutant still has measurable probability. <em>This is what real binding looks like in vivo — and the regime SFM training operates in.</em>`;
+    } else {
+      return `<strong>Hot regime.</strong> The distribution is flattening (top ${(top*100).toFixed(1)}%, bottom ${(bot*100).toFixed(1)}%). At infinite τ all four probabilities approach 25% — the antibody can't distinguish its target from GFP.`;
+    }
+  }
+
+  function update() {
+    const tau = parseFloat(tauSlider.value);
+    tauValue.textContent = tau.toFixed(2);
+    const scores = candidates.map(c => c.score);
+    const probs = softmax(scores, tau);
+    probs.forEach((p, i) => {
+      document.getElementById(`bar-${i}`).style.width = `${(p*100).toFixed(2)}%`;
+      document.getElementById(`prob-${i}`).textContent = p.toFixed(3);
+    });
+    interpretation.innerHTML = describeRegime(tau, probs);
+    presetBtns.forEach(b => {
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.tau) - tau) < 0.01);
+    });
+  }
+
+  presetBtns.forEach(btn => btn.addEventListener('click', () => {
+    tauSlider.value = btn.dataset.tau;
+    update();
+  }));
+  tauSlider.addEventListener('input', update);
+
+  buildRows();
+  update();
+
+  // When embedded inside the deck shell, escalate navigation keys to parent
+  // (this demo has no internal nav of its own).
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC Tutorial Course — Overview</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="mrc_styles.css">
+<style>
+  /* ============================================================
+     Tutorial OVERVIEW deck — 7 slides.
+     This is the introductory pitch deck for the Reddy Lab
+     Tutorial Course (advanced PhDs/postdocs). Each slide is a
+     self-contained content panel (no demos embedded).
+     ============================================================ */
+  body { padding: 0; }
+  .deck { position: relative; min-height: 100vh; }
+
+  .slide {
+    display: none;
+    height: 100vh;
+    overflow: auto;
+    padding: 60px 48px;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+  .slide-inner { max-width: 820px; margin: 0 auto; width: 100%; }
+
+  .slide h2 {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    margin: 0 0 8px 0;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .slide .slide-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-bottom: 32px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .slide ul.bullets {
+    font-size: 18px;
+    line-height: 1.75;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .slide ul.bullets > li {
+    padding: 7px 0 7px 26px;
+    position: relative;
+  }
+  .slide ul.bullets > li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 18px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .slide strong { font-weight: 700; color: var(--text); }
+  .slide em { font-style: italic; color: var(--text); }
+
+  .lead-para {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--text);
+    margin: 0 0 22px 0;
+  }
+
+  .eq-block {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 14px 22px;
+    margin: 14px 0;
+    font-size: 22px;
+    text-align: center;
+  }
+
+  /* Pillar grid for slide 2 (convergence equation) */
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 14px 0 18px 0;
+  }
+  .pillar {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 18px;
+  }
+  .pillar .year {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .pillar .name {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 3px 0 2px 0;
+    color: var(--text);
+  }
+  .pillar .field {
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .pillar .content {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .convergence-tagline {
+    text-align: center;
+    margin: 8px 0 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .convergence-tagline strong { color: var(--accent); font-weight: 700; }
+
+  /* Capability grid for slide 4 (the 4 things you'll own) */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 12px 0 18px 0;
+  }
+  .cap {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 20px;
+  }
+  .cap .num {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    color: var(--accent);
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .cap .title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .cap .body {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  /* Session list for slide 5 */
+  .session-list {
+    margin: 6px 0 14px 0;
+  }
+  .session-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rail);
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 18px;
+    align-items: baseline;
+  }
+  .session-item:last-child { border-bottom: none; }
+  .session-num {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .session-body {
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .session-body .stitle {
+    font-weight: 700;
+    color: var(--text);
+    margin-right: 6px;
+  }
+  .session-body .stopic {
+    color: var(--text-muted);
+  }
+
+  /* 3-column reason grid for slide 7 */
+  .reason-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin: 12px 0 22px 0;
+  }
+  .reason {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .reason .label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .reason .body {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .infra-block {
+    background: var(--rail);
+    border-radius: 4px;
+    padding: 16px 22px;
+    margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .infra-block .lead {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .infra-block strong { color: var(--accent); font-weight: 700; }
+
+  .closing-line {
+    text-align: center;
+    margin: 18px 0 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    font-style: italic;
+  }
+  .closing-line strong { font-style: normal; color: var(--accent); font-weight: 700; }
+
+  /* Deck chrome */
+  .deck-counter {
+    position: fixed;
+    bottom: 22px; right: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-hint {
+    position: fixed;
+    bottom: 22px; left: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-present {
+    position: fixed;
+    top: 22px; right: 32px;
+    z-index: 100;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .deck-present:hover { border-color: var(--accent); color: var(--accent); }
+  :fullscreen .deck-present { display: none; }
+
+  /* Big-screen / fullscreen sizing */
+  @media (min-width: 1400px) {
+    .slide-inner { max-width: 980px; }
+    .slide h2 { font-size: 38px; }
+    .slide .slide-subtitle { font-size: 18px; }
+    .slide ul.bullets { font-size: 20px; }
+    .lead-para { font-size: 20px; }
+    .eq-block { font-size: 25px; }
+    .pillar .name { font-size: 20px; }
+    .pillar .content { font-size: 16px; }
+    .cap .title { font-size: 19px; }
+    .cap .body { font-size: 16px; }
+    .session-body { font-size: 18px; }
+    .reason .body { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- ================== SLIDE 1 — Why This Course Exists ================== -->
+<section class="slide active" data-slide="1">
+  <div class="slide-inner">
+    <h2>Why This Course Exists</h2>
+    <div class="slide-subtitle">Four foundational concepts. Four fields. One equation.</div>
+
+    <p class="lead-para">
+      This course is built on four concepts that are <strong>settled science</strong> — textbook material in their respective fields, none in dispute by working scientists in those fields.
+    </p>
+
+    <ul class="bullets">
+      <li><strong>Boltzmann's distribution (1877)</strong> — statistical mechanics</li>
+      <li><strong>Maximum entropy principle</strong> (Shannon 1948, Jaynes 1957) — information theory</li>
+      <li><strong>Softmax attention mechanism</strong> (Vaswani et al., 2017) — machine learning</li>
+      <li><strong>Luce's choice axiom (1959)</strong> — choice theory / econometrics</li>
+    </ul>
+
+    <p class="lead-para" style="margin-top: 24px;">
+      These four pillars are mathematically the <strong>same equation</strong> — the <strong>convergence equation</strong>. The course teaches you to see the identity, then shows that the identity, combined with five physical conditions, prescribes a complete neural architecture for predicting molecular binding: the <strong>Specificity Foundation Model (SFM)</strong>.
+    </p>
+  </div>
+</section>
+
+<!-- ================== SLIDE 2 — The Convergence Equation ================== -->
+<section class="slide" data-slide="2">
+  <div class="slide-inner">
+    <h2>The Convergence Equation</h2>
+    <div class="slide-subtitle">Four independent derivations. One function.</div>
+
+    <div class="pillar-grid">
+      <div class="pillar">
+        <div class="year">1877 · Physics</div>
+        <div class="name">Boltzmann</div>
+        <div class="field">statistical mechanics</div>
+        <div class="content">$P(\text{state}) \propto \exp(-E/k_BT)$ at thermal equilibrium</div>
+      </div>
+      <div class="pillar">
+        <div class="year">1948–57 · Information theory</div>
+        <div class="name">Shannon · Jaynes</div>
+        <div class="field">maximum entropy principle</div>
+        <div class="content">Most-rational distribution under partial info → exponential form</div>
+      </div>
+      <div class="pillar">
+        <div class="year">1959 · Choice theory</div>
+        <div class="name">Luce</div>
+        <div class="field">independence of irrelevant alternatives</div>
+        <div class="content">IIA + monotonicity force the softmax form (uniqueness theorem)</div>
+      </div>
+      <div class="pillar">
+        <div class="year">2017 · Machine learning</div>
+        <div class="name">Vaswani et al.</div>
+        <div class="field">transformer attention</div>
+        <div class="content">$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}(QK^\top / \sqrt{d_k})\, V$</div>
+      </div>
+    </div>
+
+    <div class="eq-block">$$P(j) \;=\; \frac{\exp(s_j)}{\sum_k \exp(s_k)}$$</div>
+
+    <div class="convergence-tagline">
+      Four derivations, four fields, 140 years apart. <strong>Not analogies — an algebraic identity.</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ================== SLIDE 3 — Why No Existing Training Prepares You ================== -->
+<section class="slide" data-slide="3">
+  <div class="slide-inner">
+    <h2>Why No Existing Training Prepares You</h2>
+    <div class="slide-subtitle">A structural gap, not a failure of anyone's preparation</div>
+
+    <ul class="bullets">
+      <li>Standard <strong>ML courses</strong> teach attention — but not its identity with Boltzmann</li>
+      <li>Standard <strong>biophysics</strong> teaches Boltzmann — but not its identity with attention</li>
+      <li>Standard <strong>information theory</strong> teaches max entropy — but not its prescriptive consequences for neural architectures</li>
+      <li><strong>No existing curriculum stitches these together</strong> — because none was designed to. The implications of <em>Level 3 alignment</em> — where the architecture <em>is</em> the governing equation rather than approximating it — have to be learned explicitly.</li>
+    </ul>
+
+    <p class="lead-para" style="margin-top: 26px;">
+      The math used in this course is at the level of <strong>college algebra and basic calculus</strong> — dot products, exponential functions, derivatives. Detailed step-by-step derivations are provided in writing for every key result. <strong>Anyone in the lab can take this course.</strong> Wet-lab researchers, computational biologists, and immunologists will all start from the same place.
+    </p>
+  </div>
+</section>
+
+<!-- ================== SLIDE 4 — The 4 Capabilities ================== -->
+<section class="slide" data-slide="4">
+  <div class="slide-inner">
+    <h2>What You Will Learn</h2>
+    <div class="slide-subtitle">Four capabilities not currently taught anywhere as a unified curriculum</div>
+
+    <div class="cap-grid">
+      <div class="cap">
+        <div class="num">1</div>
+        <div class="title">Mathematical foundations of modern AI</div>
+        <div class="body">Linear algebra (dot products, matrix multiplication, cosine similarity, softmax with temperature). Transformers, attention, multi-head attention. Contrastive learning and the InfoNCE loss. <em>Read transformer papers and follow them.</em></div>
+      </div>
+      <div class="cap">
+        <div class="num">2</div>
+        <div class="title">The physics of molecular binding</div>
+        <div class="body">Boltzmann distribution, $K_d$ and free energy ($\Delta G = RT \ln K_d$), competitive binding as softmax. Bilinearity: TF–DNA decomposes by position exactly; antibody–antigen requires a learned encoder.</div>
+      </div>
+      <div class="cap">
+        <div class="num">3</div>
+        <div class="title">A new paradigm: physics-derived AI architectures</div>
+        <div class="body">Luce's proof. The SFM derived from the convergence equation + five physical conditions. <strong>Parameter estimation in a known governing equation</strong> vs. function approximation. Predicts exponential (not power-law) data scaling, fast convergence, OOD robustness.</div>
+      </div>
+      <div class="cap">
+        <div class="num">4</div>
+        <div class="title">Build, validate, implement your own SFM</div>
+        <div class="body">Final project: build an SFM on your own molecular recognition data using Claude Code with the CALM codebase as reference. The architecture is prescribed; you make the domain-expert decisions.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== SLIDE 5 — Course Structure ================== -->
+<section class="slide" data-slide="5">
+  <div class="slide-inner">
+    <h2>Course Structure</h2>
+    <div class="slide-subtitle">Six sessions plus the final project · run as an informal tutorial</div>
+
+    <div class="session-list">
+      <div class="session-item">
+        <div class="session-num">Session 1</div>
+        <div class="session-body"><span class="stitle">Linear Algebra for ML &amp; Molecular Recognition.</span><span class="stopic">Dot products, matrix multiplication, cosine similarity, softmax with temperature.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 2</div>
+        <div class="session-body"><span class="stitle">Neural Networks, Transformers, &amp; Attention.</span><span class="stopic">Forward passes, scaled dot-product attention, why $\sqrt{d_k}$, multi-head attention.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 3</div>
+        <div class="session-body"><span class="stitle">Language Models, Protein LMs, &amp; Contrastive Learning.</span><span class="stopic">BERT, GPT, ESM-2, AntiBERTy, DNABERT-2, CLIP, CALM, the InfoNCE loss.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 4</div>
+        <div class="session-body"><span class="stitle">Thermodynamics of Molecular Recognition.</span><span class="stopic">Free energy, $K_d$, competitive binding as softmax, the identity moment, SPR/ITC/BLI.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 5</div>
+        <div class="session-body"><span class="stitle">Given &amp; Emergent Bilinearity.</span><span class="stopic">SantaLucia, position weight matrices, the encoding problem for antibody–antigen.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 6</div>
+        <div class="session-body"><span class="stitle">The Convergence Equation, the SFM Architecture, &amp; the Ten Domains.</span><span class="stopic">Luce's proof, deriving the architecture, ten validated domains.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Final Project</div>
+        <div class="session-body"><span class="stitle">Build, Validate, &amp; Present Your SFM.</span><span class="stopic">Each lab member builds an SFM on their own data and presents results.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== SLIDE 6 — Final Project ================== -->
+<section class="slide" data-slide="6">
+  <div class="slide-inner">
+    <h2>Final Project — Build Your Own SFM</h2>
+    <div class="slide-subtitle">With Claude Code · using CALM as the reference implementation</div>
+
+    <p class="lead-para">
+      Each of you builds an SFM on <strong>your own molecular recognition data</strong> — antibody–antigen pairs from repertoire or display screening, TCR–pMHC pairs, peptide–MHC pairs, cytokine or other ligand binding to receptors, whatever fits your project.
+    </p>
+
+    <ul class="bullets">
+      <li>You decide the <strong>domain-expert decisions</strong>: encoder selection, data curation, masking strategy, train/test split design and leakage prevention, hard-negative strategy, evaluation design</li>
+      <li>The <strong>architecture itself does not change</strong> — that part is prescribed by the convergence equation</li>
+      <li>You evaluate with retrieval metrics, out-of-distribution splits at sequence-identity-clustered thresholds, and pseudo-prospective validation against held-out experiments</li>
+      <li>You <strong>present your results</strong> to the lab. We then discuss the cross-domain comparison: what training behaviors emerge from your data, what they tell us about the framework, and what comes next.</li>
+    </ul>
+
+    <p class="lead-para" style="margin-top: 22px;">
+      <em>This is the only test of understanding that matters: did you build a model that works on data nobody has seen before?</em>
+    </p>
+  </div>
+</section>
+
+<!-- ================== SLIDE 7 — SFMs as Infrastructure ================== -->
+<section class="slide" data-slide="7">
+  <div class="slide-inner">
+    <h2>SFMs as Infrastructure</h2>
+    <div class="slide-subtitle">A method like PCR or CRISPR</div>
+
+    <div class="reason-grid">
+      <div class="reason">
+        <div class="label">Broad applicability</div>
+        <div class="body">Any molecular recognition system at thermal equilibrium — antibodies, TCRs, MHC, TFs, miRNAs, CRISPR guides, enzymes, drug–target pairs. <strong>Six SFM domains demonstrated</strong>, four more in active development.</div>
+      </div>
+      <div class="reason">
+        <div class="label">Low resource</div>
+        <div class="body">CALM trained on ~4,000 antibody–antigen pairs vs. CLIP's ~400,000,000 image-text pairs. Single GPU node, pretrained encoders. <strong>Bottleneck is data curation by a domain expert.</strong></div>
+      </div>
+      <div class="reason">
+        <div class="label">Open source</div>
+        <div class="body">CALM, the SFM template, training and evaluation pipelines, validation harness, pretrained encoders — all public. <strong>No proprietary infrastructure needed.</strong></div>
+      </div>
+    </div>
+
+    <div class="infra-block">
+      <div class="lead">The natural division of labor</div>
+      <strong>AlphaFold</strong> and the structure predictors solve <em>structure</em>. <strong>ESM-2, AntiBERTy, DNABERT-2, MoLFormer, RNA-FM</strong> solve <em>sequence representation</em>. Neither solves <strong>specificity</strong> — which partner does this molecule recognize from a pool of candidates? <strong>SFMs sit on top of this infrastructure</strong> and produce the specificity prediction itself.
+    </div>
+
+    <div class="closing-line">
+      Ten years from now: every recognition problem in biology has an SFM.<br>
+      <strong>The model you build at the end of this course is the prototype.</strong>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="deck-counter" id="counter">SLIDE 1 / 7</div>
+<div class="deck-hint" id="hint">← →  navigate · F  fullscreen</div>
+<button class="deck-present" id="presentBtn">▶ Present</button>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  let current = 1;
+
+  function show(n) {
+    n = Math.max(1, Math.min(total, n));
+    current = n;
+    slides.forEach(s => s.classList.toggle('active', parseInt(s.dataset.slide) === n));
+    counter.textContent = `SLIDE ${n} / ${total}`;
+
+    const active = document.querySelector('.slide.active');
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([active]);
+    }
+    history.replaceState(null, '', `#slide=${n}`);
+  }
+
+  function next() { if (current < total) show(current + 1); }
+  function prev() { if (current > 1)     show(current - 1); }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) req.call(el);
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  }
+  document.getElementById('presentBtn').addEventListener('click', toggleFullscreen);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+        e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        e.preventDefault(); prev(); break;
+      case 'Home':
+        e.preventDefault(); show(1); break;
+      case 'End':
+        e.preventDefault(); show(total); break;
+      case 'f': case 'F':
+        e.preventDefault(); toggleFullscreen(); break;
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.tagName === 'BUTTON' || t.tagName === 'INPUT' || t.tagName === 'A') return;
+    if (t.closest('.deck-counter') || t.closest('.deck-hint') || t.closest('.deck-present')) return;
+    next();
+  });
+
+  const m = location.hash.match(/slide=(\d+)/);
+  if (m) show(parseInt(m[1])); else show(1);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Three Systems, One Problem</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Three side-by-side cards comparing antibody / TF-DNA / transformer */
+  .systems-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0 28px 0;
+  }
+  .system-card {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .system-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .system-icon svg {
+    width: 80px;
+    height: 80px;
+    color: var(--text);
+  }
+  .system-name {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    text-align: center;
+  }
+  .system-pair {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .system-pair .role {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .system-pair .agent, .system-pair .target {
+    margin-bottom: 8px;
+  }
+  .system-formula {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--rail);
+    text-align: center;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  /* Unifier — shows the common math underneath */
+  .unifier {
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    padding: 22px 28px;
+    text-align: center;
+    background: var(--accent-faint);
+    margin: 0 0 24px 0;
+  }
+  .unifier .lead {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .unifier .body {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .unifier .body strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Three Systems, One Problem</h1>
+  <div class="subtitle">MRC LECTURE 1 · SLIDE 5 · CONCEPTUAL OVERVIEW</div>
+
+  <div class="setup">
+    Three biological and computational systems that look completely different at first glance — antibody recognition, transcription factor binding, and transformer attention — all face the same mathematical challenge: <em>convert a set of compatibility scores into selection probabilities</em>.
+  </div>
+
+  <div class="systems-grid">
+
+    <!-- Card 1: antibody / antigen -->
+    <div class="system-card">
+      <div class="system-icon">
+        <!-- Y-shape antibody -->
+        <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+          <line x1="40" y1="70" x2="40" y2="48"/>
+          <line x1="40" y1="48" x2="22" y2="22"/>
+          <line x1="40" y1="48" x2="58" y2="22"/>
+          <circle cx="22" cy="22" r="4" fill="currentColor"/>
+          <circle cx="58" cy="22" r="4" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="system-name">Antibody → Antigen</div>
+      <div class="system-pair">
+        <div class="agent"><span class="role">Agent (q)</span>antibody CDR loops — surface features of the binding paratope</div>
+        <div class="target"><span class="role">Target (k)</span>antigen epitope — surface features of the target protein</div>
+      </div>
+      <div class="system-formula">score $= \mathbf{q} \cdot \mathbf{k}$</div>
+    </div>
+
+    <!-- Card 2: TF / DNA -->
+    <div class="system-card">
+      <div class="system-icon">
+        <!-- DNA double helix (simplified) -->
+        <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M 25 8 Q 55 22 25 36 Q -5 50 25 64 Q 55 78 25 92"/>
+          <path d="M 55 8 Q 25 22 55 36 Q 85 50 55 64 Q 25 78 55 92"/>
+          <line x1="35" y1="14" x2="45" y2="14" stroke-width="1.5"/>
+          <line x1="35" y1="29" x2="45" y2="29" stroke-width="1.5"/>
+          <line x1="35" y1="43" x2="45" y2="43" stroke-width="1.5"/>
+          <line x1="35" y1="57" x2="45" y2="57" stroke-width="1.5"/>
+          <line x1="35" y1="71" x2="45" y2="71" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="system-name">TF → DNA Site</div>
+      <div class="system-pair">
+        <div class="agent"><span class="role">Agent (q)</span>transcription factor's DNA-binding domain — positional preferences for nucleotides</div>
+        <div class="target"><span class="role">Target (k)</span>candidate DNA binding site — actual nucleotide identities</div>
+      </div>
+      <div class="system-formula">score $= \mathbf{q} \cdot \mathbf{k}$</div>
+    </div>
+
+    <!-- Card 3: transformer query/key -->
+    <div class="system-card">
+      <div class="system-icon">
+        <!-- Query-key attention diagram -->
+        <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="14" y1="40" x2="60" y2="14" stroke-width="1.5"/>
+          <line x1="14" y1="40" x2="60" y2="40" stroke-width="1.5"/>
+          <line x1="14" y1="40" x2="60" y2="66" stroke-width="1.5"/>
+          <circle cx="14" cy="40" r="6" fill="currentColor"/>
+          <circle cx="60" cy="14" r="5" fill="white"/>
+          <circle cx="60" cy="40" r="5" fill="white"/>
+          <circle cx="60" cy="66" r="5" fill="white"/>
+        </svg>
+      </div>
+      <div class="system-name">Query → Key</div>
+      <div class="system-pair">
+        <div class="agent"><span class="role">Agent (q)</span>transformer query vector — what the current token is looking for</div>
+        <div class="target"><span class="role">Target (k)</span>transformer key vector — what each candidate token offers</div>
+      </div>
+      <div class="system-formula">score $= \mathbf{q} \cdot \mathbf{k}$</div>
+    </div>
+
+  </div>
+
+  <div class="unifier">
+    <div class="lead">All three solve the same problem</div>
+    <div class="body">
+      Compute a score with <strong>$\mathbf{q} \cdot \mathbf{k}$</strong>, then convert all scores into a probability distribution with <strong>softmax</strong>.<br>
+      <em>Different molecules, different fields, identical math.</em>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Static demo — no internal state. Just escalate keys to parent when embedded.
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

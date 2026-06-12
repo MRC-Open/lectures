@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC Tutorial Course — Reddy Lab</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="mrc_styles.css">
+<style>
+  body { padding: 56px 32px 100px; }
+  .doc { max-width: 860px; margin: 0 auto; }
+
+  /* hero */
+  .hero { text-align: center; padding: 12px 0 28px 0; border-bottom: 1px solid var(--rule); }
+  .hero h1 { font-family: var(--font-sans); font-size: 38px; font-weight: 500; letter-spacing: -0.4px; margin: 0 0 8px 0; }
+  .hero .sub { font-family: var(--font-sans); color: var(--text-muted); font-size: 16px; font-style: italic; }
+  .hero .dates { font-family: var(--font-sans); font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-top: 14px; }
+
+  /* big CTAs */
+  .cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 30px 0 18px 0; }
+  .cta { display: block; text-decoration: none; border: 1.5px solid var(--rule); border-radius: 6px; padding: 18px 22px; color: var(--text); transition: all 0.15s; }
+  .cta:hover { border-color: var(--accent); color: var(--accent); }
+  .cta .lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+  .cta .t { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .cta .d { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+  /* sections */
+  h2.sec { font-family: var(--font-sans); font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -0.2px; margin: 44px 0 14px 0; padding-top: 18px; border-top: 1px solid var(--rule); }
+
+  /* session cards */
+  .session { border: 1px solid var(--rule); border-radius: 6px; padding: 22px 26px; margin: 16px 0; }
+  .session.live { border-color: var(--accent); }
+  .session-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .session-head .sn { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .session-head .dt { font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); }
+  .status { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; padding: 3px 9px; border-radius: 3px; }
+  .status.live { background: var(--accent); color: white; }
+  .status.upcoming { background: var(--rail); color: var(--text-muted); }
+  .status.preview { background: white; color: var(--accent); border: 1px solid var(--accent); }
+  .session-title { font-size: 21px; font-weight: 700; margin: 4px 0 4px 0; }
+  .session-tag { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+  .session-tag span { color: var(--accent); font-weight: 600; }
+
+  .links { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .link { display: block; text-decoration: none; border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; color: var(--text); transition: all 0.15s; background: white; }
+  .link:hover { border-color: var(--accent); color: var(--accent); }
+  .link.disabled { opacity: 0.4; pointer-events: none; }
+  .link .lk { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+  .link.disabled .lk { color: var(--text-muted); }
+  .link .lt { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  .link .ls { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
+
+  /* worksheets dropdown */
+  details.worksheets { margin-top: 14px; }
+  details.worksheets summary { cursor: pointer; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); padding: 4px 0; }
+  details.worksheets summary:hover { color: var(--accent); }
+  details.worksheets ul { list-style: none; padding: 6px 0 0 16px; margin: 0; font-size: 14px; line-height: 1.7; }
+  details.worksheets a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
+  details.worksheets a:hover { border-bottom-color: var(--accent); }
+
+  .note { font-size: 14px; color: var(--text-muted); font-style: italic; line-height: 1.6; padding: 14px 18px; background: var(--rail); border-radius: 4px; margin: 16px 0; }
+  .note strong { color: var(--accent); font-style: normal; font-weight: 700; }
+  .note code { background: white; padding: 1px 6px; border-radius: 3px; font-size: 13px; }
+
+  .closing { font-size: 16px; line-height: 1.75; font-style: italic; color: var(--text); margin: 24px 0 0 0; text-align: center; }
+
+  footer { margin-top: 50px; padding-top: 18px; border-top: 1px solid var(--rule); text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); letter-spacing: 0.4px; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <div class="hero">
+    <h1>Molecular Recognition Computing</h1>
+    <div class="sub">A Tutorial Course for the Reddy Lab — Sai T. Reddy</div>
+    <div class="sub">ETH Zurich · Botnar Institute of Immune Engineering</div>
+    <div class="dates">4 sessions · 12 Jun · 17 Jun · 19 Jun · 1 Jul 2026</div>
+  </div>
+
+  <div class="cta-row">
+    <a class="cta" href="MRC_Tutorial_Syllabus.html">
+      <div class="lbl">Start here</div>
+      <div class="t">Syllabus</div>
+      <div class="d">Why the course exists · what you'll learn · how the final project becomes a real publication.</div>
+    </a>
+    <a class="cta" href="#sessions">
+      <div class="lbl">The sessions</div>
+      <div class="t">Lectures &amp; materials</div>
+      <div class="d">Interactive decks · live whiteboard derivations · written derivation worksheets · session recordings.</div>
+    </a>
+  </div>
+
+  <div class="note">
+    <strong>How to use the materials.</strong> Each session deck is an interactive HTML presentation — open the link and you're in. Click <code>▶ Present</code> (or press <code>F</code>) for fullscreen; arrow keys to navigate. The derivation worksheets are downloadable Word documents — your written reference for the math. Recordings live on Google Drive.
+  </div>
+
+  <h2 id="sessions" class="sec">Sessions</h2>
+
+  <!-- ============ SESSION 1 ============ -->
+  <div class="session live">
+    <div class="session-head">
+      <span class="sn">Session 1</span>
+      <span class="dt">12 June 2026</span>
+      <span class="status live">Live</span>
+    </div>
+    <div class="session-title">Linear Algebra for Machine Learning and Molecular Recognition</div>
+    <div class="session-tag"><span>Lecture 1</span> · A molecule as a vector · dot products · matrix multiplication · cosine similarity · softmax with temperature</div>
+    <div class="links">
+      <a class="link" href="Session1_LinearAlgebra.html">
+        <div class="lk">▶ Open the deck</div>
+        <div class="lt">Interactive lecture</div>
+        <div class="ls">40 slides — demos &amp; animated proofs</div>
+      </a>
+      <a class="link" id="rec-l1" href="#" data-placeholder="Add Drive link via index.html">
+        <div class="lk">🎥 Recording</div>
+        <div class="lt">Session 1 Zoom</div>
+        <div class="ls">on Google Drive (link to be added)</div>
+      </a>
+      <a class="link" href="L1/L1_deck.html">
+        <div class="lk">📑 Backup deck</div>
+        <div class="lt">L1 standalone</div>
+        <div class="ls">no overview slides — just L1</div>
+      </a>
+    </div>
+    <details class="worksheets">
+      <summary>📥 Derivation worksheets (5 — written reference for the whiteboard math)</summary>
+      <ul>
+        <li><a href="L1/derivations/L1_WB1_DotProduct_final.docx">WB1 — The Dot Product: algebraic and geometric definitions</a></li>
+        <li><a href="L1/derivations/L1_WB2_MatrixMultiplication.docx">WB2 — Matrix Multiplication: the pairwise similarity matrix S = QKᵀ</a></li>
+        <li><a href="L1/derivations/L1_WB3_CosineSimilarity.docx">WB3 — Cosine Similarity &amp; L2 normalization</a></li>
+        <li><a href="L1/derivations/L1_WB4_Softmax.docx">WB4 — Softmax</a></li>
+        <li><a href="L1/derivations/L1_WB5_Temperature.docx">WB5 — Temperature: probability ratio = exp(δ/τ)</a></li>
+      </ul>
+    </details>
+  </div>
+
+  <!-- ============ SESSION 2 ============ -->
+  <div class="session">
+    <div class="session-head">
+      <span class="sn">Session 2</span>
+      <span class="dt">17 June 2026</span>
+      <span class="status preview">Preview · in progress</span>
+    </div>
+    <div class="session-title">Transformers &amp; Contrastive Learning</div>
+    <div class="session-tag"><span>Lectures 2 + 3</span> · attention · why √dₖ · multi-head · protein language models · CLIP → CALM · InfoNCE · symmetric loss</div>
+    <div class="links">
+      <a class="link" href="Session2_Transformers_Contrastive.html">
+        <div class="lk">▶ Preview the deck</div>
+        <div class="lt">Draft — work in progress</div>
+        <div class="ls">33 slides — final tuning before 17 Jun</div>
+      </a>
+      <span class="link disabled">
+        <div class="lk">🎥 Recording</div>
+        <div class="lt">After Session 2</div>
+        <div class="ls">available after 17 June</div>
+      </span>
+      <span class="link disabled">
+        <div class="lk">📥 Worksheets</div>
+        <div class="lt">Posted with the live deck</div>
+        <div class="ls">7 derivation guides (L2 + L3)</div>
+      </span>
+    </div>
+  </div>
+
+  <!-- ============ SESSION 3 ============ -->
+  <div class="session">
+    <div class="session-head">
+      <span class="sn">Session 3</span>
+      <span class="dt">19 June 2026</span>
+      <span class="status upcoming">Upcoming</span>
+    </div>
+    <div class="session-title">Thermodynamics &amp; Bilinearity</div>
+    <div class="session-tag"><span>Lectures 4 + 5</span> · Boltzmann from maximum entropy · K_d and ΔG · competitive binding as softmax · SantaLucia · PWMs · the encoding problem</div>
+    <div class="links">
+      <span class="link disabled">
+        <div class="lk">▶ Deck</div>
+        <div class="lt">In preparation</div>
+        <div class="ls">posted before 19 June</div>
+      </span>
+      <span class="link disabled">
+        <div class="lk">🎥 Recording</div>
+        <div class="lt">After Session 3</div>
+        <div class="ls">available after 19 June</div>
+      </span>
+      <span class="link disabled">
+        <div class="lk">📥 Worksheets</div>
+        <div class="lt">In preparation</div>
+        <div class="ls">6 derivation guides (L4 + L5)</div>
+      </span>
+    </div>
+  </div>
+
+  <!-- ============ SESSION 4 ============ -->
+  <div class="session">
+    <div class="session-head">
+      <span class="sn">Session 4</span>
+      <span class="dt">1 July 2026</span>
+      <span class="status upcoming">Upcoming</span>
+    </div>
+    <div class="session-title">The Convergence Equation, the SFM Architecture &amp; the Ten Domains</div>
+    <div class="session-tag"><span>Lecture 6</span> · Luce's choice axiom · the elimination proof · the SFM architecture from five physical conditions · the ten domains</div>
+    <div class="links">
+      <span class="link disabled">
+        <div class="lk">▶ Deck</div>
+        <div class="lt">In preparation</div>
+        <div class="ls">posted before 1 July</div>
+      </span>
+      <span class="link disabled">
+        <div class="lk">🎥 Recording</div>
+        <div class="lt">After Session 4</div>
+        <div class="ls">available after 1 July</div>
+      </span>
+      <span class="link disabled">
+        <div class="lk">📥 Worksheets</div>
+        <div class="lt">In preparation</div>
+      </span>
+    </div>
+  </div>
+
+  <h2 class="sec">Final project — build your own SFM</h2>
+  <p style="line-height: 1.7;">After Session 4, each of you builds your own Specificity Foundation Model on your own data, using <strong style="color: var(--accent);">Claude Code</strong> with the <code>mrc-sfm-template</code> as the starting scaffold. The finished project is a real, citable research artifact — equivalent to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">GenLoop</a> — with a Zenodo DOI, Hugging Face weights, and a permanent home in the <strong style="color: var(--accent);">MRC-Open</strong> community. See <a href="MRC_Tutorial_Syllabus.html#sessions" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">Section 6 of the syllabus</a> for the full infrastructure and the publication / patent path.</p>
+
+  <div class="links" style="grid-template-columns: 1fr 1fr; margin-top: 18px;">
+    <span class="link disabled">
+      <div class="lk">📦 The template</div>
+      <div class="lt">mrc-sfm-template</div>
+      <div class="ls">coming soon — published before the final project window</div>
+    </span>
+    <span class="link disabled">
+      <div class="lk">📚 The archive</div>
+      <div class="lt">MRC-Open · MRC-ETHZ-BIIE</div>
+      <div class="ls">community home for all finished SFMs</div>
+    </span>
+  </div>
+
+  <p class="closing">Anyone in the lab can take this course. The math is at the level of college algebra and basic calculus. You do not need to know how to code — that is what Claude Code is for. The only thing you need is your own domain expertise and your own data.</p>
+
+  <footer>
+    Sai T. Reddy · ETH Zurich · Botnar Institute of Immune Engineering · 2026<br>
+    Part of <strong>MRC-Open</strong> — the open community for Specificity Foundation Models.
+  </footer>
+
+</div>
+
+</body>
+</html>

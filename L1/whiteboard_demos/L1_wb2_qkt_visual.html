@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Why S = QKᵀ (algebra + matrix)</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  body { padding-bottom: 116px; }
+  .panels { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 40px; align-items: start; margin-top: 14px; }
+
+  /* left: algebra */
+  .claim {
+    border-left: 3px solid var(--accent); background: white; padding: 12px 20px; margin-bottom: 20px;
+  }
+  .claim .lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 500; display:block; margin-bottom: 4px; }
+  .claim .eq { font-size: 20px; }
+  .astep {
+    border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; margin-bottom: 12px;
+    opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s;
+  }
+  .astep.on { opacity: 1; transform: none; }
+  .astep.cur { border-color: var(--accent); background: var(--accent-faint); }
+  .astep .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .astep .eq { font-size: 18px; }
+  .astep .note { font-size: 13px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+
+  /* right: matrices */
+  .vis { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+  .block { text-align: center; }
+  .block-title { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px; }
+  .mat { display: inline-grid; gap: 4px; font-family: var(--font-serif); }
+  .clab, .rlab { font-size: 12px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .clab.mol, .rlab.mol { color: var(--accent); font-weight: 700; }
+  .cell { width: 42px; height: 34px; border:1.5px solid var(--rule); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:16px; font-variant-numeric: tabular-nums; color: var(--text); transition: background 0.2s; }
+  .cell.hl { background: #f1ebf8; }
+  .cell.hlstrong { background: var(--accent); color:#fff; font-weight:700; }
+  .op { font-family: var(--font-serif); font-size: 24px; color: var(--text-muted); align-self: center; }
+  .vis-calc { width:100%; text-align:center; margin-top:18px; font-family: var(--font-serif); font-size: 18px; min-height: 28px; font-variant-numeric: tabular-nums; }
+  .vis-calc .res { color: var(--accent); font-weight: 700; font-size: 22px; }
+  .vis-calc .mut { color: var(--text-muted); }
+  .vis-note { text-align:center; font-size:13px; color:var(--text-muted); font-style:italic; margin-top:14px; }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.5; }
+  .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btns .primary:hover:not(:disabled) { background: #4d2f87; color: white; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Why $S = QK^\top$ Gives Every Pairwise Score</h1>
+  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD + MATRIX · THE ALGEBRA ON THE LEFT, THE PICTURE ON THE RIGHT</div>
+
+  <div class="panels">
+    <div class="algebra">
+      <div class="claim">
+        <span class="lab">Claim</span>
+        <div class="eq">$$S_{ij} = \mathbf{q}_i \cdot \mathbf{k}_j$$</div>
+      </div>
+      <div class="astep" data-s="1"><div class="lab">Step 1 · definition of matrix multiplication</div><div class="eq">$S_{ij} = (QK^\top)_{ij} = \sum_{l} Q_{il}\,(K^\top)_{lj}$</div><div class="note">row $i$ of $Q$, against column $j$ of $K^\top$</div></div>
+      <div class="astep" data-s="2"><div class="lab">Step 2 · the transpose only swaps indices</div><div class="eq">$(K^\top)_{lj} = K_{jl}$</div><div class="note">column $j$ of $K^\top$ is just row $j$ of $K$ — antigen $j$'s own vector</div></div>
+      <div class="astep" data-s="3"><div class="lab">Step 3 · substitute</div><div class="eq">$S_{ij} = \sum_{l} Q_{il}\,K_{jl}$</div></div>
+      <div class="astep" data-s="4"><div class="lab">Step 4 · that sum is a dot product &nbsp;∎</div><div class="eq">$S_{ij} = \mathbf{q}_i \cdot \mathbf{k}_j$</div></div>
+    </div>
+
+    <div class="visarea">
+      <div class="vis" id="vis"></div>
+      <div class="vis-calc" id="viscalc"></div>
+      <div class="vis-note">Rows are indexed by $i$ (antibodies), columns by $j$ (antigens). The outlined cell is $i = 1$ (Ab₁), $j = 3$ (Ag₃).</div>
+    </div>
+  </div>
+</div>
+
+<div class="control-bar">
+  <div class="inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="btns">
+      <button id="prevBtn">← Back</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const FEAT = ['e','s','h','b'];
+  const AB = ['i = 1','i = 2','i = 3'], AG = ['j = 1','j = 2','j = 3'];
+  const Q = [[2,1,3,0],[1,0,2,2],[0,3,1,1]];
+  const K = [[2,0,1,1],[1,2,0,1],[0,1,3,0]];
+  const Kt = FEAT.map((_,f) => K.map(r => r[f]));
+  const I = 0, J = 2;                       // highlighted example: Ab₁ · Ag₃
+  const q = Q[I], k = K[J];
+  const dot = q.reduce((s,_,l)=> s + q[l]*k[l], 0);
+  const S = Q.map(qi => K.map(kj => qi.reduce((s,_,l)=>s+qi[l]*kj[l],0)));
+
+  function mat(data, rLab, cLab, opts={}) {
+    const nr=data.length, nc=data[0].length, hr=opts.hlRows||[], hcl=opts.hlCols||[], hc=opts.hlCell;
+    let h = `<div class="mat" style="grid-template-columns:${cLab?'auto ':''}repeat(${nc},42px);">`;
+    if (cLab){ h+=`<div></div>`; cLab.forEach(c=> h+=`<div class="clab ${opts.cMol?'mol':''}">${c}</div>`); }
+    for(let r=0;r<nr;r++){
+      if (rLab) h+=`<div class="rlab ${opts.rMol?'mol':''}">${rLab[r]}</div>`;
+      for(let c=0;c<nc;c++){
+        let cls='cell';
+        if (hc && hc[0]===r && hc[1]===c) cls+=' hlstrong';
+        else if (hr.includes(r)||hcl.includes(c)) cls+=' hl';
+        h+=`<div class="${cls}">${data[r][c]}</div>`;
+      }
+    }
+    return h+`</div>`;
+  }
+  const block = (t,m)=>`<div class="block"><div class="block-title">${t}</div>${m}</div>`;
+
+  function renderVis() {
+    document.getElementById('vis').innerHTML =
+        block('<span style="color:var(--accent)">Q</span>', mat(Q, AB, FEAT, {rMol:true, hlRows:[I]}))
+      + `<div class="op">×</div>`
+      + block('<span style="color:var(--accent)">Kᵀ</span>', mat(Kt, FEAT, AG, {cMol:true, hlCols:[J]}))
+      + `<div class="op">=</div>`
+      + block('<span style="color:var(--accent)">S</span>', mat(S, AB, AG, {rMol:true, cMol:true, hlCell:[I,J]}));
+  }
+
+  const STEPS = [
+    { reveal:0, caption:`Goal: show that <strong>every cell of S is a dot product</strong>. On the right, the outlined cell of S comes from the purple row of Q and the purple column of Kᵀ. Press <strong>Next</strong>.`, calc:0 },
+    { reveal:1, caption:`<strong>Step 1.</strong> By the definition of matrix multiplication, cell $(i,j)$ is row $i$ of Q against column $j$ of $K^\\top$ — a sum over the shared index $l$.`, calc:0 },
+    { reveal:2, caption:`<strong>Step 2.</strong> The transpose only relabels: column $j$ of $K^\\top$ is exactly row $j$ of K — antigen $j$'s own feature vector, stood upright.`, calc:0 },
+    { reveal:3, caption:`<strong>Step 3.</strong> So the cell is a sum of products: multiply the purple row and purple column entry-by-entry.`, calc:1 },
+    { reveal:4, caption:`<strong>Step 4.</strong> Add them up — that sum <em>is</em> the dot product $\\mathbf{q}_i\\cdot\\mathbf{k}_j = ${dot}$. Every cell of S works exactly this way. ∎`, calc:2 },
+  ];
+
+  let step = 0;
+  const caption = document.getElementById('caption');
+  const counter = document.getElementById('counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const viscalc = document.getElementById('viscalc');
+
+  function show(n) {
+    step = Math.max(0, Math.min(STEPS.length-1, n));
+    const st = STEPS[step];
+    document.querySelectorAll('.astep').forEach(el => {
+      const s = parseInt(el.dataset.s);
+      el.classList.toggle('on', s <= st.reveal);
+      el.classList.toggle('cur', s === st.reveal);
+    });
+    // products line
+    if (st.calc === 0) viscalc.innerHTML = '';
+    else if (st.calc === 1) viscalc.innerHTML = `<span class="mut">q₁ · k₃ =</span> ${q.map((v,l)=>`(${v})(${k[l]})`).join(' + ')}`;
+    else viscalc.innerHTML = `<span class="mut">q₁ · k₃ =</span> ${q.map((v,l)=>v*k[l]).join(' + ')} = <span class="res">${dot}</span>`;
+
+    caption.innerHTML = st.caption;
+    counter.textContent = `STEP ${step} / ${STEPS.length-1}`;
+    prevBtn.disabled = step === 0;
+    nextBtn.disabled = step === STEPS.length-1;
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.querySelector('.algebra'), caption, viscalc]);
+  }
+  function next(){ if (step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if (step>0) show(step-1); else esc('prev'); }
+  function esc(d){ if (window.parent && window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
+  document.getElementById('resetBtn').addEventListener('click', () => show(0));
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+    if (['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft','PageUp','ArrowUp'].includes(e.key)) { e.preventDefault(); prev(); }
+  });
+
+  renderVis();
+  show(0);
+</script>
+
+</body>
+</html>

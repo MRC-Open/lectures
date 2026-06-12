@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — Cosine Similarity, Magnitude vs Direction</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Side-by-side layout: plot left, readouts + presets right */
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+    margin: 12px 0 24px 0;
+  }
+  .plot-col, .control-col { min-width: 0; }
+  .control-col { display: flex; flex-direction: column; gap: 14px; }
+
+  .plot-wrap {
+    background: white;
+    user-select: none;
+    touch-action: none;
+  }
+  svg.plot { display: block; width: 100%; height: auto; }
+  .grid-line   { stroke: var(--rail); stroke-width: 1; }
+  .axis-line   { stroke: var(--rule); stroke-width: 1.2; }
+  .unit-circle { fill: none; stroke: var(--rule); stroke-width: 1; stroke-dasharray: 4 4; }
+  .vec-a    { stroke: var(--text); stroke-width: 2.4; fill: none; }
+  .unit-a   { stroke: var(--text); stroke-width: 1.5; fill: none; stroke-dasharray: 2 3; }
+  .dot-a    { fill: var(--text); }
+  .handle-a { fill: white; stroke: var(--text); stroke-width: 2; cursor: grab; }
+  .handle-a:active { cursor: grabbing; fill: var(--text); }
+  .vec-b    { stroke: var(--accent); stroke-width: 2.6; fill: none; }
+  .unit-b   { stroke: var(--accent); stroke-width: 1.5; fill: none; stroke-dasharray: 2 3; }
+  .dot-b    { fill: var(--accent); }
+  .handle-b { fill: white; stroke: var(--accent); stroke-width: 2.2; cursor: grab; }
+  .handle-b:active { cursor: grabbing; fill: var(--accent); }
+  .vec-label {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .vec-label.a { fill: var(--text); }
+  .vec-label.b { fill: var(--accent); }
+  .axis-tick { font-family: var(--font-serif); font-size: 12px; fill: var(--text-muted); }
+
+  .hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 14px;
+    margin: 14px 0 0 0;
+  }
+
+  /* Readout panels — stacked in right column */
+  .readout-col {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 20px;
+  }
+  .readout-col.highlight { border-color: var(--accent); }
+  .readout-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .readout-col.highlight .readout-label { color: var(--accent); }
+  .readout-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--rail);
+    font-size: 16px;
+  }
+  .readout-row:last-child { border-bottom: none; }
+  .readout-row.big {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--text);
+    border-bottom: none;
+    font-size: 17px;
+  }
+  .r-key   { color: var(--text-muted); font-style: italic; }
+  .r-val {
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .r-val.live {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 22px;
+  }
+
+  .preset-row { margin-top: 6px; justify-content: flex-start; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Cosine Similarity — Magnitude vs Direction</h1>
+  <div class="subtitle">MRC LECTURE 1 · SLIDE 13 · INTERACTIVE DEMO</div>
+
+  <div class="formula">$$\hat{\mathbf{a}} \cdot \hat{\mathbf{b}} \;=\; \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\|\,\|\mathbf{b}\|} \;=\; \cos\theta$$</div>
+
+  <div class="setup">
+    Drag the tips of $\mathbf{a}$ (black) and $\mathbf{b}$ (purple), or use the preset buttons to scale them. The dashed circle is the <em>unit hypersphere</em> — the L2-normalized $\hat{\mathbf{a}}$ and $\hat{\mathbf{b}}$ always land on it. Watch what changes — and what doesn't — when you scale.
+  </div>
+
+  <div class="main-row">
+
+    <div class="plot-col">
+      <div class="plot-wrap">
+        <svg class="plot" viewBox="0 0 500 500" id="plot">
+          <g id="grid"></g>
+          <g id="axes"></g>
+          <circle class="unit-circle" id="unitCircle" cx="250" cy="250" r="50"/>
+          <line id="vecA" class="vec-a" x1="0" y1="0" x2="0" y2="0" marker-end="url(#arrowA)"/>
+          <line id="vecB" class="vec-b" x1="0" y1="0" x2="0" y2="0" marker-end="url(#arrowB)"/>
+          <line id="unitA" class="unit-a" x1="0" y1="0" x2="0" y2="0"/>
+          <line id="unitB" class="unit-b" x1="0" y1="0" x2="0" y2="0"/>
+          <circle id="dotA" class="dot-a" cx="0" cy="0" r="3"/>
+          <circle id="dotB" class="dot-b" cx="0" cy="0" r="3"/>
+          <text id="labelA" class="vec-label a" x="0" y="0">a</text>
+          <text id="labelB" class="vec-label b" x="0" y="0">b</text>
+          <circle id="handleA" class="handle-a" cx="0" cy="0" r="9"/>
+          <circle id="handleB" class="handle-b" cx="0" cy="0" r="10"/>
+          <defs>
+            <marker id="arrowA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+            </marker>
+            <marker id="arrowB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5e3aa3"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+      <div class="hint">Drag the tips, or use the buttons →</div>
+    </div>
+
+    <div class="control-col">
+
+      <div class="readout-col">
+        <div class="readout-label">Without normalization</div>
+        <div class="readout-row"><span class="r-key">‖<em>a</em>‖</span><span class="r-val" id="aNorm">—</span></div>
+        <div class="readout-row"><span class="r-key">‖<em>b</em>‖</span><span class="r-val" id="bNorm">—</span></div>
+        <div class="readout-row big"><span class="r-key"><em>a</em> · <em>b</em></span><span class="r-val live" id="aDotB">—</span></div>
+      </div>
+
+      <div class="readout-col highlight">
+        <div class="readout-label">With L2 normalization</div>
+        <div class="readout-row"><span class="r-key">‖<em>â</em>‖</span><span class="r-val">1.00</span></div>
+        <div class="readout-row"><span class="r-key">‖<em>b̂</em>‖</span><span class="r-val">1.00</span></div>
+        <div class="readout-row big"><span class="r-key"><em>â</em> · <em>b̂</em>  =  cos θ</span><span class="r-val live" id="cosT">—</span></div>
+      </div>
+
+      <div class="preset-row">
+        <button class="preset-btn" id="resetBtn">Reset</button>
+        <button class="preset-btn" data-action="scaleA2">Scale <em>a</em> × 2</button>
+        <button class="preset-btn" data-action="scaleAhalf">Scale <em>a</em> × ½</button>
+        <button class="preset-btn" data-action="scaleB2">Scale <em>b</em> × 2</button>
+        <button class="preset-btn" data-action="scaleBhalf">Scale <em>b</em> × ½</button>
+        <button class="preset-btn" data-action="orthogonal">Orthogonal</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footnote">
+    <span class="label">CLIP & CALM</span>
+    Both architectures L2-normalize all embeddings before computing pairwise similarities. After normalization, the cheapest similarity operation — the dot product — gives exactly the cosine similarity. There is no extra computational cost to removing magnitude dependence.
+  </div>
+
+</div>
+
+<script>
+  const SVG_SIZE = 500;
+  const CENTER   = SVG_SIZE / 2;
+  const SCALE    = 50;
+  const RANGE    = 4.5;
+
+  function mathToSvg(x, y) { return [CENTER + x * SCALE, CENTER - y * SCALE]; }
+  function svgToMath(px, py) { return [(px - CENTER) / SCALE, (CENTER - py) / SCALE]; }
+
+  const A_INIT = { x: 2.0, y: 1.0 };
+  const B_INIT = { x: 1.0, y: 2.0 };
+  let A = { ...A_INIT };
+  let B = { ...B_INIT };
+
+  const svg     = document.getElementById('plot');
+  const handleA = document.getElementById('handleA');
+  const handleB = document.getElementById('handleB');
+  const vecAEl  = document.getElementById('vecA');
+  const vecBEl  = document.getElementById('vecB');
+  const unitAEl = document.getElementById('unitA');
+  const unitBEl = document.getElementById('unitB');
+  const dotAEl  = document.getElementById('dotA');
+  const dotBEl  = document.getElementById('dotB');
+  const labelA  = document.getElementById('labelA');
+  const labelB  = document.getElementById('labelB');
+  const gridG   = document.getElementById('grid');
+  const axesG   = document.getElementById('axes');
+
+  function drawGrid() {
+    gridG.innerHTML = ''; axesG.innerHTML = '';
+    for (let i = -4; i <= 4; i++) {
+      if (i === 0) continue;
+      const [x1, y1] = mathToSvg(i, -RANGE);
+      const [x2, y2] = mathToSvg(i,  RANGE);
+      gridG.insertAdjacentHTML('beforeend', `<line class="grid-line" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+      const [hx1, hy1] = mathToSvg(-RANGE, i);
+      const [hx2, hy2] = mathToSvg( RANGE, i);
+      gridG.insertAdjacentHTML('beforeend', `<line class="grid-line" x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}"/>`);
+    }
+    const [ax1, ay1] = mathToSvg(-RANGE, 0);
+    const [ax2, ay2] = mathToSvg( RANGE, 0);
+    axesG.insertAdjacentHTML('beforeend', `<line class="axis-line" x1="${ax1}" y1="${ay1}" x2="${ax2}" y2="${ay2}"/>`);
+    const [bx1, by1] = mathToSvg(0, -RANGE);
+    const [bx2, by2] = mathToSvg(0,  RANGE);
+    axesG.insertAdjacentHTML('beforeend', `<line class="axis-line" x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}"/>`);
+    [-4, -2, 2, 4].forEach(v => {
+      const [tx, ty]   = mathToSvg(v, 0);
+      axesG.insertAdjacentHTML('beforeend', `<text class="axis-tick" x="${tx}" y="${ty + 16}" text-anchor="middle">${v}</text>`);
+      const [tx2, ty2] = mathToSvg(0, v);
+      axesG.insertAdjacentHTML('beforeend', `<text class="axis-tick" x="${tx2 - 9}" y="${ty2 + 4}" text-anchor="end">${v}</text>`);
+    });
+  }
+
+  function dot(u, v) { return u.x*v.x + u.y*v.y; }
+  function norm(u)   { return Math.sqrt(u.x*u.x + u.y*u.y); }
+
+  function render() {
+    const [oX, oY] = mathToSvg(0, 0);
+
+    const [ax, ay] = mathToSvg(A.x, A.y);
+    vecAEl.setAttribute('x1', oX); vecAEl.setAttribute('y1', oY);
+    vecAEl.setAttribute('x2', ax); vecAEl.setAttribute('y2', ay);
+    handleA.setAttribute('cx', ax); handleA.setAttribute('cy', ay);
+    const aLen = norm(A);
+    if (aLen > 0.05) {
+      const aLab = mathToSvg(A.x + 0.34 * A.x/aLen, A.y + 0.34 * A.y/aLen);
+      labelA.setAttribute('x', aLab[0]); labelA.setAttribute('y', aLab[1] + 5);
+      const ahat = { x: A.x/aLen, y: A.y/aLen };
+      const [hax, hay] = mathToSvg(ahat.x, ahat.y);
+      unitAEl.setAttribute('x1', oX); unitAEl.setAttribute('y1', oY);
+      unitAEl.setAttribute('x2', hax); unitAEl.setAttribute('y2', hay);
+      dotAEl.setAttribute('cx', hax); dotAEl.setAttribute('cy', hay);
+    }
+
+    const [bx, by] = mathToSvg(B.x, B.y);
+    vecBEl.setAttribute('x1', oX); vecBEl.setAttribute('y1', oY);
+    vecBEl.setAttribute('x2', bx); vecBEl.setAttribute('y2', by);
+    handleB.setAttribute('cx', bx); handleB.setAttribute('cy', by);
+    const bLen = norm(B);
+    if (bLen > 0.05) {
+      const bLab = mathToSvg(B.x + 0.36 * B.x/bLen, B.y + 0.36 * B.y/bLen);
+      labelB.setAttribute('x', bLab[0]); labelB.setAttribute('y', bLab[1] + 5);
+      const bhat = { x: B.x/bLen, y: B.y/bLen };
+      const [hbx, hby] = mathToSvg(bhat.x, bhat.y);
+      unitBEl.setAttribute('x1', oX); unitBEl.setAttribute('y1', oY);
+      unitBEl.setAttribute('x2', hbx); unitBEl.setAttribute('y2', hby);
+      dotBEl.setAttribute('cx', hbx); dotBEl.setAttribute('cy', hby);
+    }
+
+    document.getElementById('aNorm').textContent = aLen.toFixed(2);
+    document.getElementById('bNorm').textContent = bLen.toFixed(2);
+    document.getElementById('aDotB').textContent = dot(A, B).toFixed(2);
+    const cosT = (aLen < 1e-6 || bLen < 1e-6) ? 0 : dot(A, B) / (aLen * bLen);
+    document.getElementById('cosT').textContent = cosT.toFixed(3);
+  }
+
+  function getMathPoint(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    const local = pt.matrixTransform(ctm);
+    return svgToMath(local.x, local.y);
+  }
+  function attachDrag(handle, target) {
+    let dragging = false;
+    handle.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const [mx, my] = getMathPoint(e);
+      target.x = Math.max(-RANGE, Math.min(RANGE, mx));
+      target.y = Math.max(-RANGE, Math.min(RANGE, my));
+      render();
+    });
+    handle.addEventListener('pointerup',    () => { dragging = false; });
+    handle.addEventListener('pointercancel',() => { dragging = false; });
+  }
+  attachDrag(handleA, A);
+  attachDrag(handleB, B);
+
+  function scaleVec(v, factor) {
+    v.x = Math.max(-RANGE, Math.min(RANGE, v.x * factor));
+    v.y = Math.max(-RANGE, Math.min(RANGE, v.y * factor));
+  }
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    A = { ...A_INIT }; B = { ...B_INIT }; render();
+  });
+  document.querySelectorAll('.preset-btn[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      if (action === 'scaleA2')    scaleVec(A, 2);
+      if (action === 'scaleAhalf') scaleVec(A, 0.5);
+      if (action === 'scaleB2')    scaleVec(B, 2);
+      if (action === 'scaleBhalf') scaleVec(B, 0.5);
+      if (action === 'orthogonal') {
+        const aLen = norm(A);
+        if (aLen > 0.01) {
+          const bLen = norm(B);
+          B.x = -A.y/aLen * bLen;
+          B.y =  A.x/aLen * bLen;
+          B.x = Math.max(-RANGE, Math.min(RANGE, B.x));
+          B.y = Math.max(-RANGE, Math.min(RANGE, B.y));
+        }
+      }
+      render();
+    });
+  });
+
+  drawGrid();
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

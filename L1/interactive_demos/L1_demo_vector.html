@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — A Molecule Is a Vector</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* A molecule is a vector: amino-acid property profiles (bars) + property
+     space (2D arrows). Builds the "list of numbers = direction in space" idea. */
+
+  .aa-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 4px 0; }
+  .aa-chip {
+    font-family: var(--font-serif); font-size: 18px;
+    padding: 10px 16px; border: 1.5px solid var(--rule); border-radius: 6px; cursor: pointer;
+    transition: all 0.15s; text-align: center; min-width: 58px; color: var(--text);
+  }
+  .aa-chip .code { font-weight: 700; font-size: 20px; display: block; }
+  .aa-chip .nm { font-size: 11px; color: var(--text-muted); }
+  .aa-chip:hover { border-color: var(--accent); }
+  .aa-chip.sel { border-color: var(--accent); border-width: 2.5px; background: var(--accent-faint); }
+  .hint { text-align: center; color: var(--text-muted); font-style: italic; font-size: 14px; margin: 8px 0 22px 0; }
+
+  .main-row { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; margin-bottom: 18px; }
+  .panel-label { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; margin-bottom: 14px; }
+
+  /* property bars */
+  .prop-row { display: grid; grid-template-columns: 120px 1fr 64px; gap: 12px; align-items: center; padding: 9px 0; font-size: 15px; }
+  .prop-row .pn { font-family: var(--font-serif); color: var(--text); }
+  .bar-track { height: 22px; background: var(--rail); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); transition: width 0.22s ease-out; }
+  .prop-row .pv { font-family: var(--font-serif); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; text-align: right; }
+  .vec-readout {
+    text-align: center; font-family: var(--font-serif); font-size: 20px; margin-top: 16px;
+    padding-top: 14px; border-top: 1px solid var(--rail);
+  }
+  .vec-readout .nm { color: var(--text); font-style: italic; }
+  .vec-readout .vv { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* 2D plot */
+  .plot-wrap { background: white; }
+  svg.plot { display: block; width: 100%; height: auto; }
+  .axis-line { stroke: var(--rule); stroke-width: 1.2; }
+  .axis-cap { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.4px; fill: var(--text-muted); text-transform: uppercase; }
+  .pt { fill: var(--text-muted); opacity: 0.5; }
+  .pt-label { font-family: var(--font-serif); font-size: 13px; fill: var(--text-muted); opacity: 0.7; }
+  .vec-arrow { stroke: var(--accent); stroke-width: 2.6; fill: none; }
+  .pt.sel { fill: var(--accent); opacity: 1; }
+  .pt-label.sel { fill: var(--accent); opacity: 1; font-weight: 700; }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 6px; font-size: 16px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>A Molecule Is a Vector</h1>
+  <div class="subtitle">MRC LECTURE 1 · INTERACTIVE DEMO · WHAT A VECTOR REALLY IS</div>
+
+  <div class="setup">
+    Describe an amino acid by its physical properties — hydrophobicity, size, charge, polarity. That ordered list of numbers <em>is</em> a vector. Click a residue: see its property list (left) and where those numbers place it as an arrow in "property space" (right).
+  </div>
+
+  <div class="aa-row" id="chips"></div>
+  <div class="hint">Each property is one coordinate. Similar residues → similar lists → arrows pointing the same way.</div>
+
+  <div class="main-row">
+    <div>
+      <div class="panel-label">The property vector</div>
+      <div id="bars"></div>
+      <div class="vec-readout" id="vecReadout"></div>
+    </div>
+    <div>
+      <div class="panel-label">Property space — the same numbers as a direction</div>
+      <div class="plot-wrap">
+        <svg class="plot" viewBox="0 0 460 360" id="plot">
+          <g id="axes"></g>
+          <g id="points"></g>
+          <line id="arrow" class="vec-arrow" x1="0" y1="0" x2="0" y2="0" marker-end="url(#ah)"/>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5e3aa3"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bridge">
+    Turning a molecule into a list of numbers turns biology into <strong>geometry</strong>. Two residues that point the same way share properties — and that "pointing the same way" is exactly what the <strong>dot product</strong> measures next.
+  </div>
+
+</div>
+
+<script>
+  // 6 amino acids, four properties. (Kyte–Doolittle hydropathy; residue volume Å³.)
+  const AA = [
+    { code:'L', name:'Leucine',       hyd: 3.8, vol:167, charge: 0, polar:0 },
+    { code:'V', name:'Valine',        hyd: 4.2, vol:140, charge: 0, polar:0 },
+    { code:'F', name:'Phenylalanine', hyd: 2.8, vol:190, charge: 0, polar:0 },
+    { code:'G', name:'Glycine',       hyd:-0.4, vol: 60, charge: 0, polar:0 },
+    { code:'K', name:'Lysine',        hyd:-3.9, vol:169, charge:+1, polar:1 },
+    { code:'D', name:'Aspartate',     hyd:-3.5, vol:111, charge:-1, polar:1 },
+  ];
+  let sel = 0;
+
+  const PROPS = [
+    { key:'hyd',    label:'Hydrophobicity', fmt: v=>v.toFixed(1) },
+    { key:'vol',    label:'Volume (Å³)',    fmt: v=>v.toFixed(0) },
+    { key:'charge', label:'Charge',         fmt: v=>(v>0?'+':'')+v.toFixed(0) },
+    { key:'polar',  label:'Polarity',       fmt: v=>v.toFixed(0) },
+  ];
+  // min/max per property for bar normalization
+  const RANGE = {};
+  PROPS.forEach(p => {
+    const vals = AA.map(a => a[p.key]);
+    RANGE[p.key] = { min: Math.min(...vals), max: Math.max(...vals) };
+  });
+  function norm(p, v) { const r = RANGE[p]; return r.max === r.min ? 0.5 : (v - r.min) / (r.max - r.min); }
+
+  // z-scores for the two plotted properties (hyd, vol)
+  function zstats(key) {
+    const vals = AA.map(a => a[key]);
+    const mean = vals.reduce((s,x)=>s+x,0)/vals.length;
+    const sd = Math.sqrt(vals.reduce((s,x)=>s+(x-mean)**2,0)/vals.length);
+    return { mean, sd };
+  }
+  const ZX = zstats('hyd'), ZY = zstats('vol');
+  const zx = a => (a.hyd - ZX.mean)/ZX.sd;
+  const zy = a => (a.vol - ZY.mean)/ZY.sd;
+
+  // plot geometry
+  const PX0=44, PX1=416, PY0=24, PY1=316, ZMIN=-2.3, ZMAX=2.3;
+  const mapX = z => PX0 + (z - ZMIN)/(ZMAX-ZMIN)*(PX1-PX0);
+  const mapY = z => PY1 - (z - ZMIN)/(ZMAX-ZMIN)*(PY1-PY0);
+
+  const chipsEl = document.getElementById('chips');
+  const barsEl = document.getElementById('bars');
+  const axesEl = document.getElementById('axes');
+  const pointsEl = document.getElementById('points');
+  const arrowEl = document.getElementById('arrow');
+
+  function buildChips() {
+    chipsEl.innerHTML = AA.map((a,i) =>
+      `<div class="aa-chip" data-i="${i}"><span class="code">${a.code}</span><span class="nm">${a.name}</span></div>`
+    ).join('');
+    chipsEl.querySelectorAll('.aa-chip').forEach(el =>
+      el.addEventListener('click', () => { sel = parseInt(el.dataset.i); render(); }));
+  }
+
+  function drawAxes() {
+    const ox = mapX(0), oy = mapY(0);
+    let h = '';
+    h += `<line class="axis-line" x1="${PX0}" y1="${oy}" x2="${PX1}" y2="${oy}"/>`;
+    h += `<line class="axis-line" x1="${ox}" y1="${PY0}" x2="${ox}" y2="${PY1}"/>`;
+    h += `<text class="axis-cap" x="${PX1-2}" y="${oy-8}" text-anchor="end">hydrophobic →</text>`;
+    h += `<text class="axis-cap" x="${PX0+2}" y="${oy-8}" text-anchor="start">← polar / charged</text>`;
+    h += `<text class="axis-cap" x="${ox+8}" y="${PY0+12}" text-anchor="start">bulky ↑</text>`;
+    h += `<text class="axis-cap" x="${ox+8}" y="${PY1-4}" text-anchor="start">small ↓</text>`;
+    axesEl.innerHTML = h;
+  }
+
+  function render() {
+    const a = AA[sel];
+
+    // bars
+    barsEl.innerHTML = PROPS.map(p =>
+      `<div class="prop-row">
+         <div class="pn">${p.label}</div>
+         <div class="bar-track"><div class="bar-fill" style="width:${(norm(p.key, a[p.key])*100).toFixed(1)}%"></div></div>
+         <div class="pv">${p.fmt(a[p.key])}</div>
+       </div>`
+    ).join('');
+    document.getElementById('vecReadout').innerHTML =
+      `<span class="nm">${a.name}</span> = <span class="vv">[ ${a.hyd.toFixed(1)}, ${a.vol.toFixed(0)}, ${(a.charge>0?'+':'')+a.charge}, ${a.polar} ]</span>`;
+
+    // points
+    pointsEl.innerHTML = AA.map((m,i) => {
+      const px = mapX(zx(m)), py = mapY(zy(m));
+      const s = i === sel ? ' sel' : '';
+      return `<circle class="pt${s}" cx="${px}" cy="${py}" r="${i===sel?6:5}"/>` +
+             `<text class="pt-label${s}" x="${px+9}" y="${py+4}">${m.code}</text>`;
+    }).join('');
+
+    // arrow from origin to selected
+    arrowEl.setAttribute('x1', mapX(0)); arrowEl.setAttribute('y1', mapY(0));
+    arrowEl.setAttribute('x2', mapX(zx(a))); arrowEl.setAttribute('y2', mapY(zy(a)));
+
+    chipsEl.querySelectorAll('.aa-chip').forEach((el,i) => el.classList.toggle('sel', i===sel));
+  }
+
+  buildChips();
+  drawAxes();
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (prevKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

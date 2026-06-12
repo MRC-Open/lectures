@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 Whiteboard 5 — Proof: Temperature and the Probability Ratio</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<link rel="stylesheet" href="../../mrc_whiteboard.css">
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>Proof — Temperature Sets the Probability Ratio</h1>
+  <div class="subtitle">MRC LECTURE 1 · WHITEBOARD 5 · STEP-BY-STEP DERIVATION</div>
+
+  <div class="claim">
+    <span class="label">Claim to prove</span>
+    <div class="eq">$$\frac{P_A}{P_B} \;=\; \exp\!\left(\frac{\delta}{\tau}\right), \quad \delta = z_A - z_B$$</div>
+  </div>
+
+  <div class="setup">
+    Two candidates $A$ and $B$ have scores $z_A$ and $z_B$. Their score difference is $\delta = z_A - z_B$. We will show that the probability ratio depends only on $\delta$ and the temperature $\tau$ — not on the absolute scores, and not on any other candidates in the pool. This is the mathematical heart of "why temperature controls specificity."
+  </div>
+
+  <div class="step" data-step="1">
+    <div class="step-label">Step 1 · Write each probability using the temperature-scaled softmax</div>
+    <div class="step-eq">
+      $$P_A \;=\; \frac{\exp(z_A/\tau)}{Z}, \qquad P_B \;=\; \frac{\exp(z_B/\tau)}{Z}$$
+    </div>
+  </div>
+
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 · Take the ratio — the partition function Z cancels</div>
+    <div class="step-eq">$$\frac{P_A}{P_B} \;=\; \frac{\exp(z_A/\tau)\,/\,Z}{\exp(z_B/\tau)\,/\,Z} \;=\; \frac{\exp(z_A/\tau)}{\exp(z_B/\tau)}$$</div>
+  </div>
+
+  <div class="step qed" data-step="3">
+    <div class="step-label">Step 3 · Combine the exponentials &nbsp;∎</div>
+    <div class="step-eq">$$\frac{\exp(z_A/\tau)}{\exp(z_B/\tau)} \;=\; \exp\!\left(\frac{z_A - z_B}{\tau}\right) \;=\; \exp\!\left(\frac{\delta}{\tau}\right)$$</div>
+  </div>
+
+</div>
+
+<div class="control-bar">
+  <div class="stage-inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="step-buttons">
+      <button id="prevBtn">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.STEP_CAPTIONS = [
+    "Press <strong>Next</strong> or → to begin the proof.",
+    "Each probability is its exponentiated score divided by the partition function $Z$ (the sum over all candidates in the pool, including $A$, $B$, and any others).",
+    "When we take the ratio, the partition function $Z$ — which depends on every candidate in the pool — <strong>cancels exactly</strong>. Only $A$ and $B$ remain. <em>This is the IIA property: irrelevant alternatives don't affect the relative preference.</em>",
+    "Use the identity $\\exp(x)/\\exp(y) = \\exp(x-y)$ to combine the two exponentials into one. The result depends only on $\\delta = z_A - z_B$ and $\\tau$. At low $\\tau$, a small $\\delta$ produces a huge ratio — sharp selection. At high $\\tau$, even a large $\\delta$ produces a ratio near 1 — promiscuous selection. ∎"
+  ];
+</script>
+<script src="../../mrc_whiteboard.js"></script>
+
+</body>
+</html>

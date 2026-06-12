@@ -1,0 +1,185 @@
+/* ============================================================
+   MRC Course — Shared Design System
+   ------------------------------------------------------------
+   Single source of truth for the visual language used across
+   every interactive lecture demo in MRC_L1/ … MRC_L12/.
+
+   Design principles:
+     • Two-font system: serif for content, sans for chrome.
+     • Mostly black / white / grey. Purple ONLY on live elements.
+     • Editorial layout: 720px max-width, generous whitespace.
+     • Vertical, single-column. One focal element per slide.
+
+   To use in a slide HTML file, add to <head>:
+     <link rel="stylesheet" href="../../mrc_styles.css">
+   (relative path adjusts based on demo folder depth)
+   ============================================================ */
+
+
+/* --- Design tokens --------------------------------------- */
+:root {
+  /* color */
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #4a4a4a;
+  --rule: #d8d8d8;
+  --rail: #f0f0f0;
+  --accent: #5e3aa3;          /* purple — only on live/interactive elements */
+  --accent-faint: #f3eef9;    /* very pale purple for active button bg */
+
+  /* type */
+  --font-serif: "Iowan Old Style", "Charter", "Times New Roman", Times, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+               Helvetica, Arial, sans-serif;
+}
+
+
+/* --- Reset + base ---------------------------------------- */
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+
+body {
+  font-family: var(--font-serif);
+  margin: 0;
+  padding: 64px 32px 96px;
+  color: var(--text);
+  line-height: 1.65;
+  font-weight: 400;
+  font-size: 19px;
+}
+
+
+/* --- Layout container ------------------------------------ */
+.stage {
+  max-width: 720px;
+  margin: 0 auto;
+}
+/* For side-by-side demos that need more horizontal room */
+.stage.wide { max-width: 1000px; }
+
+/* On large screens (projectors, fullscreen presentation), use more of the
+   available width and bump base font slightly so projected content reads
+   from the back of the room. */
+@media (min-width: 1400px) {
+  body { font-size: 21px; padding: 56px 32px 80px; }
+  .stage      { max-width: 900px; }
+  .stage.wide { max-width: 1180px; }
+  h1          { font-size: 38px; }
+  .formula    { font-size: 26px; }
+}
+
+
+/* --- Title chrome (sans) --------------------------------- */
+h1 {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 34px;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 44px;
+  font-weight: 400;
+  letter-spacing: 0.6px;
+}
+
+
+/* --- Display formula (MathJax block math) ---------------- */
+.formula {
+  text-align: center;
+  margin: 0 0 36px 0;
+  font-size: 22px;
+  color: var(--text);
+}
+
+
+/* --- Setup paragraph (intro text under formula) ---------- */
+.setup {
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 auto 32px auto;
+  text-align: center;
+  max-width: 640px;
+}
+
+
+/* --- Preset buttons -------------------------------------- */
+.preset-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.preset-btn {
+  font-family: var(--font-sans);
+  padding: 8px 18px;
+  border: 1px solid var(--rule);
+  background: white;
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+.preset-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-faint);
+}
+
+
+/* --- Interpretation paragraph ---------------------------- */
+.interpretation {
+  font-size: 18px;
+  line-height: 1.75;
+  color: var(--text);
+  margin: 0 auto 40px auto;
+  text-align: center;
+  max-width: 640px;
+}
+.interpretation strong { font-weight: 700; }
+.interpretation em { font-style: italic; color: var(--text-muted); }
+
+
+/* --- Footnote / footnotes (small text at bottom) --------- */
+.footnote, .footnotes {
+  font-size: 15px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--rule);
+  padding-top: 20px;
+  margin-top: 32px;
+  line-height: 1.7;
+}
+.footnotes p { margin: 0 0 14px 0; }
+.footnotes p:last-child { margin-bottom: 0; }
+.footnote .label, .footnotes .label {
+  font-family: var(--font-sans);
+  display: inline;
+  color: var(--text);
+  font-weight: 500;
+  margin-right: 8px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+
+/* --- Hint line (small italic helper text) ---------------- */
+.hint {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 32px;
+}

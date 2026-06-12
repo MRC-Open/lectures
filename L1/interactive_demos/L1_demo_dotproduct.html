@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L1 — The Dot Product, Geometric Meaning</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  /* Demo-specific styles for the dot-product geometry visualisation.
+     Shared design tokens + base typography live in mrc_styles.css. */
+
+  /* SVG plot */
+  .plot-wrap {
+    background: white;
+    user-select: none;
+    touch-action: none;
+    margin-bottom: 22px;
+  }
+  svg.plot { display: block; width: 100%; height: auto; }
+  .grid-line { stroke: var(--rail); stroke-width: 1; }
+  .axis-line { stroke: var(--rule); stroke-width: 1.2; }
+  .vec-fixed { stroke: var(--text); stroke-width: 2.4; fill: none; }
+  .vec-live  { stroke: var(--accent); stroke-width: 2.8; fill: none; }
+  .arc       { stroke: var(--text-muted); stroke-width: 1.2; fill: none; stroke-dasharray: 3 3; }
+  .proj-line { stroke: var(--text-muted); stroke-width: 1; fill: none; stroke-dasharray: 2 4; }
+  .vec-label {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 19px;
+    font-weight: 700;
+    fill: var(--text);
+  }
+  .vec-label.live { fill: var(--accent); }
+  .drag-handle { fill: white; stroke: var(--accent); stroke-width: 2.4; cursor: grab; }
+  .drag-handle:active { cursor: grabbing; fill: var(--accent); }
+  .axis-tick { font-family: var(--font-serif); font-size: 12px; fill: var(--text-muted); }
+
+  /* the one big live readout */
+  .readout {
+    text-align: center;
+    margin: 0 0 8px 0;
+    font-size: 40px;
+    line-height: 1.2;
+    font-weight: 400;
+  }
+  .readout .lhs { font-style: italic; color: var(--text); }
+  .readout .eq  { color: var(--text); margin: 0 10px; }
+  .readout .val {
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .breakdown {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 17px;
+    margin: 0 0 36px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .breakdown em {
+    font-style: italic;
+    color: var(--text);
+  }
+  .breakdown .live { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <h1>The Dot Product — Geometric Meaning</h1>
+  <div class="subtitle">MRC LECTURE 1 · SLIDE 8 · INTERACTIVE DEMO</div>
+
+  <div class="formula">
+    $$\mathbf{a} \cdot \mathbf{b} \;=\; a_1 b_1 + a_2 b_2 \;=\; \lVert\mathbf{a}\rVert\,\lVert\mathbf{b}\rVert\,\cos\theta$$
+  </div>
+
+  <div class="plot-wrap">
+    <svg class="plot" viewBox="0 0 500 500" id="plot">
+      <g id="grid"></g>
+      <g id="axes"></g>
+      <line id="proj" class="proj-line" x1="0" y1="0" x2="0" y2="0"/>
+      <path id="arc" class="arc" d=""/>
+      <line id="vecA" class="vec-fixed" x1="0" y1="0" x2="0" y2="0" marker-end="url(#arrowFixed)"/>
+      <line id="vecB" class="vec-live"  x1="0" y1="0" x2="0" y2="0" marker-end="url(#arrowLive)"/>
+      <text id="labelA" class="vec-label"      x="0" y="0">a</text>
+      <text id="labelB" class="vec-label live" x="0" y="0">b</text>
+      <circle id="handle" class="drag-handle" cx="0" cy="0" r="10"/>
+      <defs>
+        <marker id="arrowFixed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+        </marker>
+        <marker id="arrowLive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#5e3aa3"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="hint">Drag the purple tip to change vector <em>b</em>. Vector <em>a</em> is fixed.</div>
+
+  <div class="readout">
+    <span class="lhs">a · b</span><span class="eq">=</span><span class="val" id="dot">—</span>
+  </div>
+  <div class="breakdown" id="breakdown">—</div>
+
+  <div class="preset-row">
+    <button class="preset-btn" data-preset="aligned">Aligned</button>
+    <button class="preset-btn" data-preset="orthogonal">Orthogonal</button>
+    <button class="preset-btn" data-preset="antiparallel">Antiparallel</button>
+    <button class="preset-btn active" data-preset="free">Free</button>
+  </div>
+
+  <div class="interpretation" id="interpretation">—</div>
+
+  <div class="footnote">
+    Think of <em>a</em> as the feature vector of an antibody's CDRs and <em>b</em> as the feature vector of a candidate antigen's epitope. The dot product is the compatibility score — positive when matching, zero when unrelated, negative when conflicting. The dotted line is the projection of <em>b</em> onto the direction of <em>a</em>; the dot product equals ‖<em>a</em>‖ times that projection length.
+  </div>
+
+</div>
+
+<script>
+  const SVG_SIZE = 500;
+  const CENTER   = SVG_SIZE / 2;
+  const SCALE    = 50;
+  const RANGE    = 4;
+  function mathToSvg(x, y) { return [CENTER + x * SCALE, CENTER - y * SCALE]; }
+  function svgToMath(px, py) { return [(px - CENTER) / SCALE, (CENTER - py) / SCALE]; }
+
+  const A = { x: 3.0, y: 1.5 };
+  let   B = { x: 2.0, y: 2.0 };
+
+  const svg     = document.getElementById('plot');
+  const handle  = document.getElementById('handle');
+  const vecAEl  = document.getElementById('vecA');
+  const vecBEl  = document.getElementById('vecB');
+  const labelA  = document.getElementById('labelA');
+  const labelB  = document.getElementById('labelB');
+  const arcEl   = document.getElementById('arc');
+  const projEl  = document.getElementById('proj');
+  const gridG   = document.getElementById('grid');
+  const axesG   = document.getElementById('axes');
+
+  function drawGrid() {
+    gridG.innerHTML = ''; axesG.innerHTML = '';
+    for (let i = -RANGE; i <= RANGE; i++) {
+      if (i === 0) continue;
+      const [x1, y1] = mathToSvg(i, -RANGE);
+      const [x2, y2] = mathToSvg(i,  RANGE);
+      gridG.insertAdjacentHTML('beforeend', `<line class="grid-line" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+      const [hx1, hy1] = mathToSvg(-RANGE, i);
+      const [hx2, hy2] = mathToSvg( RANGE, i);
+      gridG.insertAdjacentHTML('beforeend', `<line class="grid-line" x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}"/>`);
+    }
+    const [ax1, ay1] = mathToSvg(-RANGE, 0);
+    const [ax2, ay2] = mathToSvg( RANGE, 0);
+    axesG.insertAdjacentHTML('beforeend', `<line class="axis-line" x1="${ax1}" y1="${ay1}" x2="${ax2}" y2="${ay2}"/>`);
+    const [bx1, by1] = mathToSvg(0, -RANGE);
+    const [bx2, by2] = mathToSvg(0,  RANGE);
+    axesG.insertAdjacentHTML('beforeend', `<line class="axis-line" x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}"/>`);
+    [-4, -2, 2, 4].forEach(v => {
+      const [tx, ty] = mathToSvg(v, 0);
+      axesG.insertAdjacentHTML('beforeend', `<text class="axis-tick" x="${tx}" y="${ty + 16}" text-anchor="middle">${v}</text>`);
+      const [tx2, ty2] = mathToSvg(0, v);
+      axesG.insertAdjacentHTML('beforeend', `<text class="axis-tick" x="${tx2 - 9}" y="${ty2 + 4}" text-anchor="end">${v}</text>`);
+    });
+  }
+
+  function dot(u, v) { return u.x*v.x + u.y*v.y; }
+  function norm(u)   { return Math.sqrt(u.x*u.x + u.y*u.y); }
+
+  function render() {
+    const [oX, oY] = mathToSvg(0, 0);
+    const [ax, ay] = mathToSvg(A.x, A.y);
+    vecAEl.setAttribute('x1', oX); vecAEl.setAttribute('y1', oY);
+    vecAEl.setAttribute('x2', ax); vecAEl.setAttribute('y2', ay);
+    const aLen = norm(A);
+    const aLab = mathToSvg(A.x + 0.34 * A.x/aLen, A.y + 0.34 * A.y/aLen);
+    labelA.setAttribute('x', aLab[0]); labelA.setAttribute('y', aLab[1] + 5);
+
+    const [bx, by] = mathToSvg(B.x, B.y);
+    vecBEl.setAttribute('x1', oX); vecBEl.setAttribute('y1', oY);
+    vecBEl.setAttribute('x2', bx); vecBEl.setAttribute('y2', by);
+    const bLen = norm(B);
+    if (bLen > 0.001) {
+      const bLab = mathToSvg(B.x + 0.36 * B.x/bLen, B.y + 0.36 * B.y/bLen);
+      labelB.setAttribute('x', bLab[0]); labelB.setAttribute('y', bLab[1] + 5);
+    }
+    handle.setAttribute('cx', bx); handle.setAttribute('cy', by);
+
+    const aDotB = dot(A, B);
+    const aLen2 = aLen * aLen;
+    const projVec = { x: (aDotB / aLen2) * A.x, y: (aDotB / aLen2) * A.y };
+    const [pX, pY] = mathToSvg(projVec.x, projVec.y);
+    projEl.setAttribute('x1', bx); projEl.setAttribute('y1', by);
+    projEl.setAttribute('x2', pX); projEl.setAttribute('y2', pY);
+
+    const r = 38;
+    const aAng = Math.atan2(A.y, A.x);
+    const bAng = Math.atan2(B.y, B.x);
+    let dAng = bAng - aAng;
+    while (dAng >  Math.PI) dAng -= 2*Math.PI;
+    while (dAng <= -Math.PI) dAng += 2*Math.PI;
+    const sweepFlag = dAng > 0 ? 1 : 0;
+    const largeArcFlag = Math.abs(dAng) > Math.PI ? 1 : 0;
+    const sx = CENTER + r * Math.cos(aAng);
+    const sy = CENTER - r * Math.sin(aAng);
+    const ex = CENTER + r * Math.cos(bAng);
+    const ey = CENTER - r * Math.sin(bAng);
+    if (bLen > 0.05) {
+      arcEl.setAttribute('d', `M ${sx} ${sy} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${ex} ${ey}`);
+    } else {
+      arcEl.setAttribute('d', '');
+    }
+
+    updateNumbers();
+  }
+
+  function updateNumbers() {
+    const aDotB = dot(A, B);
+    document.getElementById('dot').textContent = aDotB.toFixed(2);
+    const t1 = (A.x * B.x).toFixed(2);
+    const t2 = (A.y * B.y).toFixed(2);
+    document.getElementById('breakdown').innerHTML =
+      `<em>a</em>₁<em>b</em>₁ + <em>a</em>₂<em>b</em>₂ &nbsp;=&nbsp; (${A.x.toFixed(2)})(${B.x.toFixed(2)}) + (${A.y.toFixed(2)})(${B.y.toFixed(2)}) &nbsp;=&nbsp; ${t1} + ${t2}`;
+
+    const bLen = norm(B);
+    const aLen = norm(A);
+    const cosT = bLen < 1e-6 ? 0 : aDotB / (aLen * bLen);
+    const interp = document.getElementById('interpretation');
+    if (Math.abs(aDotB) < 0.15) {
+      interp.innerHTML = `<strong>Orthogonal regime.</strong> The vectors share no common direction. <em>The antibody's features and the antigen's features are uncorrelated — no binding signal.</em>`;
+    } else if (aDotB > 0) {
+      const strength = cosT > 0.85 ? 'strongly' : 'partially';
+      interp.innerHTML = `<strong>Compatible regime.</strong> The vectors are ${strength} aligned. <em>The antibody's CDR features match the epitope's features — a positive contribution to binding.</em>`;
+    } else {
+      interp.innerHTML = `<strong>Incompatible regime.</strong> The vectors point in opposing directions. <em>The features actively conflict — a steric or chemical clash.</em>`;
+    }
+  }
+
+  let dragging = false;
+  function getMathPoint(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    const local = pt.matrixTransform(ctm);
+    return svgToMath(local.x, local.y);
+  }
+  handle.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    handle.setPointerCapture(e.pointerId);
+    setActivePreset('free');
+  });
+  handle.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const [mx, my] = getMathPoint(e);
+    B.x = Math.max(-RANGE, Math.min(RANGE, mx));
+    B.y = Math.max(-RANGE, Math.min(RANGE, my));
+    render();
+  });
+  handle.addEventListener('pointerup',    () => { dragging = false; });
+  handle.addEventListener('pointercancel',() => { dragging = false; });
+
+  function setActivePreset(name) {
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.preset === name);
+    });
+  }
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = btn.dataset.preset;
+      const aLen = norm(A);
+      if (p === 'aligned')         { B = { x: A.x * (3.5/aLen), y: A.y * (3.5/aLen) }; }
+      else if (p === 'orthogonal') { const perp = { x: -A.y, y: A.x }; const pLen = norm(perp); B = { x: perp.x * (3.0/pLen), y: perp.y * (3.0/pLen) }; }
+      else if (p === 'antiparallel') { B = { x: -A.x * (3.0/aLen), y: -A.y * (3.0/aLen) }; }
+      else { B = { x: 2.0, y: 2.0 }; }
+      setActivePreset(p);
+      render();
+    });
+  });
+
+  drawGrid();
+  render();
+
+  // When embedded inside the deck shell, escalate navigation keys to parent
+  // (this demo has no internal nav of its own).
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
+      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
+      if (nextKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'next' }, '*');
+      } else if (prevKeys.includes(e.key)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'mrc-deck-advance', direction: 'prev' }, '*');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

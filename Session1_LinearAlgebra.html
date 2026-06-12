@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC Tutorial — Session 1: Linear Algebra</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="mrc_styles.css">
+<style>
+
+  /* ============================================================
+     L1 deck shell — navigable presentation for Lecture 1.
+     Extends mrc_styles.css. Adds slide-specific structure:
+       - Title card layout (slide 1)
+       - Bulleted content slides (the majority)
+       - Dark section dividers (whiteboard transitions)
+       - Demo slides (full-iframe to existing interactive demos)
+     ============================================================ */
+  body { padding: 0; }
+  .deck { position: relative; min-height: 100vh; }
+
+  /* base slide — each slide fills the viewport exactly (slideshow mode) */
+  .slide {
+    display: none;
+    height: 100vh;
+    overflow: auto;            /* graceful fallback if content is too tall */
+    padding: 60px 48px;
+  }
+  .slide.active {
+    display: flex;
+    flex-direction: column;
+  }
+  .slide-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .slide h2 {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    margin: 0 0 6px 0;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .slide .slide-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-bottom: 40px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  /* bulleted content */
+  .slide ul.bullets {
+    font-size: 19px;
+    line-height: 1.85;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .slide ul.bullets > li {
+    padding: 8px 0 8px 26px;
+    position: relative;
+  }
+  .slide ul.bullets > li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 19px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .slide ul.bullets ul {
+    margin: 6px 0 0 0;
+    padding-left: 0;
+    list-style: none;
+  }
+  .slide ul.bullets ul > li {
+    padding: 4px 0 4px 22px;
+    position: relative;
+    color: var(--text-muted);
+    font-size: 17px;
+  }
+  .slide ul.bullets ul > li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    color: var(--text-muted);
+    font-weight: 400;
+    background: none;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+  }
+  .slide strong { font-weight: 700; color: var(--text); }
+  .slide em { font-style: italic; color: var(--text); }
+
+  /* equation block within content slides */
+  .eq-block {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 16px 24px;
+    margin: 18px 0;
+    font-size: 22px;
+  }
+
+  /* title card (slide 1) */
+  .slide.title-card {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .slide.title-card.active { display: flex; }
+  .slide.title-card .title-main {
+    font-family: var(--font-sans);
+    font-size: 54px;
+    font-weight: 400;
+    letter-spacing: -0.6px;
+    margin: 0 0 14px 0;
+    line-height: 1.15;
+  }
+  .slide.title-card .title-sub {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    color: var(--text-muted);
+    margin-bottom: 64px;
+    font-style: italic;
+    font-weight: 300;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.4;
+  }
+  .slide.title-card .author {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .slide.title-card .affiliation {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.65;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .slide.title-card .term {
+    font-family: var(--font-sans);
+    margin-top: 36px;
+    color: var(--accent);
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* dark section dividers */
+  .slide.divider {
+    background: var(--text);
+    color: white;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .slide.divider.active { display: flex; }
+  .slide.divider .divider-eyebrow {
+    font-family: var(--font-sans);
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+  .slide.divider .divider-title {
+    font-family: var(--font-sans);
+    font-size: 44px;
+    font-weight: 400;
+    color: white;
+    max-width: 760px;
+    line-height: 1.25;
+    margin: 0;
+    letter-spacing: -0.4px;
+  }
+
+  /* demo slides — full iframe sized to the fixed slide viewport */
+  .slide.demo { padding: 0; }
+  .slide.demo iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    border: none;
+  }
+
+  /* table for slide 23 */
+  table.summary {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 16px;
+  }
+  table.summary th, table.summary td {
+    text-align: left;
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  table.summary th {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--text);
+  }
+  table.summary td:first-child {
+    color: var(--text);
+    font-weight: 500;
+    width: 32%;
+  }
+  table.summary td:nth-child(2) { width: 38%; color: var(--text-muted); }
+  table.summary td:nth-child(3) { color: var(--text); }
+
+  /* deck chrome — counter + nav hint + present button */
+  .deck-counter {
+    position: fixed;
+    bottom: 22px;
+    right: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-counter.on-dark { color: rgba(255,255,255,0.7); }
+  .deck-hint {
+    position: fixed;
+    bottom: 22px;
+    left: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-hint.on-dark { color: rgba(255,255,255,0.7); }
+  .deck-present {
+    position: fixed;
+    top: 22px;
+    right: 32px;
+    z-index: 100;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .deck-present:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  /* hide the Present button when already in fullscreen */
+  :fullscreen .deck-present { display: none; }
+
+  /* On big screens / projector / fullscreen, use more of the available
+     width and bump font sizes so content reads from the back of the room. */
+  @media (min-width: 1400px) {
+    .slide-inner { max-width: 900px; }
+    .slide h2 { font-size: 38px; }
+    .slide .slide-subtitle { font-size: 18px; }
+    .slide ul.bullets { font-size: 21px; line-height: 1.85; }
+    .slide ul.bullets ul > li { font-size: 19px; }
+    .slide.title-card .title-main { font-size: 60px; }
+    .slide.title-card .title-sub  { font-size: 24px; }
+    .eq-block { font-size: 25px; }
+    .identity-block .eq { font-size: 25px; }
+    table.summary { font-size: 18px; }
+  }
+
+  /* references / readings list at end of slide 24 */
+  .reading-list {
+    margin-top: 28px;
+    padding: 18px 22px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--text-muted);
+  }
+  .reading-list .label {
+    font-family: var(--font-sans);
+    color: var(--text);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* identity slide (19): two equations side-by-side feel */
+  .identity-block {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 22px;
+    margin: 12px 0;
+  }
+  .identity-block .heading {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .identity-block .eq {
+    font-size: 22px;
+    color: var(--text);
+  }
+
+
+/* ============ overview-deck component styles ============ */
+
+  /* ============================================================
+     Tutorial OVERVIEW deck — 7 slides.
+     This is the introductory pitch deck for the Reddy Lab
+     Tutorial Course (advanced PhDs/postdocs). Each slide is a
+     self-contained content panel (no demos embedded).
+     ============================================================ */
+  body { padding: 0; }
+  .deck { position: relative; min-height: 100vh; }
+
+  .slide {
+    display: none;
+    height: 100vh;
+    overflow: auto;
+    padding: 60px 48px;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+  .slide-inner { max-width: 820px; margin: 0 auto; width: 100%; }
+
+  .slide h2 {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    margin: 0 0 8px 0;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .slide .slide-subtitle {
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-bottom: 32px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .slide ul.bullets {
+    font-size: 18px;
+    line-height: 1.75;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .slide ul.bullets > li {
+    padding: 7px 0 7px 26px;
+    position: relative;
+  }
+  .slide ul.bullets > li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 18px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .slide strong { font-weight: 700; color: var(--text); }
+  .slide em { font-style: italic; color: var(--text); }
+
+  .lead-para {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--text);
+    margin: 0 0 22px 0;
+  }
+
+  .eq-block {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 14px 22px;
+    margin: 14px 0;
+    font-size: 22px;
+    text-align: center;
+  }
+
+  /* Pillar grid for slide 2 (convergence equation) */
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 14px 0 18px 0;
+  }
+  .pillar {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 18px;
+  }
+  .pillar .year {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .pillar .name {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 3px 0 2px 0;
+    color: var(--text);
+  }
+  .pillar .field {
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .pillar .content {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .convergence-tagline {
+    text-align: center;
+    margin: 8px 0 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .convergence-tagline strong { color: var(--accent); font-weight: 700; }
+
+  /* Capability grid for slide 4 (the 4 things you'll own) */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 12px 0 18px 0;
+  }
+  .cap {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 20px;
+  }
+  .cap .num {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    color: var(--accent);
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .cap .title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .cap .body {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  /* Session list for slide 5 */
+  .session-list {
+    margin: 6px 0 14px 0;
+  }
+  .session-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rail);
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 18px;
+    align-items: baseline;
+  }
+  .session-item:last-child { border-bottom: none; }
+  .session-num {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .session-body {
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .session-body .stitle {
+    font-weight: 700;
+    color: var(--text);
+    margin-right: 6px;
+  }
+  .session-body .stopic {
+    color: var(--text-muted);
+  }
+
+  /* 3-column reason grid for slide 7 */
+  .reason-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin: 12px 0 22px 0;
+  }
+  .reason {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .reason .label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .reason .body {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .infra-block {
+    background: var(--rail);
+    border-radius: 4px;
+    padding: 16px 22px;
+    margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .infra-block .lead {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .infra-block strong { color: var(--accent); font-weight: 700; }
+
+  .closing-line {
+    text-align: center;
+    margin: 18px 0 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    font-style: italic;
+  }
+  .closing-line strong { font-style: normal; color: var(--accent); font-weight: 700; }
+
+  /* Deck chrome */
+  .deck-counter {
+    position: fixed;
+    bottom: 22px; right: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-hint {
+    position: fixed;
+    bottom: 22px; left: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .deck-present {
+    position: fixed;
+    top: 22px; right: 32px;
+    z-index: 100;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1px solid var(--rule);
+    background: white;
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .deck-present:hover { border-color: var(--accent); color: var(--accent); }
+  :fullscreen .deck-present { display: none; }
+
+  /* Big-screen / fullscreen sizing */
+  @media (min-width: 1400px) {
+    .slide-inner { max-width: 980px; }
+    .slide h2 { font-size: 38px; }
+    .slide .slide-subtitle { font-size: 18px; }
+    .slide ul.bullets { font-size: 20px; }
+    .lead-para { font-size: 20px; }
+    .eq-block { font-size: 25px; }
+    .pillar .name { font-size: 20px; }
+    .pillar .content { font-size: 16px; }
+    .cap .title { font-size: 19px; }
+    .cap .body { font-size: 16px; }
+    .session-body { font-size: 18px; }
+    .reason .body { font-size: 16px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<section class="slide title-card active" data-slide="1">
+  <div>
+    <div class="title-main">Molecular Recognition Computing</div>
+    <div class="title-sub">Tutorial Course · Session 1 — Linear Algebra for Machine Learning and Molecular Recognition</div>
+    <div class="author">Sai T. Reddy</div>
+    <p class="affiliation">Reddy Lab · ETH Zurich<br>Botnar Institute of Immune Engineering (BIIE)</p>
+    <div class="term">12 June 2026 · Session 1 of 4</div>
+  </div>
+</section>
+<section class="slide" data-slide="2">
+  <div class="slide-inner">
+    <h2>Why This Course Exists</h2>
+    <div class="slide-subtitle">Four foundational concepts. Four fields. One equation.</div>
+
+    <p class="lead-para">
+      This course is built on four concepts that are <strong>settled science</strong> — textbook material in their respective fields, none in dispute by working scientists in those fields.
+    </p>
+
+    <ul class="bullets">
+      <li><strong>Boltzmann's distribution (1877)</strong> — statistical mechanics</li>
+      <li><strong>Maximum entropy principle</strong> (Shannon 1948, Jaynes 1957) — information theory</li>
+      <li><strong>Softmax attention mechanism</strong> (Vaswani et al., 2017) — machine learning</li>
+      <li><strong>Luce's choice axiom (1959)</strong> — choice theory / econometrics</li>
+    </ul>
+
+    <p class="lead-para" style="margin-top: 24px;">
+      These four pillars are mathematically the <strong>same equation</strong> — the <strong>convergence equation</strong>. The course teaches you to see the identity, then shows that the identity, combined with five physical conditions, prescribes a complete neural architecture for predicting molecular binding: the <strong>Specificity Foundation Model (SFM)</strong>.
+    </p>
+  </div>
+</section>
+<section class="slide" data-slide="3">
+  <div class="slide-inner">
+    <h2>The Convergence Equation</h2>
+    <div class="slide-subtitle">Four independent derivations. One function.</div>
+
+    <div class="pillar-grid">
+      <div class="pillar">
+        <div class="year">1877 · Physics</div>
+        <div class="name">Boltzmann</div>
+        <div class="field">statistical mechanics</div>
+        <div class="content">$P(\text{state}) \propto \exp(-E/k_BT)$ at thermal equilibrium</div>
+      </div>
+      <div class="pillar">
+        <div class="year">1948–57 · Information theory</div>
+        <div class="name">Shannon · Jaynes</div>
+        <div class="field">maximum entropy principle</div>
+        <div class="content">Most-rational distribution under partial info → exponential form</div>
+      </div>
+      <div class="pillar">
+        <div class="year">1959 · Choice theory</div>
+        <div class="name">Luce</div>
+        <div class="field">independence of irrelevant alternatives</div>
+        <div class="content">IIA + monotonicity force the softmax form (uniqueness theorem)</div>
+      </div>
+      <div class="pillar">
+        <div class="year">2017 · Machine learning</div>
+        <div class="name">Vaswani et al.</div>
+        <div class="field">transformer attention</div>
+        <div class="content">$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}(QK^\top / \sqrt{d_k})\, V$</div>
+      </div>
+    </div>
+
+    <div class="eq-block">$$P(j) \;=\; \frac{\exp(s_j)}{\sum_k \exp(s_k)}$$</div>
+
+    <div class="convergence-tagline">
+      Four derivations, four fields, 140 years apart. <strong>Not analogies — an algebraic identity.</strong>
+    </div>
+  </div>
+</section>
+<section class="slide" data-slide="4">
+  <div class="slide-inner">
+    <h2>Why No Existing Training Prepares You</h2>
+    <div class="slide-subtitle">A structural gap, not a failure of anyone's preparation</div>
+
+    <ul class="bullets">
+      <li>Standard <strong>ML courses</strong> teach attention — but not its identity with Boltzmann</li>
+      <li>Standard <strong>biophysics</strong> teaches Boltzmann — but not its identity with attention</li>
+      <li>Standard <strong>information theory</strong> teaches max entropy — but not its prescriptive consequences for neural architectures</li>
+      <li><strong>No existing curriculum stitches these together</strong> — because none was designed to. The implications of <em>Level 3 alignment</em> — where the architecture <em>is</em> the governing equation rather than approximating it — have to be learned explicitly.</li>
+    </ul>
+
+    <p class="lead-para" style="margin-top: 26px;">
+      The math used in this course is at the level of <strong>college algebra and basic calculus</strong> — dot products, exponential functions, derivatives. Detailed step-by-step derivations are provided in writing for every key result. <strong>Anyone in the lab can take this course.</strong> Wet-lab researchers, computational biologists, and immunologists will all start from the same place.
+    </p>
+  </div>
+</section>
+<section class="slide" data-slide="5">
+  <div class="slide-inner">
+    <h2>What You Will Learn</h2>
+    <div class="slide-subtitle">Four capabilities not currently taught anywhere as a unified curriculum</div>
+
+    <div class="cap-grid">
+      <div class="cap">
+        <div class="num">1</div>
+        <div class="title">Mathematical foundations of modern AI</div>
+        <div class="body">Linear algebra (dot products, matrix multiplication, cosine similarity, softmax with temperature). Transformers, attention, multi-head attention. Contrastive learning and the InfoNCE loss. <em>Read transformer papers and follow them.</em></div>
+      </div>
+      <div class="cap">
+        <div class="num">2</div>
+        <div class="title">The physics of molecular binding</div>
+        <div class="body">Boltzmann distribution, $K_d$ and free energy ($\Delta G = RT \ln K_d$), competitive binding as softmax. Bilinearity: TF–DNA decomposes by position exactly; antibody–antigen requires a learned encoder.</div>
+      </div>
+      <div class="cap">
+        <div class="num">3</div>
+        <div class="title">A new paradigm: physics-derived AI architectures</div>
+        <div class="body">Luce's proof. The SFM derived from the convergence equation + five physical conditions. <strong>Parameter estimation in a known governing equation</strong> vs. function approximation. Predicts exponential (not power-law) data scaling, fast convergence, OOD robustness.</div>
+      </div>
+      <div class="cap">
+        <div class="num">4</div>
+        <div class="title">Build, validate, implement your own SFM</div>
+        <div class="body">Final project: build an SFM on your own molecular recognition data using Claude Code with the CALM codebase as reference. The architecture is prescribed; you make the domain-expert decisions.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="slide" data-slide="6">
+  <div class="slide-inner">
+    <h2>Course Structure</h2>
+    <div class="slide-subtitle">Four sessions plus the final project · run as an informal tutorial</div>
+
+    <div class="session-list">
+      <div class="session-item">
+        <div class="session-num">Session 1<br><span style="color:var(--text-muted);font-weight:400;font-size:10px;">12 Jun</span></div>
+        <div class="session-body"><span class="stitle">Linear Algebra for ML &amp; Molecular Recognition &nbsp;<span style="font-family:var(--font-sans);font-size:10px;color:var(--accent);font-weight:600;">L1</span></span><span class="stopic">Vectors, dot products, matrix multiplication, cosine similarity, softmax with temperature.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 2<br><span style="color:var(--text-muted);font-weight:400;font-size:10px;">17 Jun</span></div>
+        <div class="session-body"><span class="stitle">Transformers &amp; Contrastive Learning &nbsp;<span style="font-family:var(--font-sans);font-size:10px;color:var(--accent);font-weight:600;">L2 + L3</span></span><span class="stopic">Attention, why $\sqrt{d_k}$, multi-head; protein language models (ESM-2, AntiBERTy); CLIP, CALM, the InfoNCE loss.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 3<br><span style="color:var(--text-muted);font-weight:400;font-size:10px;">19 Jun</span></div>
+        <div class="session-body"><span class="stitle">Thermodynamics &amp; Bilinearity &nbsp;<span style="font-family:var(--font-sans);font-size:10px;color:var(--accent);font-weight:600;">L4 + L5</span></span><span class="stopic">Boltzmann from maximum entropy, $K_d$ and free energy, competitive binding as softmax; SantaLucia, PWMs, the encoding problem.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Session 4<br><span style="color:var(--text-muted);font-weight:400;font-size:10px;">01 Jul</span></div>
+        <div class="session-body"><span class="stitle">Convergence Equation, SFM Architecture &amp; Ten Domains &nbsp;<span style="font-family:var(--font-sans);font-size:10px;color:var(--accent);font-weight:600;">L6</span></span><span class="stopic">Luce's proof, deriving the SFM architecture, ten validated domains.</span></div>
+      </div>
+      <div class="session-item">
+        <div class="session-num">Final Project</div>
+        <div class="session-body"><span class="stitle">Build, Validate &amp; Present Your SFM.</span><span class="stopic">Each of you builds an SFM on your own molecular-recognition data with Claude Code, and presents the results.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="slide" data-slide="7">
+  <div class="slide-inner">
+    <h2>Final Project — Build Your Own SFM</h2>
+    <div class="slide-subtitle">With Claude Code · using CALM as the reference implementation</div>
+
+    <p class="lead-para">
+      Each of you builds an SFM on <strong>your own molecular recognition data</strong> — antibody–antigen pairs from repertoire or display screening, TCR–pMHC pairs, peptide–MHC pairs, cytokine or other ligand binding to receptors, whatever fits your project.
+    </p>
+
+    <ul class="bullets">
+      <li>You decide the <strong>domain-expert decisions</strong>: encoder selection, data curation, masking strategy, train/test split design and leakage prevention, hard-negative strategy, evaluation design</li>
+      <li>The <strong>architecture itself does not change</strong> — that part is prescribed by the convergence equation</li>
+      <li>You evaluate with retrieval metrics, out-of-distribution splits at sequence-identity-clustered thresholds, and pseudo-prospective validation against held-out experiments</li>
+      <li>You <strong>present your results</strong> to the lab. We then discuss the cross-domain comparison: what training behaviors emerge from your data, what they tell us about the framework, and what comes next.</li>
+    </ul>
+
+    <p class="lead-para" style="margin-top: 22px;">
+      <em>This is the only test of understanding that matters: did you build a model that works on data nobody has seen before?</em>
+    </p>
+  </div>
+</section>
+<section class="slide" data-slide="8">
+  <div class="slide-inner">
+    <h2>SFMs as Infrastructure</h2>
+    <div class="slide-subtitle">A method like PCR or CRISPR</div>
+
+    <div class="reason-grid">
+      <div class="reason">
+        <div class="label">Broad applicability</div>
+        <div class="body">Any molecular recognition system at thermal equilibrium — antibodies, TCRs, MHC, TFs, miRNAs, CRISPR guides, enzymes, drug–target pairs. <strong>Six SFM domains demonstrated</strong>, four more in active development.</div>
+      </div>
+      <div class="reason">
+        <div class="label">Low resource</div>
+        <div class="body">CALM trained on ~4,000 antibody–antigen pairs vs. CLIP's ~400,000,000 image-text pairs. Single GPU node, pretrained encoders. <strong>Bottleneck is data curation by a domain expert.</strong></div>
+      </div>
+      <div class="reason">
+        <div class="label">Open source</div>
+        <div class="body">CALM, the SFM template, training and evaluation pipelines, validation harness, pretrained encoders — all public. <strong>No proprietary infrastructure needed.</strong></div>
+      </div>
+    </div>
+
+    <div class="infra-block">
+      <div class="lead">The natural division of labor</div>
+      <strong>AlphaFold</strong> and the structure predictors solve <em>structure</em>. <strong>ESM-2, AntiBERTy, DNABERT-2, MoLFormer, RNA-FM</strong> solve <em>sequence representation</em>. Neither solves <strong>specificity</strong> — which partner does this molecule recognize from a pool of candidates? <strong>SFMs sit on top of this infrastructure</strong> and produce the specificity prediction itself.
+    </div>
+
+    <div class="closing-line">
+      Ten years from now: every recognition problem in biology has an SFM.<br>
+      <strong>The model you build at the end of this course is the prototype.</strong>
+    </div>
+  </div>
+</section>
+<section class="slide divider" data-slide="9">
+  <div>
+    <div class="divider-eyebrow">Part 2 · The Mathematics</div>
+    <h2 class="divider-title">Linear Algebra for Machine Learning and Molecular Recognition</h2>
+  </div>
+</section>
+<section class="slide demo" data-slide="10">
+  <iframe src="L1/interactive_demos/L1_demo_uat.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="11">
+  <iframe src="L1/interactive_demos/L1_demo_uat_flexibility.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="12">
+  <iframe src="L1/interactive_demos/L1_demo_known_equation.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="13">
+  <iframe src="L1/interactive_demos/L1_demo_coverage.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="14">
+  <iframe src="L1/interactive_demos/L1_demo_function_approximation.html" loading="lazy"></iframe>
+</section>
+<section class="slide" data-slide="15">
+  <div class="slide-inner">
+    <h2>One Equation Governs Both</h2>
+    <ul class="bullets">
+      <li>The <strong>softmax attention mechanism</strong> in transformers (Vaswani et al., 2017)</li>
+      <li>is <strong>mathematically identical</strong> to</li>
+      <li>the <strong>Boltzmann distribution</strong> governing molecular binding (Boltzmann, 1877)</li>
+      <li>This identity is not approximate — it is <strong>algebraic</strong></li>
+      <li>This course will prove it, derive its consequences, and show it prescribes a complete neural architecture across ten biological domains</li>
+    </ul>
+  </div>
+</section>
+<section class="slide" data-slide="16">
+  <div class="slide-inner">
+    <h2>Four Operations Build the Entire Course</h2>
+    <div class="slide-subtitle">Everything that follows is constructed from these</div>
+    <ul class="bullets">
+      <li><strong>Dot product:</strong> measures compatibility between two vectors</li>
+      <li><strong>Matrix multiplication:</strong> computes all pairwise compatibilities simultaneously</li>
+      <li><strong>Cosine similarity:</strong> normalizes the comparison to a [−1, +1] scale</li>
+      <li><strong>Softmax:</strong> converts compatibility scores into a probability distribution</li>
+    </ul>
+  </div>
+</section>
+<section class="slide demo" data-slide="17">
+  <iframe src="L1/interactive_demos/L1_demo_three_systems.html" loading="lazy"></iframe>
+</section>
+<section class="slide" data-slide="18">
+  <div class="slide-inner">
+    <h2>What Is a Vector?</h2>
+    <div class="slide-subtitle">Just an ordered list of numbers — and a direction in space</div>
+    <ul class="bullets">
+      <li>A <strong>vector</strong> is an ordered list of numbers. Nothing more mysterious than that.</li>
+      <li>You already use them. Describe an amino acid by its measurable properties:
+        <ul>
+          <li>Leucine → [ hydrophobicity 3.8, &nbsp;volume 167, &nbsp;charge 0, &nbsp;polarity 0 ]</li>
+          <li>Lysine &nbsp;→ [ hydrophobicity −3.9, volume 169, charge +1, polarity 1 ]</li>
+        </ul>
+      </li>
+      <li>Each number is one <strong>coordinate</strong>; each property is one <strong>axis</strong>. The list places the molecule as a point — or an arrow from the origin — in "property space."</li>
+      <li>Two molecules with similar properties → nearby points → arrows that <strong>point the same way</strong>.</li>
+      <li>The whole game of this course: turn molecules into geometry, then compare them geometrically.</li>
+    </ul>
+  </div>
+</section>
+<section class="slide demo" data-slide="19">
+  <iframe src="L1/interactive_demos/L1_demo_vector.html" loading="lazy"></iframe>
+</section>
+<section class="slide" data-slide="20">
+  <div class="slide-inner">
+    <h2>What Is a Compatibility Score?</h2>
+    <div class="slide-subtitle">In every system, it is a dot product of feature vectors</div>
+    <ul class="bullets">
+      <li>Antibody surface features <strong>·</strong> Antigen surface features &nbsp;=&nbsp; binding compatibility</li>
+      <li>TF positional preferences <strong>·</strong> DNA nucleotide identities &nbsp;=&nbsp; binding energy</li>
+      <li>Transformer query vector <strong>·</strong> key vector &nbsp;=&nbsp; attention score</li>
+      <li>The dot product is the <strong>universal compatibility measure</strong></li>
+      <li>This is not a modeling choice — it follows from the <strong>bilinear decomposition of binding energy</strong> (Lecture 5)</li>
+    </ul>
+  </div>
+</section>
+<section class="slide demo" data-slide="21">
+  <iframe src="L1/interactive_demos/L1_demo_vector_dotproduct.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="22">
+  <iframe src="L1/interactive_demos/L1_demo_dotproduct.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="23">
+  <iframe src="L1/whiteboard_demos/L1_wb1_proof_dotproduct.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="24">
+  <iframe src="L1/interactive_demos/L1_demo_similarity_build.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="25">
+  <iframe src="L1/interactive_demos/L1_demo_matmul.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="26">
+  <iframe src="L1/whiteboard_demos/L1_wb2_qkt_visual.html" loading="lazy"></iframe>
+</section>
+<section class="slide" data-slide="27">
+  <div class="slide-inner">
+    <h2>The Magnitude Problem</h2>
+    <div class="slide-subtitle">Should longer vectors always mean higher compatibility?</div>
+    <div class="eq-block">$$\mathbf{a} \cdot \mathbf{b} = \|\mathbf{a}\|\,\|\mathbf{b}\|\,\cos\theta$$</div>
+    <ul class="bullets">
+      <li>The dot product conflates <strong>alignment</strong> ($\cos\theta$) and <strong>magnitude</strong> ($\|\mathbf{a}\|\,\|\mathbf{b}\|$)</li>
+      <li>A very "loud" vector dominates all dot products regardless of direction</li>
+      <li>In molecular binding: we care about <strong>direction</strong> (what features match), not magnitude</li>
+      <li>Solution: <strong>normalize to unit length</strong> → dot product = pure alignment</li>
+    </ul>
+  </div>
+</section>
+<section class="slide demo" data-slide="28">
+  <iframe src="L1/interactive_demos/L1_demo_cosine.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="29">
+  <iframe src="L1/whiteboard_demos/L1_wb3_proof_l2norm.html" loading="lazy"></iframe>
+</section>
+<section class="slide" data-slide="30">
+  <div class="slide-inner">
+    <h2>The Conversion Problem</h2>
+    <div class="slide-subtitle">We have scores. We need probabilities.</div>
+    <ul class="bullets">
+      <li>Agent has compatibility scores with $M$ candidates: $\mathbf{s} = [s_1, s_2, \ldots, s_M]$</li>
+      <li>We need a probability distribution: $\mathbf{P} = [P_1, P_2, \ldots, P_M]$</li>
+      <li>Requirements:
+        <ul>
+          <li>All probabilities positive</li>
+          <li>Sum to 1</li>
+          <li>Accept any real-valued scores — including negatives (unrestricted domain)</li>
+          <li>Higher score → higher probability</li>
+          <li>Relative preference between two candidates shouldn't change when a third enters or leaves</li>
+        </ul>
+      </li>
+      <li>How many functions satisfy all five? &nbsp;→&nbsp; <strong>Exactly one</strong> (Lecture 6)</li>
+    </ul>
+  </div>
+</section>
+<section class="slide demo" data-slide="31">
+  <iframe src="L1/whiteboard_demos/L1_wb4_softmax_example.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="32">
+  <iframe src="L1/interactive_demos/L1_demo_softmax.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="33">
+  <iframe src="L1/whiteboard_demos/L1_wb5_proof_ratio.html" loading="lazy"></iframe>
+</section>
+<section class="slide demo" data-slide="34">
+  <iframe src="L1/interactive_demos/L1_demo_temperature.html" loading="lazy"></iframe>
+</section>
+<section class="slide" data-slide="35">
+  <div class="slide-inner">
+    <h2>The Identity</h2>
+    <div class="slide-subtitle">Boltzmann (1877) = Vaswani (2017)</div>
+
+    <div class="identity-block">
+      <div class="heading">Molecular binding — Boltzmann, 1877</div>
+      <div class="eq">$$P(\text{bind } j) = \frac{\exp(-\Delta G_j / k_B T)}{\sum_k \exp(-\Delta G_k / k_B T)}$$</div>
+    </div>
+
+    <div class="identity-block">
+      <div class="heading">Transformer attention — Vaswani et al., 2017</div>
+      <div class="eq">$$A_j = \frac{\exp(\mathbf{q} \cdot \mathbf{k}_j / \tau)}{\sum_k \exp(\mathbf{q} \cdot \mathbf{k}_k / \tau)}$$</div>
+    </div>
+
+    <div class="identity-block">
+      <div class="heading">Score identification</div>
+      <div class="eq">$$s_j = -\Delta G_j / k_B T = \mathbf{q} \cdot \mathbf{k}_j / \tau$$</div>
+    </div>
+
+    <p style="text-align:center; font-size:18px; margin-top:24px; color: var(--text);">
+      <strong>Same function. Same structure. Same parameter.</strong><br>
+      <em>Derived independently, 140 years apart.</em>
+    </p>
+  </div>
+</section>
+<section class="slide" data-slide="36">
+  <div class="slide-inner">
+    <h2>Why Represent Molecules as Vectors?</h2>
+    <div class="slide-subtitle">From one-hot encoding to distributed representations</div>
+    <ul class="bullets">
+      <li><strong>One-hot encoding:</strong> A = [1,0,0,0], C = [0,1,0,0], G = [0,0,1,0], T = [0,0,0,1]
+        <ul><li>Every pair has dot product = 0 — all biological information discarded</li></ul>
+      </li>
+      <li><strong>Distributed representation:</strong> each token → dense vector in $d$ dimensions
+        <ul>
+          <li>Tokens in similar contexts → similar vectors</li>
+          <li>Geometric relationships capture functional relationships</li>
+        </ul>
+      </li>
+      <li><strong>Mikolov et al. (2013):</strong> king − man + woman ≈ queen
+        <ul><li><em>Meaning is geometry</em></li></ul>
+      </li>
+    </ul>
+  </div>
+</section>
+<section class="slide" data-slide="37">
+  <div class="slide-inner">
+    <h2>From Words to Molecules</h2>
+    <div class="slide-subtitle">The lineage of representation learning</div>
+    <ul class="bullets">
+      <li><strong>2013 — Word2Vec</strong> (Mikolov et al.): words → vectors, similarity = dot product</li>
+      <li><strong>2019 — BERT</strong> (Devlin et al.): contextual word vectors via masked language modeling</li>
+      <li><strong>2021 — ESM-2</strong> (Lin et al.): protein sequences → contextual residue vectors</li>
+      <li><strong>2021 — CLIP</strong> (Radford et al.): two encoders (image + text), contrastive learning</li>
+      <li><strong>2026 — CALM</strong> (Lee et al.): two encoders (antibody + antigen), dot product = binding compatibility</li>
+      <li>The mathematical operation at every step: <strong>the dot product</strong></li>
+    </ul>
+  </div>
+</section>
+<section class="slide" data-slide="38">
+  <div class="slide-inner">
+    <h2>What Makes a Good Representation?</h2>
+    <div class="slide-subtitle">Bengio, Courville &amp; Vincent, IEEE TPAMI 2013</div>
+    <ul class="bullets">
+      <li>A good representation <strong>disentangles the factors of variation</strong> relevant to the task</li>
+      <li>After disentangling: a linear classifier (the dot product) suffices</li>
+      <li><strong>Given bilinearity</strong> (Lecture 5): the energy IS a dot product in raw sequence space
+        <ul><li>Example: TF–DNA binding via position weight matrices</li></ul>
+      </li>
+      <li><strong>Emergent bilinearity</strong> (Lecture 5): the encoder must learn a representation where energy becomes a dot product
+        <ul><li>Example: antibody–antigen binding via contrastive co-embedding</li></ul>
+      </li>
+      <li>This distinction predicts measurably different scaling behavior</li>
+    </ul>
+  </div>
+</section>
+<section class="slide" data-slide="39">
+  <div class="slide-inner">
+    <h2>Four Operations — The Complete Toolkit</h2>
+    <div class="slide-subtitle">Everything in Lectures 2–12 is built from these</div>
+    <table class="summary">
+      <thead>
+        <tr><th>Operation</th><th>What it computes</th><th>Role in MRC</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dot product: $\mathbf{a} \cdot \mathbf{b}$</td>
+          <td>Alignment between two vectors</td>
+          <td>Binding compatibility score</td>
+        </tr>
+        <tr>
+          <td>Matrix multiplication: $QK^\top$</td>
+          <td>All pairwise alignments</td>
+          <td>All pairwise binding scores</td>
+        </tr>
+        <tr>
+          <td>Cosine similarity</td>
+          <td>Normalized alignment $\in [-1, +1]$</td>
+          <td>L2-normalized embedding scores</td>
+        </tr>
+        <tr>
+          <td>Softmax($\mathbf{z}/\tau$)</td>
+          <td>Scores → probability distribution</td>
+          <td>Boltzmann selection probability</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="slide" data-slide="40">
+  <div class="slide-inner">
+    <h2>Next: Neural Networks, Transformers, and Attention</h2>
+    <div class="slide-subtitle">Lecture 2</div>
+    <ul class="bullets">
+      <li>How neural networks approximate functions</li>
+      <li>From RNNs to the transformer architecture</li>
+      <li>Full derivation of <strong>scaled dot-product attention</strong> on the whiteboard</li>
+      <li>You will see exactly where today's four operations fit into the most powerful AI architecture ever built</li>
+    </ul>
+    <div class="reading-list">
+      <span class="label">Reading for Lecture 2</span>
+      Vaswani A, Shazeer N, Parmar N, et al. <em>Attention is all you need.</em> NeurIPS 30 (2017). Focus on §3.2 (Scaled Dot-Product Attention) and §3.2.2 (Multi-Head Attention).
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="deck-counter" id="counter">SLIDE 1 / 40</div>
+<div class="deck-hint" id="hint">← →  navigate · F  fullscreen</div>
+<button class="deck-present" id="presentBtn">▶ Present</button>
+
+<script>
+
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const hint = document.getElementById('hint');
+  let current = 1;
+
+  function show(n) {
+    n = Math.max(1, Math.min(total, n));
+    current = n;
+    // index-based: slide position in the DOM is the source of truth, so new
+    // slides can be inserted anywhere without renumbering data-slide attributes.
+    slides.forEach((s, i) => s.classList.toggle('active', i === n - 1));
+    counter.textContent = `SLIDE ${n} / ${total}`;
+
+    // tint counter/hint white if the slide is dark
+    const active = slides[n - 1];
+    const isDark = active && active.classList.contains('divider');
+    counter.classList.toggle('on-dark', isDark);
+    hint.classList.toggle('on-dark', isDark);
+
+    // re-typeset MathJax for the newly visible slide (it may not have rendered if hidden)
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([active]);
+    }
+
+    // If this slide hosts an iframe (animated whiteboard or interactive demo),
+    // focus the iframe so its keyboard handlers receive arrow-key presses.
+    // Otherwise focus the parent window so deck-level navigation works.
+    const iframe = active && active.querySelector('iframe');
+    if (iframe) {
+      // small delay to let the iframe finish loading on first reveal
+      setTimeout(() => { try { iframe.contentWindow.focus(); } catch (e) {} }, 80);
+    } else {
+      window.focus();
+    }
+
+    // keep URL hash in sync so reload preserves position
+    history.replaceState(null, '', `#slide=${n}`);
+  }
+
+  function next() { if (current < total) show(current + 1); }
+  function prev() { if (current > 1)     show(current - 1); }
+
+  // Listen for postMessage from embedded iframes (whiteboards + interactive
+  // demos). When the user arrows past the boundary of an iframe widget, the
+  // iframe escalates to us and we advance/retreat the deck.
+  window.addEventListener('message', (e) => {
+    if (!e.data || e.data.type !== 'mrc-deck-advance') return;
+    if (e.data.direction === 'next') next();
+    else if (e.data.direction === 'prev') prev();
+  });
+
+  // Fullscreen / slideshow mode
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) req.call(el);
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  }
+  document.getElementById('presentBtn').addEventListener('click', toggleFullscreen);
+
+  document.addEventListener('keydown', (e) => {
+    // ignore key presses inside form fields (keep typing safe)
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+      case ' ':
+      case 'PageDown':
+        e.preventDefault(); next(); break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+      case 'PageUp':
+        e.preventDefault(); prev(); break;
+      case 'Home':
+        e.preventDefault(); show(1); break;
+      case 'End':
+        e.preventDefault(); show(total); break;
+      case 'f':
+      case 'F':
+        e.preventDefault(); toggleFullscreen(); break;
+    }
+  });
+
+  // click anywhere (except inside iframes/buttons) to advance
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.tagName === 'IFRAME' || t.tagName === 'BUTTON' || t.tagName === 'INPUT' || t.tagName === 'A') return;
+    if (t.closest('iframe') || t.closest('.deck-counter') || t.closest('.deck-hint') || t.closest('.deck-present')) return;
+    next();
+  });
+
+  // restore from hash on load
+  const m = location.hash.match(/slide=(\d+)/);
+  if (m) show(parseInt(m[1])); else show(1);
+
+</script>
+
+</body>
+</html>
