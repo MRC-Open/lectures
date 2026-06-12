@@ -13,23 +13,51 @@
   .doc { max-width: 860px; margin: 0 auto; }
 
   /* hero */
-  .hero { text-align: center; padding: 12px 0 28px 0; border-bottom: 1px solid var(--rule); }
+  .hero { text-align: center; padding: 12px 0 24px 0; }
   .hero h1 { font-family: var(--font-sans); font-size: 38px; font-weight: 500; letter-spacing: -0.4px; margin: 0 0 8px 0; }
   .hero .sub { font-family: var(--font-sans); color: var(--text-muted); font-size: 16px; font-style: italic; }
   .hero .dates { font-family: var(--font-sans); font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-top: 14px; }
 
-  /* big CTAs */
-  .cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 30px 0 18px 0; }
-  .cta { display: block; text-decoration: none; border: 1.5px solid var(--rule); border-radius: 6px; padding: 18px 22px; color: var(--text); transition: all 0.15s; }
-  .cta:hover { border-color: var(--accent); color: var(--accent); }
-  .cta .lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
-  .cta .t { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-  .cta .d { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+  .meta {
+    font-family: var(--font-sans); font-size: 13px; color: var(--text-muted);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 12px 0; margin: 22px 0 36px 0; display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+  }
+  .meta b { color: var(--text); font-weight: 600; }
 
   /* sections */
-  h2.sec { font-family: var(--font-sans); font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -0.2px; margin: 44px 0 14px 0; padding-top: 18px; border-top: 1px solid var(--rule); }
+  h2.sec {
+    font-family: var(--font-sans); font-size: 22px; font-weight: 500; color: var(--text);
+    letter-spacing: -0.2px; margin: 44px 0 14px 0; padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+  h2.sec .num { color: var(--accent); font-weight: 600; margin-right: 10px; }
 
-  /* session cards */
+  p.lead { font-size: 19px; line-height: 1.7; }
+  .doc p { line-height: 1.7; }
+  .doc strong { font-weight: 700; color: var(--text); }
+  .doc em { font-style: italic; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
+  a:hover { border-bottom-color: var(--accent); }
+
+  /* four pillars */
+  .pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; }
+  .pillar { border: 1px solid var(--rule); border-radius: 5px; padding: 14px 18px; }
+  .pillar .yr { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .pillar .nm { font-weight: 700; margin: 2px 0; }
+  .pillar .ds { font-size: 15px; color: var(--text-muted); line-height: 1.5; }
+  .conv-eq { text-align: center; font-size: 22px; margin: 8px 0 6px 0; }
+  .conv-cap { text-align: center; font-family: var(--font-sans); font-size: 13px; color: var(--text-muted); font-style: italic; margin-bottom: 8px; }
+
+  /* capabilities */
+  .caps { counter-reset: cap; margin: 14px 0; }
+  .cap { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--rail); }
+  .cap:last-child { border-bottom: none; }
+  .cap .n { font-family: var(--font-sans); font-size: 28px; font-weight: 300; color: var(--accent); line-height: 1; }
+  .cap .t { font-size: 16px; line-height: 1.6; }
+  .cap .t b { color: var(--text); }
+
+  /* sessions */
   .session { border: 1px solid var(--rule); border-radius: 6px; padding: 22px 26px; margin: 16px 0; }
   .session.live { border-color: var(--accent); }
   .session-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
@@ -40,10 +68,11 @@
   .status.upcoming { background: var(--rail); color: var(--text-muted); }
   .status.preview { background: white; color: var(--accent); border: 1px solid var(--accent); }
   .session-title { font-size: 21px; font-weight: 700; margin: 4px 0 4px 0; }
-  .session-tag { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
-  .session-tag span { color: var(--accent); font-weight: 600; }
+  .session-tag { font-family: var(--font-sans); font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 12px; letter-spacing: 0.4px; }
+  .session-topics { font-size: 16px; line-height: 1.7; color: var(--text); margin-bottom: 16px; }
 
-  .links { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+  /* materials link grid (deck / recording / worksheets) */
+  .links { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 4px; }
   .link { display: block; text-decoration: none; border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; color: var(--text); transition: all 0.15s; background: white; }
   .link:hover { border-color: var(--accent); color: var(--accent); }
   .link.disabled { opacity: 0.4; pointer-events: none; }
@@ -52,22 +81,34 @@
   .link .lt { font-size: 14px; font-weight: 600; line-height: 1.35; }
   .link .ls { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
 
-  /* worksheets dropdown */
+  /* worksheets details */
   details.worksheets { margin-top: 14px; }
-  details.worksheets summary { cursor: pointer; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); padding: 4px 0; }
+  details.worksheets summary { cursor: pointer; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); padding: 4px 0; letter-spacing: 0.4px; }
   details.worksheets summary:hover { color: var(--accent); }
   details.worksheets ul { list-style: none; padding: 6px 0 0 16px; margin: 0; font-size: 14px; line-height: 1.7; }
-  details.worksheets a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
-  details.worksheets a:hover { border-bottom-color: var(--accent); }
+  details.worksheets a { color: var(--accent); border-bottom: 1px solid #d9cdee; }
+
+  /* readings (per session) */
+  .readings-label { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin: 18px 0 6px 0; }
+  ul.readings { list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 1.55; }
+  ul.readings li { padding: 4px 0 4px 18px; position: relative; color: var(--text); }
+  ul.readings li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+  ul.readings li.supp { color: var(--text-muted); }
+  ul.readings li.supp::before { background: var(--text-muted); }
+  ul.readings .supp-tag { font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); font-style: italic; }
+
+  .session.project { border: 2px solid var(--accent); background: var(--accent-faint); }
 
   .note { font-size: 14px; color: var(--text-muted); font-style: italic; line-height: 1.6; padding: 14px 18px; background: var(--rail); border-radius: 4px; margin: 16px 0; }
   .note strong { color: var(--accent); font-style: normal; font-weight: 700; }
   .note code { background: white; padding: 1px 6px; border-radius: 3px; font-size: 13px; }
 
-  .closing { font-size: 16px; line-height: 1.75; font-style: italic; color: var(--text); margin: 24px 0 0 0; text-align: center; }
+  .closing { font-size: 17px; line-height: 1.75; font-style: italic; color: var(--text); margin: 24px 0 0 0; text-align: center; }
 
   footer { margin-top: 50px; padding-top: 18px; border-top: 1px solid var(--rule); text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); letter-spacing: 0.4px; }
-  footer a { color: var(--accent); text-decoration: none; }
+  footer a { color: var(--accent); border-bottom: none; }
+
+  @media (min-width: 1400px) { .doc { max-width: 900px; } body { font-size: 20px; } }
 </style>
 </head>
 <body>
@@ -81,24 +122,50 @@
     <div class="dates">4 sessions · 12 Jun · 17 Jun · 19 Jun · 1 Jul 2026</div>
   </div>
 
-  <div class="cta-row">
-    <a class="cta" href="MRC_Tutorial_Syllabus.html">
-      <div class="lbl">Start here</div>
-      <div class="t">Syllabus</div>
-      <div class="d">Why the course exists · what you'll learn · how the final project becomes a real publication.</div>
-    </a>
-    <a class="cta" href="#sessions">
-      <div class="lbl">The sessions</div>
-      <div class="t">Lectures &amp; materials</div>
-      <div class="d">Interactive decks · live whiteboard derivations · written derivation worksheets · session recordings.</div>
-    </a>
+  <div class="meta">
+    <span><b>Format</b> &nbsp;4 sessions · ~2 hours each · informal</span>
+    <span><b>Assessment</b> &nbsp;Final project — build your own SFM</span>
   </div>
+
+  <p class="lead">
+    This course proves a single idea and follows it to its consequences: the <strong>softmax attention mechanism</strong> in modern AI is the same equation as the <strong>Boltzmann distribution</strong> that governs molecular binding. From that identity — plus five physical conditions any recognition system at thermal equilibrium satisfies — a complete neural architecture is prescribed: a <strong>Specificity Foundation Model (SFM)</strong>. The goal is for each of you to learn <em>enough</em> to build one on your own data.
+  </p>
 
   <div class="note">
-    <strong>How to use the materials.</strong> Each session deck is an interactive HTML presentation — open the link and you're in. Click <code>▶ Present</code> (or press <code>F</code>) for fullscreen; arrow keys to navigate. The derivation worksheets are downloadable Word documents — your written reference for the math. Recordings live on Google Drive.
+    <strong>How to use these materials.</strong> Each session deck is an interactive HTML presentation — click and you're in. Press <code>▶ Present</code> (or <code>F</code>) for fullscreen, arrow keys to navigate. The derivation worksheets are downloadable Word documents — your written reference for the math. Recordings live on Google Drive.
   </div>
 
-  <h2 id="sessions" class="sec">Sessions</h2>
+  <h2 class="sec"><span class="num">1</span>Why This Course Exists</h2>
+  <p>The course rests on four concepts that are <strong>settled science</strong> — textbook material in their fields, not new claims:</p>
+
+  <div class="pillars">
+    <div class="pillar"><div class="yr">1877 · Physics</div><div class="nm">Boltzmann distribution</div><div class="ds">The probability of an energy state at thermal equilibrium ∝ $\exp(-E/k_BT)$.</div></div>
+    <div class="pillar"><div class="yr">1948–57 · Information theory</div><div class="nm">Maximum entropy</div><div class="ds">Shannon &amp; Jaynes: the most-rational distribution under partial information is the exponential family.</div></div>
+    <div class="pillar"><div class="yr">1959 · Choice theory</div><div class="nm">Luce's choice axiom</div><div class="ds">Independence of irrelevant alternatives forces the softmax form — a uniqueness theorem.</div></div>
+    <div class="pillar"><div class="yr">2017 · Machine learning</div><div class="nm">Softmax attention</div><div class="ds">Vaswani et al.: the operational core of every transformer and language model.</div></div>
+  </div>
+
+  <div class="conv-eq">$$P(j) \;=\; \frac{\exp(s_j)}{\sum_k \exp(s_k)}$$</div>
+  <div class="conv-cap">The same function, derived independently in four fields. We call it the convergence equation.</div>
+
+  <p>The one genuinely new contribution — the only thing here that is not already textbook material — is <strong>the bridge</strong>: the convergence equation, combined with five physical conditions, prescribes a complete neural architecture for predicting binding. The proof is in <a href="https://www.biorxiv.org/content/10.64898/2026.02.03.703525v1"><em>Computational Convergence of Adaptive Immunity and Artificial Intelligence</em></a> (Reddy, 2026); the architectural derivation in <a href="https://www.biorxiv.org/content/10.64898/2026.04.03.716328v1"><em>Methods for Molecular Recognition Computing</em></a> (Reddy, 2026); the first SFM — CALM, for antibody–antigen specificity — in <a href="https://www.biorxiv.org/content/10.64898/2026.02.25.707916v1">Lee et al. (2026)</a>.</p>
+
+  <h2 class="sec"><span class="num">2</span>An Identity, Not an Analogy</h2>
+  <p>Synthetic biology is full of useful analogies — genetic circuits are <em>like</em> electronic circuits; neural networks are <em>inspired by</em> neurons. What is claimed here is different. The convergence equation is not analogous to the Boltzmann distribution; under the appropriate identification of variables, it <strong>is</strong> the Boltzmann distribution. To our knowledge there is no other case in the history of computer science where a computational mechanism has been shown to be a literal mathematical identity with a physical one.</p>
+
+  <h2 class="sec"><span class="num">3</span>Why No Existing Training Prepares You</h2>
+  <p>This is structural, not a gap in anyone's background. ML courses teach attention but not its identity with Boltzmann; biophysics courses teach Boltzmann but not its identity with attention; information-theory courses teach maximum entropy but not its consequences for neural architectures. No curriculum stitches these together — so the implications of <strong>Level 3 alignment</strong> (where the architecture <em>is</em> the governing equation, not an approximation of it) have to be taught explicitly. The math used here is at the level of <strong>college algebra and basic calculus</strong> — dot products, exponentials, derivatives. Anyone in the lab can take this course; wet-lab, computational, and hybrid researchers all start from the same place. Detailed written derivation guides are provided for every key result, and the most important ones we work through together in class.</p>
+
+  <h2 class="sec"><span class="num">4</span>What You Will Learn</h2>
+  <div class="caps">
+    <div class="cap"><div class="n">1</div><div class="t"><b>The mathematical foundations of modern AI.</b> Linear algebra at the level needed to read transformer papers; the transformer architecture; contrastive learning and the InfoNCE loss. Enough to read the relevant papers and understand them.</div></div>
+    <div class="cap"><div class="n">2</div><div class="t"><b>The physics that governs molecular binding.</b> The Boltzmann distribution and binding probability; the dissociation constant and free energy ($\Delta G = RT\ln K_d$); why competitive binding is softmax; given vs. emergent bilinearity.</div></div>
+    <div class="cap"><div class="n">3</div><div class="t"><b>A new paradigm — physics-derived AI architectures.</b> Luce's proof; the SFM architecture derived from physics; <strong>parameter estimation in a known equation</strong> vs. function approximation — and the measurably different training behaviour it predicts (exponential data scaling, fast convergence, OOD robustness).</div></div>
+    <div class="cap"><div class="n">4</div><div class="t"><b>The ability to build, validate, and implement your own SFM.</b> The final project: build an SFM on your own molecular-recognition data with Claude Code and the CALM codebase. You make the domain-expert decisions; the architecture is prescribed.</div></div>
+  </div>
+
+  <h2 class="sec"><span class="num">5</span>Sessions</h2>
+  <p>Each session draws its slides and written derivation guides from the corresponding ETH semester lectures (L1–L6), condensed for our four sittings. Decks are interactive; the math we work through live is provided in writing for every result. Sessions are flexible — overstuffed is fine; we add follow-ups as needed.</p>
 
   <!-- ============ SESSION 1 ============ -->
   <div class="session live">
@@ -108,14 +175,15 @@
       <span class="status live">Live</span>
     </div>
     <div class="session-title">Linear Algebra for Machine Learning and Molecular Recognition</div>
-    <div class="session-tag"><span>Lecture 1</span> · A molecule as a vector · dot products · matrix multiplication · cosine similarity · softmax with temperature</div>
+    <div class="session-tag">Lecture 1</div>
+    <div class="session-topics">A molecule as a vector — a list of its properties. The dot product in two equivalent forms (algebraic and geometric) as a compatibility score. Matrix multiplication as parallel dot products: $S = QK^\top$. Cosine similarity and L2 normalization. Softmax with temperature.</div>
     <div class="links">
       <a class="link" href="Session1_LinearAlgebra.html">
         <div class="lk">▶ Open the deck</div>
         <div class="lt">Interactive lecture</div>
         <div class="ls">40 slides — demos &amp; animated proofs</div>
       </a>
-      <a class="link" id="rec-l1" href="https://drive.google.com/file/d/1HDWJ1rHkUjO9e3PMI0HUidW4IuNxdHMc/view?usp=sharing" target="_blank" rel="noopener">
+      <a class="link" href="https://drive.google.com/file/d/1HDWJ1rHkUjO9e3PMI0HUidW4IuNxdHMc/view?usp=sharing" target="_blank" rel="noopener">
         <div class="lk">🎥 Recording</div>
         <div class="lt">Session 1 Zoom</div>
         <div class="ls">watch on Google Drive →</div>
@@ -136,6 +204,12 @@
         <li><a href="L1/derivations/L1_WB5_Temperature.docx">WB5 — Temperature: probability ratio = exp(δ/τ)</a></li>
       </ul>
     </details>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Mikolov T, et al. Efficient estimation of word representations in vector space. <em>ICLR Workshop</em> (2013). <a href="https://arxiv.org/abs/1301.3781">arXiv:1301.3781</a></li>
+      <li>Bengio Y, Courville A, Vincent P. Representation learning: a review and new perspectives. <em>IEEE TPAMI</em> (2013). <a href="https://arxiv.org/abs/1206.5538">arXiv:1206.5538</a></li>
+      <li class="supp">Strang G. <em>Introduction to Linear Algebra</em>, 6th ed. (2023), Ch. 1 &amp; 7. <span class="supp-tag">supplementary · textbook</span></li>
+    </ul>
   </div>
 
   <!-- ============ SESSION 2 ============ -->
@@ -146,7 +220,8 @@
       <span class="status preview">Preview · in progress</span>
     </div>
     <div class="session-title">Transformers &amp; Contrastive Learning</div>
-    <div class="session-tag"><span>Lectures 2 + 3</span> · attention · why √dₖ · multi-head · protein language models · CLIP → CALM · InfoNCE · symmetric loss</div>
+    <div class="session-tag">Lectures 2 + 3</div>
+    <div class="session-topics">The neuron, the forward pass, and the Universal Approximation Theorem. From RNNs to the transformer. <strong>Scaled dot-product attention</strong> — the full derivation. Why $\sqrt{d_k}$ (the variance argument). Multi-head attention ↔ CDR loops. Language models (BERT, GPT) and protein language models (ESM-2, AntiBERTy). Contrastive learning: CLIP → CALM. The <strong>InfoNCE loss</strong> from the Boltzmann selection probability; the symmetric loss; why other losses fail.</div>
     <div class="links">
       <a class="link" href="Session2_Transformers_Contrastive.html">
         <div class="lk">▶ Preview the deck</div>
@@ -164,6 +239,17 @@
         <div class="ls">7 derivation guides (L2 + L3)</div>
       </span>
     </div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Vaswani A, et al. Attention is all you need. <em>NeurIPS</em> (2017). <a href="https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a></li>
+      <li>Radford A, et al. Learning transferable visual models from natural language supervision (CLIP). <em>ICML</em> (2021). <a href="https://arxiv.org/abs/2103.00020">arXiv:2103.00020</a></li>
+      <li>Rives A, et al. Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences (ESM). <em>PNAS</em> (2021). <a href="https://www.pnas.org/doi/10.1073/pnas.2016239118">10.1073/pnas.2016239118</a></li>
+      <li>Lin Z, et al. Evolutionary-scale prediction of atomic-level protein structure (ESM-2). <em>Science</em> (2023). <a href="https://www.science.org/doi/10.1126/science.ade2574">10.1126/science.ade2574</a></li>
+      <li>LeCun Y, Bengio Y, Hinton G. Deep learning. <em>Nature</em> (2015). <a href="https://www.nature.com/articles/nature14539">nature14539</a></li>
+      <li class="supp">Ruffolo J, et al. AntiBERTy — antibody language model (2022). <a href="https://arxiv.org/abs/2112.07782">arXiv:2112.07782</a> <span class="supp-tag">supplementary</span></li>
+      <li class="supp">Bahdanau D, Cho K, Bengio Y. Neural machine translation by jointly learning to align and translate. <em>ICLR</em> (2015). <a href="https://arxiv.org/abs/1409.0473">arXiv:1409.0473</a> <span class="supp-tag">supplementary</span></li>
+      <li class="supp">van den Oord A, Li Y, Vinyals O. Representation learning with contrastive predictive coding (2018). <a href="https://arxiv.org/abs/1807.03748">arXiv:1807.03748</a> <span class="supp-tag">supplementary</span></li>
+    </ul>
   </div>
 
   <!-- ============ SESSION 3 ============ -->
@@ -174,7 +260,8 @@
       <span class="status upcoming">Upcoming</span>
     </div>
     <div class="session-title">Thermodynamics &amp; Bilinearity</div>
-    <div class="session-tag"><span>Lectures 4 + 5</span> · Boltzmann from maximum entropy · K_d and ΔG · competitive binding as softmax · SantaLucia · PWMs · the encoding problem</div>
+    <div class="session-tag">Lectures 4 + 5</div>
+    <div class="session-topics">Free energy $\Delta G = \Delta H - T\Delta S$, the second law, the Boltzmann factor. The Boltzmann distribution from maximum entropy (full derivation). From Boltzmann to $K_d$: $\Delta G = RT\ln K_d$. Competitive binding as softmax — the identity moment. Measurement: SPR, ITC, BLI. <strong>Given vs. emergent bilinearity</strong>: the SantaLucia nearest-neighbor model; position weight matrices (PWM = the convergence equation); the encoding problem for antibody–antigen.</div>
     <div class="links">
       <span class="link disabled">
         <div class="lk">▶ Deck</div>
@@ -192,6 +279,15 @@
         <div class="ls">6 derivation guides (L4 + L5)</div>
       </span>
     </div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Jaynes ET. Information theory and statistical mechanics. <em>Phys. Rev.</em> (1957). <a href="https://doi.org/10.1103/PhysRev.106.620">10.1103/PhysRev.106.620</a></li>
+      <li>SantaLucia J Jr. A unified view of polymer, dumbbell, and oligonucleotide DNA nearest-neighbor thermodynamics. <em>PNAS</em> (1998). <a href="https://www.pnas.org/doi/10.1073/pnas.95.4.1460">10.1073/pnas.95.4.1460</a></li>
+      <li>Stormo GD. DNA binding sites: representation and discovery. <em>Bioinformatics</em> (2000). <a href="https://doi.org/10.1093/bioinformatics/16.1.16">10.1093/bioinformatics/16.1.16</a></li>
+      <li class="supp">Dill KA, Bromberg S. <em>Molecular Driving Forces</em>, 2nd ed. (2010), Ch. 10–11. <span class="supp-tag">supplementary · textbook</span></li>
+      <li class="supp">Bartel DP. MicroRNAs: target recognition and regulatory functions. <em>Cell</em> (2009). <a href="https://doi.org/10.1016/j.cell.2009.01.002">10.1016/j.cell.2009.01.002</a> <span class="supp-tag">supplementary</span></li>
+      <li class="supp">Nelson DL, Cox MM. <em>Lehninger Principles of Biochemistry</em>, 8th ed. (2021), Ch. 5. <span class="supp-tag">supplementary · textbook</span></li>
+    </ul>
   </div>
 
   <!-- ============ SESSION 4 ============ -->
@@ -202,7 +298,8 @@
       <span class="status upcoming">Upcoming</span>
     </div>
     <div class="session-title">The Convergence Equation, the SFM Architecture &amp; the Ten Domains</div>
-    <div class="session-tag"><span>Lecture 6</span> · Luce's choice axiom · the elimination proof · the SFM architecture from five physical conditions · the ten domains</div>
+    <div class="session-tag">Lecture 6</div>
+    <div class="session-topics">Luce's choice axiom and the five axioms of competitive selection. The elimination proof — why sigmoid, ReLU, and polynomials all fail, and only the exponential survives. The identity written twice (Boltzmann = attention). Deriving the SFM architecture from five physical conditions: dual encoders, dot-product cross-attention, InfoNCE, symmetric loss, learned temperature. The Level 1/2/3 classification and the ten SFM domains.</div>
     <div class="links">
       <span class="link disabled">
         <div class="lk">▶ Deck</div>
@@ -219,26 +316,30 @@
         <div class="lt">In preparation</div>
       </span>
     </div>
+    <div class="readings-label">Reading</div>
+    <ul class="readings">
+      <li>Reddy ST. Computational convergence of adaptive immunity and artificial intelligence. <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.02.03.703525v1">biorxiv.org</a></li>
+      <li>Reddy ST. Methods for molecular recognition computing. <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.04.03.716328v1">biorxiv.org</a></li>
+      <li class="supp">Luce RD. <em>Individual Choice Behavior: A Theoretical Analysis.</em> Wiley (1959), Ch. 1–3. <span class="supp-tag">supplementary · book</span></li>
+      <li class="supp">Ramsauer H, et al. Hopfield networks is all you need. <em>ICLR</em> (2021). <a href="https://arxiv.org/abs/2008.02217">arXiv:2008.02217</a> <span class="supp-tag">supplementary</span></li>
+    </ul>
   </div>
 
-  <h2 class="sec">Final project — build your own SFM</h2>
-  <p style="line-height: 1.7;">After Session 4, each of you builds your own Specificity Foundation Model on your own data, using <strong style="color: var(--accent);">Claude Code</strong> with the <code>mrc-sfm-template</code> as the starting scaffold. The finished project is a citable research artifact — comparable to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">GenLoop</a>. See the <a href="MRC_Tutorial_Syllabus.html#sessions" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">syllabus</a> for the full setup.</p>
+  <h2 class="sec"><span class="num">6</span>Final Project — Build Your Own SFM</h2>
+  <p>After Session 4, each of you builds an SFM on your own molecular-recognition data — antibody–antigen, TCR–pMHC, peptide–MHC, cytokine–receptor, TF–DNA, drug–target, microRNA–mRNA, CRISPR off-target, enzyme–substrate, whatever fits your project — using <strong>Claude Code</strong> with the <code>mrc-sfm-template</code> as the starting scaffold. You decide the domain-expert questions: encoder selection, data curation, masking, train/test split and leakage prevention, hard-negative strategy, evaluation. The architecture itself does not change — it is prescribed by the convergence equation. The finished project is a citable research artifact, comparable to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">GenLoop</a> — with a Zenodo DOI and Hugging Face weights, archived at <code>github.com/MRC-ETHZ-BIIE</code>. <em>The only test of understanding that matters: did you build a model that works on data nobody has seen before?</em></p>
 
-  <div class="links" style="grid-template-columns: 1fr 1fr; margin-top: 18px;">
-    <span class="link disabled">
-      <div class="lk">📦 The template</div>
-      <div class="lt">mrc-sfm-template</div>
-      <div class="ls">coming soon — published before the final project window</div>
-    </span>
-    <span class="link disabled">
-      <div class="lk">📚 Code &amp; weights</div>
-      <div class="lt">github.com/MRC-ETHZ-BIIE</div>
-      <div class="ls">where finished projects are archived</div>
-    </span>
-  </div>
+  <div class="readings-label">Reading for the build</div>
+  <ul class="readings">
+    <li>Reddy ST. Methods for molecular recognition computing. <em>bioRxiv</em> (2026) — the full framework. <a href="https://www.biorxiv.org/content/10.64898/2026.04.03.716328v1">biorxiv.org</a></li>
+    <li>Reddy ST. Vibe Coding Specificity Foundation Models. <em>bioRxiv</em> (2026) — six SFMs built by a domain expert with no programming, via AI coding agents; the closest blueprint for your project. <a href="https://www.biorxiv.org/content/10.64898/2026.06.04.730134v1">biorxiv.org</a></li>
+    <li>Lee H, et al. Contrastive learning for antibody–antigen sequence-to-specificity prediction (CALM). <em>bioRxiv</em> (2026) — the reference SFM implementation. <a href="https://www.biorxiv.org/content/10.64898/2026.02.25.707916v1">biorxiv.org</a></li>
+    <li class="supp">Reddy ST. dtSFM. <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">biorxiv.org</a> <span class="supp-tag">worked example — encoder + decoder</span></li>
+    <li class="supp">Reddy ST. Generative Drug Design in a Loop with dtSFM (GenLoop). <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">biorxiv.org</a> <span class="supp-tag">worked example — generative loop + AF3 verifier</span></li>
+    <li>The <code>mrc-sfm-template</code> repository — <code>README.md</code> + <code>CLAUDE.md</code> + audit protocol.</li>
+  </ul>
 
-  <h2 class="sec">Compute</h2>
-  <p style="line-height: 1.7;">For the final project you will need a GPU. The course supports two paths — pick whichever you have access to. Both can comfortably train at CALM scale (a few thousand pairs).</p>
+  <h2 class="sec"><span class="num">7</span>Compute</h2>
+  <p>For the final project you will need a GPU. The course supports two paths — pick whichever you have access to. Both can comfortably train at CALM scale (a few thousand pairs).</p>
 
   <div class="links" style="grid-template-columns: 1fr 1fr; margin-top: 14px;">
     <div class="link" style="cursor: default;">
@@ -249,11 +350,17 @@
     <div class="link" style="cursor: default;">
       <div class="lk">BIIE &amp; non-ETH</div>
       <div class="lt">Google Colab</div>
-      <div class="ls">Free T4 GPU notebooks at <a href="https://colab.research.google.com" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">colab.research.google.com</a>. The template will come with a Colab-ready notebook. Pro tier (~$10/mo) is useful for longer runs but not required.</div>
+      <div class="ls">Free T4 GPU notebooks at <a href="https://colab.research.google.com" target="_blank" rel="noopener">colab.research.google.com</a>. The template will come with a Colab-ready notebook. Pro tier (~$10/mo) is useful for longer runs but not required.</div>
     </div>
   </div>
 
   <p style="font-size: 14px; color: var(--text-muted); font-style: italic; margin-top: 16px;">If you have access to other compute (a lab GPU workstation, an HPC allocation elsewhere), it works too — the template is portable. Detailed setup notes ship with the template.</p>
+
+  <h2 class="sec"><span class="num">8</span>Why SFMs Become a Method Like PCR or CRISPR</h2>
+  <p><strong>Broad applicability:</strong> the framework prescribes an SFM for any molecular recognition system at thermal equilibrium — antibodies, TCRs, MHC, transcription factors, microRNAs, CRISPR guides, enzymes, drug–target pairs. <strong>Low resource:</strong> SFMs train on tens of thousands of pairs on a single GPU node using pretrained encoders — CALM achieved its results with ~4,000 pairs where CLIP needed ~400,000,000. The bottleneck is data curation by a domain expert, not compute. <strong>Open source:</strong> CALM, the SFM template, the pipelines, and the pretrained encoders are all public. PCR and CRISPR became foundational because they were broadly applicable, low-resource, and open — and unlike them, building an SFM needs no wet-lab step, only a domain expert who understands their own data.</p>
+
+  <h2 class="sec"><span class="num">9</span>SFMs as Infrastructure</h2>
+  <p>AlphaFold solved structure prediction. ESM and the protein language models solved sequence representation. Neither solves <strong>specificity</strong> — given a molecule and a pool of candidates, which partner does it actually recognize? Specificity is the central question of immunology, drug discovery, and synthetic biology, and it is what SFMs are built to answer. The natural division of labour: structure predictors provide structure, language models provide sequence representations, and <strong>SFMs sit on top and produce the specificity prediction itself</strong>. AlphaFold and ESM are tools you use; SFMs are the framework you build in.</p>
 
   <p class="closing">Anyone in the lab can take this course. The math is at the level of college algebra and basic calculus. You do not need to know how to code — that is what Claude Code is for. The only thing you need is your own domain expertise and your own data.</p>
 
