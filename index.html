@@ -222,7 +222,7 @@
   </div>
 
   <h2 class="sec">Final project — build your own SFM</h2>
-  <p style="line-height: 1.7;">After Session 4, each of you builds your own Specificity Foundation Model on your own data, using <strong style="color: var(--accent);">Claude Code</strong> with the <code>mrc-sfm-template</code> as the starting scaffold. The finished project is a real, citable research artifact — equivalent to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">GenLoop</a> — with a Zenodo DOI, Hugging Face weights, and a permanent home in the <strong style="color: var(--accent);">MRC-Open</strong> community. See <a href="MRC_Tutorial_Syllabus.html#sessions" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">Section 6 of the syllabus</a> for the full infrastructure and the publication / patent path.</p>
+  <p style="line-height: 1.7;">After Session 4, each of you builds your own Specificity Foundation Model on your own data, using <strong style="color: var(--accent);">Claude Code</strong> with the <code>mrc-sfm-template</code> as the starting scaffold. The finished project is a citable research artifact — comparable to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">GenLoop</a>. See the <a href="MRC_Tutorial_Syllabus.html#sessions" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">syllabus</a> for the full setup.</p>
 
   <div class="links" style="grid-template-columns: 1fr 1fr; margin-top: 18px;">
     <span class="link disabled">
@@ -231,17 +231,35 @@
       <div class="ls">coming soon — published before the final project window</div>
     </span>
     <span class="link disabled">
-      <div class="lk">📚 The archive</div>
-      <div class="lt">MRC-Open · MRC-ETHZ-BIIE</div>
-      <div class="ls">community home for all finished SFMs</div>
+      <div class="lk">📚 Code &amp; weights</div>
+      <div class="lt">github.com/MRC-ETHZ-BIIE</div>
+      <div class="ls">where finished projects are archived</div>
     </span>
   </div>
+
+  <h2 class="sec">Compute</h2>
+  <p style="line-height: 1.7;">For the final project you will need a GPU. The course supports two paths — pick whichever you have access to. Both can comfortably train at CALM scale (a few thousand pairs).</p>
+
+  <div class="links" style="grid-template-columns: 1fr 1fr; margin-top: 14px;">
+    <div class="link" style="cursor: default;">
+      <div class="lk">ETH students</div>
+      <div class="lt">Euler (ETH cluster)</div>
+      <div class="ls">Free GPU access via your <code style="background: var(--rail); padding: 1px 5px; border-radius: 2px; font-size: 11px;">nethz</code> account. Request Euler access through ETH IT if you haven't already. We will help you set up the environment when the final project starts.</div>
+    </div>
+    <div class="link" style="cursor: default;">
+      <div class="lk">BIIE &amp; non-ETH</div>
+      <div class="lt">Google Colab</div>
+      <div class="ls">Free T4 GPU notebooks at <a href="https://colab.research.google.com" style="color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee;">colab.research.google.com</a>. The template will come with a Colab-ready notebook. Pro tier (~$10/mo) is useful for longer runs but not required.</div>
+    </div>
+  </div>
+
+  <p style="font-size: 14px; color: var(--text-muted); font-style: italic; margin-top: 16px;">If you have access to other compute (a lab GPU workstation, an HPC allocation elsewhere), it works too — the template is portable. Detailed setup notes ship with the template.</p>
 
   <p class="closing">Anyone in the lab can take this course. The math is at the level of college algebra and basic calculus. You do not need to know how to code — that is what Claude Code is for. The only thing you need is your own domain expertise and your own data.</p>
 
   <footer>
     Sai T. Reddy · ETH Zurich · Botnar Institute of Immune Engineering · 2026<br>
-    Part of <strong>MRC-Open</strong> — the open community for Specificity Foundation Models.
+    Lecture materials, derivations, and demos under open licence.
   </footer>
 
 </div>
