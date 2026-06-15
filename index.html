@@ -216,20 +216,20 @@
   </div>
 
   <!-- ============ SESSION 2 ============ -->
-  <div class="session">
+  <div class="session live">
     <div class="session-head">
       <span class="sn">Session 2</span>
       <span class="dt">17 June 2026</span>
-      <span class="status preview">Preview · in progress</span>
+      <span class="status live">Live</span>
     </div>
     <div class="session-title">Transformers &amp; Contrastive Learning</div>
     <div class="session-tag">Lectures 2 + 3</div>
     <div class="session-topics">The neuron, the forward pass, and the Universal Approximation Theorem. From RNNs to the transformer. <strong>Scaled dot-product attention</strong> — the full derivation. Why $\sqrt{d_k}$ (the variance argument). Multi-head attention ↔ CDR loops. Language models (BERT, GPT) and protein language models (ESM-2, AntiBERTy). Contrastive learning: CLIP → CALM. The <strong>InfoNCE loss</strong> from the Boltzmann selection probability; the symmetric loss; why other losses fail.</div>
     <div class="links" style="grid-template-columns: 1fr 1fr;">
       <a class="link" href="Session2_Transformers_Contrastive.html">
-        <div class="lk">▶ Preview the deck</div>
-        <div class="lt">Draft — work in progress</div>
-        <div class="ls">33 slides — final tuning before 17 Jun</div>
+        <div class="lk">▶ Open the deck</div>
+        <div class="lt">Interactive lecture</div>
+        <div class="ls">33 slides — demos &amp; animated proofs</div>
       </a>
       <span class="link disabled">
         <div class="lk">🎥 Recording</div>
@@ -238,7 +238,7 @@
       </span>
     </div>
     <details class="worksheets" open>
-      <summary>📥 Draft derivation worksheets (7 — preview · may evolve before 17 June · PDF)</summary>
+      <summary>📥 Derivation worksheets (7 — written reference for the whiteboard math · PDF)</summary>
       <ul>
         <li><a href="L2/derivations/L2_WB1_ForwardPass.pdf">L2 WB1 — The Neuron and the Forward Pass</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L2/derivations/L2_WB1_ForwardPass.docx">.docx</a>]</span></li>
         <li><a href="L2/derivations/L2_WB2_ScaledDotProductAttention.pdf">L2 WB2 — Scaled Dot-Product Attention: full derivation</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L2/derivations/L2_WB2_ScaledDotProductAttention.docx">.docx</a>]</span></li>
@@ -272,7 +272,7 @@
     <div class="session-title">Thermodynamics &amp; Bilinearity</div>
     <div class="session-tag">Lectures 4 + 5</div>
     <div class="session-topics">Free energy $\Delta G = \Delta H - T\Delta S$, the second law, the Boltzmann factor. The Boltzmann distribution from maximum entropy (full derivation). From Boltzmann to $K_d$: $\Delta G = RT\ln K_d$. Competitive binding as softmax — the identity moment. Measurement: SPR, ITC, BLI. <strong>Given vs. emergent bilinearity</strong>: the SantaLucia nearest-neighbor model; position weight matrices (PWM = the convergence equation); the encoding problem for antibody–antigen.</div>
-    <div class="links">
+    <div class="links" style="grid-template-columns: 1fr 1fr;">
       <span class="link disabled">
         <div class="lk">▶ Deck</div>
         <div class="lt">In preparation</div>
@@ -283,12 +283,18 @@
         <div class="lt">After Session 3</div>
         <div class="ls">available after 19 June</div>
       </span>
-      <span class="link disabled">
-        <div class="lk">📥 Worksheets</div>
-        <div class="lt">In preparation</div>
-        <div class="ls">6 derivation guides (L4 + L5)</div>
-      </span>
     </div>
+    <details class="worksheets" open>
+      <summary>📥 Derivation worksheets (6 — written reference for the whiteboard math · PDF)</summary>
+      <ul>
+        <li><a href="L4/derivations/L4_WB1_BoltzmannDerivation.pdf">L4 WB1 — The Boltzmann Distribution from Maximum Entropy</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L4/derivations/L4_WB1_BoltzmannDerivation.docx">.docx</a>]</span></li>
+        <li><a href="L4/derivations/L4_WB2_KdDerivation.pdf">L4 WB2 — From Boltzmann to K<sub>d</sub>: ΔG = RT ln K<sub>d</sub></a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L4/derivations/L4_WB2_KdDerivation.docx">.docx</a>]</span></li>
+        <li><a href="L4/derivations/L4_WB3_CompetitiveBinding.pdf">L4 WB3 — Competitive Binding as Softmax: the identity moment</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L4/derivations/L4_WB3_CompetitiveBinding.docx">.docx</a>]</span></li>
+        <li><a href="L5/derivations/L5_WB1_SantaLuciaModel.pdf">L5 WB1 — The SantaLucia Nearest-Neighbor Model (exact dot-product thermodynamics)</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L5/derivations/L5_WB1_SantaLuciaModel.docx">.docx</a>]</span></li>
+        <li><a href="L5/derivations/L5_WB2_PWMDotProduct.pdf">L5 WB2 — Position Weight Matrices: PWM = the convergence equation</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L5/derivations/L5_WB2_PWMDotProduct.docx">.docx</a>]</span></li>
+        <li><a href="L5/derivations/L5_WB3_EmergentBilinearity.pdf">L5 WB3 — Given vs. Emergent Bilinearity: the antibody–antigen encoding problem</a> &nbsp;<span style="font-size: 11px; color: var(--text-muted);">[<a href="L5/derivations/L5_WB3_EmergentBilinearity.docx">.docx</a>]</span></li>
+      </ul>
+    </details>
     <div class="readings-label">Reading</div>
     <ul class="readings">
       <li>Jaynes ET. Information theory and statistical mechanics. <em>Phys. Rev.</em> 106, 620–630 (1957). <a href="readings/Jaynes_1957_Information_Theory_and_Statistical_Mechanics.pdf">PDF</a></li>
