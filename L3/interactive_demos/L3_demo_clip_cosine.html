@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — CLIP: One Number</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 800px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .pick { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-bottom: 12px; }
+  .pcol { text-align:center; }
+  .pcol .pl { font-family: var(--font-sans); font-size: 10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:6px; }
+  .chips { display:flex; gap:6px; justify-content:center; }
+  .chip { font-family: var(--font-serif); font-size:15px; padding:6px 11px; border:1.5px solid var(--rule); border-radius:6px; cursor:pointer; color: var(--text); transition: all 0.15s; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { border-color: var(--accent); background: var(--accent-faint); color: var(--accent); font-weight:700; }
+  .chip .em { font-size:18px; }
+
+  .vecs { display:flex; gap: 30px; justify-content:center; flex-wrap:wrap; margin: 8px 0 6px; }
+  .vec { text-align:center; }
+  .vec .vl { font-family: var(--font-sans); font-size:11px; color: var(--text-muted); margin-bottom:5px; }
+  .vec .vl b { color: var(--accent); }
+  .cells { display:inline-grid; grid-auto-flow:column; gap:3px; }
+  .vc { width:46px; height:30px; border:1px solid var(--rule); border-radius:3px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:14px; font-variant-numeric:tabular-nums; }
+
+  .calc { border:1px solid var(--rule); border-left:3px solid var(--accent); background:#fbfaff; border-radius:8px; padding:11px 18px; max-width:720px; margin:6px auto 0; font-family: var(--font-serif); font-size:14.5px; line-height:1.95; font-variant-numeric:tabular-nums; text-align:left; }
+  .calc .wh { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:4px; }
+  .calc .mut { color: var(--text-muted); }
+  .calc .res { color: var(--accent); font-weight:700; }
+
+  .verdict { display:flex; align-items:center; justify-content:center; gap:14px; margin:14px auto 0; }
+  .vbadge { font-family: var(--font-serif); font-size:30px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .vtag { font-family: var(--font-sans); font-size:13px; font-weight:700; padding:6px 14px; border-radius:20px; }
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin: 10px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:150px; height:10px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>CLIP — Measuring Agreement With One Number</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · TWO ENCODERS → TWO VECTORS → ONE COSINE</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="clip">CLIP · image ↔ text</button>
+    <button class="tbtn" data-ex="calm">SFM · antibody ↔ antigen</button>
+  </div>
+
+  <div class="pick">
+    <div class="pcol"><div class="pl" id="alab"></div><div class="chips" id="achips"></div></div>
+    <div class="pcol"><div class="pl" id="blab"></div><div class="chips" id="bchips"></div></div>
+  </div>
+
+  <div class="vecs">
+    <div class="vec"><div class="vl" id="avl"></div><div class="cells" id="acells"></div></div>
+    <div class="vec"><div class="vl" id="bvl"></div><div class="cells" id="bcells"></div></div>
+  </div>
+
+  <div class="calc" id="calc"></div>
+
+  <div class="verdict"><div class="vbadge" id="vbadge"></div><div class="vtag" id="vtag"></div></div>
+  <div class="legend"><span>0 · no match</span><div class="legbar"></div><span>1 · perfect match</span><span style="margin-left:4px;font-style:italic;">cosine similarity</span></div>
+
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=n=>(n<0?'−':'')+Math.abs(n).toFixed(2);
+  const dot=(a,b)=>a.reduce((s,_,i)=>s+a[i]*b[i],0);
+  const mag=a=>Math.sqrt(dot(a,a));
+
+  const EX = {
+    clip: {
+      recog:'CLIP turns a picture and a caption into <b>vectors</b> in one shared space, then scores their agreement with a single number — <b>cosine similarity</b>, the very one from Lecture 1. Training pushes a <b>matched</b> pair’s cosine toward <b>1</b>, and every <b>mismatch</b> toward 0.',
+      alab:'image', blab:'caption', aenc:'image encoder', benc:'text encoder',
+      items:[
+        {a:'🐕', b:'“a dog”', va:[0.9,0.2,0.1,0.1], vb:[0.8,0.3,0.2,0.0]},
+        {a:'🐈', b:'“a cat”', va:[0.5,0.8,0.1,0.2], vb:[0.4,0.7,0.0,0.2]},
+        {a:'🚗', b:'“a car”', va:[0.1,0.1,0.9,0.2], vb:[0.2,0.0,0.8,0.3]},
+        {a:'🍕', b:'“pizza”', va:[0.1,0.2,0.2,0.9], vb:[0.0,0.3,0.1,0.8]}
+      ],
+      bridge:'One image, one caption, one number. But CLIP scores a whole <strong>batch</strong> at once — every image against every caption — and that grid is the <strong>N×N similarity matrix</strong> (next).'
+    },
+    calm: {
+      recog:'An SFM is identical, on <b>amino-acid sequences</b>: <b>AntiBERTy</b> turns an antibody’s <b>CDR-H3</b> into a vector, <b>ESM-2</b> turns an antigen <b>epitope</b> into a vector, and their <b>cosine</b> is the binding score. A true <b>binder</b> scores near 1; a non-binder near 0. Prescribed by physics ($\\cos \\leftrightarrow -\\Delta G$).',
+      alab:'antibody · CDR-H3', blab:'antigen · epitope', aenc:'AntiBERTy', benc:'ESM-2',
+      items:[
+        {a:'CARDYW', b:'FNCYF', va:[0.9,0.2,0.1,0.1], vb:[0.8,0.3,0.2,0.0]},
+        {a:'CARGYW', b:'GVTQN', va:[0.5,0.8,0.1,0.2], vb:[0.4,0.7,0.0,0.2]},
+        {a:'CARHPW', b:'ALDPS', va:[0.1,0.1,0.9,0.2], vb:[0.2,0.0,0.8,0.3]},
+        {a:'CARWFW', b:'PVRWE', va:[0.1,0.2,0.2,0.9], vb:[0.0,0.3,0.1,0.8]}
+      ],
+      bridge:'One CDR-H3, one epitope, one number. An SFM scores a whole <strong>batch</strong> — every antibody against every epitope — the <strong>N×N similarity matrix</strong> (next).'
+    }
+  };
+  let exKey='clip', ai=0, bi=0;
+
+  function vcells(v){ return v.map(x=>`<div class="vc">${f2(x)}</div>`).join(''); }
+
+  function render(){
+    const ex=EX[exKey];
+    document.getElementById('recog').innerHTML=ex.recog;
+    document.getElementById('alab').textContent=`${ex.alab} (→ ${ex.aenc})`;
+    document.getElementById('blab').textContent=`${ex.blab} (→ ${ex.benc})`;
+    document.getElementById('achips').innerHTML=ex.items.map((it,i)=>`<div class="chip ${i===ai?'on':''}" data-a="${i}">${exKey==='clip'?`<span class="em">${it.a}</span>`:it.a}</div>`).join('');
+    document.getElementById('bchips').innerHTML=ex.items.map((it,i)=>`<div class="chip ${i===bi?'on':''}" data-b="${i}">${it.b}</div>`).join('');
+    document.querySelectorAll('[data-a]').forEach(el=>el.addEventListener('click',()=>{ai=+el.dataset.a;render();}));
+    document.querySelectorAll('[data-b]').forEach(el=>el.addEventListener('click',()=>{bi=+el.dataset.b;render();}));
+
+    const A=ex.items[ai], B=ex.items[bi], va=A.va, vb=B.vb;
+    document.getElementById('avl').innerHTML=`<b>z<sub>${ex.alab[0]}</sub></b> — ${ex.aenc}(${A.a})`;
+    document.getElementById('bvl').innerHTML=`<b>z<sub>${ex.blab[0]}</sub></b> — ${ex.benc}(${B.b})`;
+    document.getElementById('acells').innerHTML=vcells(va);
+    document.getElementById('bcells').innerHTML=vcells(vb);
+
+    const d=dot(va,vb), ma=mag(va), mb=mag(vb), cos=d/(ma*mb);
+    document.getElementById('calc').innerHTML=
+      `<div class="wh">plug in the numbers — cosine of the two fingerprints</div>`+
+      `<span class="mut">dot:</span> z<sub>a</sub>·z<sub>b</sub> = ${va.map((x,i)=>`(${f2(x)})(${f2(vb[i])})`).join(' + ')} = <b>${f2(d)}</b><br>`+
+      `<span class="mut">lengths:</span> |z<sub>a</sub>| = √(${va.map(x=>f2(x*x)).join('+')}) = ${f2(ma)}, &nbsp; |z<sub>b</sub>| = ${f2(mb)}<br>`+
+      `<span class="mut">cosine:</span> ${f2(d)} / (${f2(ma)} × ${f2(mb)}) = <span class="res" style="font-size:18px">${f2(cos)}</span>`;
+
+    const matched = ai===bi;
+    document.getElementById('vbadge').textContent=f2(cos);
+    document.getElementById('vbadge').style.color=heat(cos);
+    const tag=document.getElementById('vtag');
+    tag.textContent = cos>=0.7 ? (matched?'✓ MATCH':'high — same kind') : 'no match';
+    tag.style.background=heat(cos); tag.style.color = cos>0.5?'#fff':'var(--text)';
+
+    document.getElementById('bridge').innerHTML=ex.bridge + (exKey==='clip'?' &nbsp;<span style="color:var(--text-muted)">— Radford et al. 2021, 400M pairs</span>':'');
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;ai=0;bi=0;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

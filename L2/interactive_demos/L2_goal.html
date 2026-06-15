@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Today's Goal</title>
+<script>
+  MathJax = { loader: {load: ['[tex]/color']}, tex: { packages: {'[+]': ['color']}, inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.5; margin:4px auto 6px; max-width:860px; color: var(--text); }
+  .intro b { color: var(--accent); }
+  .eqbig { text-align:center; font-size:23px; margin:10px auto 6px; }
+  .flow { display:flex; align-items:stretch; justify-content:center; gap:8px; flex-wrap:wrap; max-width:1100px; margin:10px auto 0; }
+  .fc { width:188px; border:1px solid var(--rule); border-top:3px solid var(--bd); border-radius:8px; padding:10px 12px; background:white; }
+  .fc .pc { font-family: var(--font-serif); font-size:17px; font-weight:700; color: var(--bd); }
+  .fc .tool { font-family: var(--font-sans); font-size:10px; letter-spacing:0.3px; text-transform:uppercase; color: var(--text-muted); font-weight:700; margin:3px 0 4px; }
+  .fc .wd { font-family: var(--font-serif); font-size:12.5px; line-height:1.4; color: var(--text); }
+  .farr { display:flex; align-items:center; color: var(--text-muted); font-size:16px; }
+  .bridge { max-width:880px; margin:18px auto 0; border-left:3px solid var(--accent); background: var(--accent-faint); border-radius:6px; padding:11px 18px; text-align:center; font-family: var(--font-serif); font-size:14.5px; line-height:1.55; color: var(--text); }
+  .bridge b { color: var(--accent); } .bridge .pl { font-family: var(--font-sans); font-size:10px; letter-spacing:0.6px; text-transform:uppercase; color: var(--accent); font-weight:700; display:block; margin-bottom:3px; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Today's Goal</h1>
+  <div class="subtitle">LECTURE 2 · DERIVE ATTENTION FROM FIRST PRINCIPLES — THEN LEARN BINDING</div>
+
+  <div class="intro">One equation runs every transformer. We will <b>build it from the four Session-1 tools</b> — then see how two encoders <b>learn</b> to recognize binding.</div>
+
+  <div class="eqbig">$\definecolor{cP}{RGB}{94,58,163}\definecolor{cB}{RGB}{43,108,176}\definecolor{cA}{RGB}{176,125,42}\definecolor{cV}{RGB}{200,54,54}\text{Attention}(Q,K,V) = \color{cP}{\text{softmax}}\!\left(\dfrac{\color{cB}{QK^\top}}{\color{cA}{\sqrt{d_k}}}\right)\color{cV}{V}$</div>
+
+  <div class="flow" id="flow"></div>
+
+  <div class="bridge">
+    <span class="pl">Part B · then</span>
+    That equation <b>scores</b> binding — but how does a model <b>learn</b> which molecules actually bind? Two encoders, one shared space, and a single loss: the <b>InfoNCE</b> objective.
+  </div>
+</div>
+
+<script>
+  const STEPS=[
+    {pc:'QKᵀ', bd:'#2b6cb0', tool:'tool ② · matrix multiply', wd:'every query · every key — all pairwise scores in one step'},
+    {pc:'÷ √dₖ', bd:'#b07d2a', tool:'temperature', wd:'scale the scores so softmax stays in its learning range'},
+    {pc:'softmax', bd:'#5e3aa3', tool:'tool ④ · score → probability', wd:'turn the scores into a distribution — the model chooses'},
+    {pc:'× V', bd:'#c83636', tool:'weighted sum', wd:'blend the values by those weights — the contextual output'}
+  ];
+  document.getElementById('flow').innerHTML = STEPS.map((s,i)=>
+    `<div class="fc" style="--bd:${s.bd}"><div class="pc">${s.pc}</div><div class="tool">${s.tool}</div><div class="wd">${s.wd}</div></div>`+
+    (i<STEPS.length-1?`<div class="farr">→</div>`:'')
+  ).join('');
+
+  if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

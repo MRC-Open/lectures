@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — Encoder vs Decoder</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 780px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 16px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 820px; margin: 0 auto; }
+  .card { border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; text-align: center; }
+  .card .ch { font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--accent); }
+  .card .csub { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+  .matwrap { display: flex; justify-content: center; }
+  .mat { display: inline-grid; gap: 2px; }
+  .ml { font-family: var(--font-serif); font-size: 11px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .mc { width: 28px; height: 24px; border-radius: 2px; }
+  .mc.future { background: repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#ececec 3px,#ececec 6px); }
+  .shape { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin: 8px 0 12px; }
+  .shape b { color: var(--accent); font-style: normal; }
+
+  .facts { text-align: left; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.7; color: var(--text); border-top: 1px solid var(--rule); padding-top: 10px; }
+  .facts .row { display: flex; gap: 6px; }
+  .facts .k { color: var(--text-muted); min-width: 64px; }
+  .facts .v b { color: var(--accent); }
+  .job { font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 8px; }
+
+  .analogy { text-align: center; font-family: var(--font-sans); font-size: 12.5px; color: var(--text-muted); font-style: italic; max-width: 740px; margin: 18px auto 0; line-height: 1.6; }
+  .analogy b { color: var(--accent); font-style: normal; }
+  .legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 12px auto 0; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); }
+  .legbar { width: 150px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Encoder vs Decoder — Two Masks, Two Jobs</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · THE SAME TRANSFORMER, ONE CHOICE APART</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="sentence">Sentence · LLM</button>
+    <button class="tbtn" data-ex="protein">Antibody CDR-H3 · PLM</button>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="ch">ENCODER</div>
+      <div class="csub" id="encsub"></div>
+      <div class="matwrap"><div class="mat" id="encmat"></div></div>
+      <div class="shape">attention is a <b>full square</b> — reads both sides</div>
+      <div class="facts">
+        <div class="row"><span class="k">trained by</span><span class="v">masked LM — fill the blank</span></div>
+        <div class="row"><span class="k">context</span><span class="v"><b>bidirectional</b></span></div>
+        <div class="row"><span class="k">models</span><span class="v">BERT · ESM-2 · AntiBERTy</span></div>
+      </div>
+      <div class="job">→ REPRESENT: pool → vector → q·k</div>
+      <div class="facts" style="border:none;padding-top:4px;"><div class="row"><span class="k">SFM use</span><span class="v"><b>recognition</b> — an SFM (this course)</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="ch">DECODER</div>
+      <div class="csub" id="decsub"></div>
+      <div class="matwrap"><div class="mat" id="decmat"></div></div>
+      <div class="shape">attention is <b>lower-triangular</b> — reads left only</div>
+      <div class="facts">
+        <div class="row"><span class="k">trained by</span><span class="v">autoregression — predict next</span></div>
+        <div class="row"><span class="k">context</span><span class="v"><b>left-to-right</b></span></div>
+        <div class="row"><span class="k">models</span><span class="v">GPT · protein generators</span></div>
+      </div>
+      <div class="job">→ GENERATE: design new sequences</div>
+      <div class="facts" style="border:none;padding-top:4px;"><div class="row"><span class="k">SFM use</span><span class="v"><b>design</b> — dtSFM / GenLoop (Session 4)</span></div></div>
+    </div>
+  </div>
+
+  <div class="analogy" id="analogy"></div>
+  <div class="legend"><span>low</span><div class="legbar"></div><span>high</span><span style="margin-left:4px;font-style:italic;">attention weight</span></div>
+
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+  const EX = {
+    sentence: {
+      recog:'Both are the <b>same transformer</b>, pretrained by self-supervision. The <b>only</b> difference is the attention mask — and that one choice decides whether the model <b>represents</b> (encoder) or <b>generates</b> (decoder).',
+      seq:['The','antibody','binds','the','antigen'],
+      analogy:'Same method, two alphabets — <b>26 letters</b> of text, <b>20 amino acids</b> of protein. Grammar constrains word order the way <b>physics</b> constrains residue arrangement. Toggle above to switch alphabets.'
+    },
+    protein: {
+      recog:'Both are the <b>same transformer</b> on an antibody <b>CDR-H3</b>. The <b>only</b> difference is the attention mask: read both sides to <b>represent</b> the loop (AntiBERTy), or read left-to-right to <b>generate</b> a new one (design).',
+      seq:['C','A','R','D','Y','W'],
+      analogy:'Same method, two alphabets — words for text, <b>amino acids</b> for proteins. The encoder learns what a CDR-H3 <b>is</b>; the decoder learns to <b>write</b> a new one — both from sequence alone.'
+    }
+  };
+  let exKey='sentence';
+
+  function matHTML(seq, causal){
+    const n=seq.length;
+    let h=`<div class="mat" style="grid-template-columns:24px repeat(${n},28px);">`;
+    h+=`<div class="ml"></div>`+seq.map(t=>`<div class="ml">${t.slice(0,3)}</div>`).join('');
+    for(let i=0;i<n;i++){
+      h+=`<div class="ml">${seq[i].slice(0,3)}</div>`;
+      const ws=[]; let lo=0,hi=causal?i:n-1;
+      for(let j=0;j<n;j++) ws[j]=(causal&&j>i)?null:Math.pow(0.78,Math.abs(i-j));
+      const wmax=Math.max(...ws.filter(x=>x!==null));
+      for(let j=0;j<n;j++){
+        if(ws[j]===null){ h+=`<div class="mc future"></div>`; continue; }
+        h+=`<div class="mc" style="background:${heat(ws[j]/wmax)}"></div>`;
+      }
+    }
+    return h+`</div>`;
+  }
+
+  function render(){
+    const ex=EX[exKey], who=exKey==='protein'?'CDR-H3':'sentence';
+    document.getElementById('recog').innerHTML=ex.recog;
+    document.getElementById('encsub').textContent=`reads the whole ${who}`;
+    document.getElementById('decsub').textContent=`writes the ${who} left → right`;
+    document.getElementById('encmat').outerHTML=matHTML(ex.seq,false).replace('class="mat"','class="mat" id="encmat"');
+    document.getElementById('decmat').outerHTML=matHTML(ex.seq,true).replace('class="mat"','class="mat" id="decmat"');
+    document.getElementById('analogy').innerHTML=ex.analogy;
+    document.getElementById('bridge').innerHTML=
+      `One mask choice splits the whole field: <strong>full → encoder → represent</strong>, <strong>triangular → decoder → generate</strong>. SFMs use <strong>both</strong> — encoders to recognise binding (an SFM), decoders to design molecules. But notice: <strong>neither knows which molecules actually bind which</strong> — only what each one <em>is</em>. Learning binding needs a second idea: <strong>contrastive learning</strong>.`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

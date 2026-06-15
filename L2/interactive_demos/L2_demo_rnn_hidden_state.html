@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — The RNN Hidden State, Computed</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 10px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+  .eqline { text-align: center; font-size: 18px; margin: 2px 0 10px 0; }
+
+  /* recognition framing */
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 700px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog .seek { color: var(--accent); font-weight: 700; }
+  .recog .part { font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+  .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0 4px 0; }
+  .chip { font-family: var(--font-serif); font-size: 16px; padding: 8px 12px; border: 1.5px solid var(--rule); border-radius: 6px; min-width: 30px; text-align: center; color: var(--text-muted); position: relative; }
+  .chip.past { color: var(--text); }
+  .chip.cur { border-color: var(--accent); border-width: 2.5px; color: var(--accent); font-weight: 700; background: var(--accent-faint); }
+  .chip.partner { border-style: dashed; border-color: var(--accent); color: var(--accent); }
+  .chip .tag { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-family: var(--font-sans); font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .stepind { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); margin: 10px 0 12px 0; }
+
+  /* reference-frame composition bar */
+  .refframe { max-width: 720px; margin: 0 auto 16px; }
+  .rflab { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 6px; }
+  .rflab b { color: var(--text); }
+  .refbar { display: flex; height: 34px; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; background: white; }
+  .refseg { display: flex; align-items: center; justify-content: center; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); border-right: 1px solid white; min-width: 0; overflow: hidden; white-space: nowrap; background: #efeaf6; }
+  .refseg.partner { background: var(--accent); color: white; font-weight: 700; }
+  .refempty { display: flex; align-items: center; justify-content: center; height: 34px; border: 1px dashed var(--rule); border-radius: 5px; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); font-style: italic; }
+  .refcall { text-align: center; font-family: var(--font-sans); font-size: 13px; margin-top: 8px; color: #b4453a; font-weight: 600; min-height: 18px; }
+
+  .calc { border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; max-width: 720px; margin: 0 auto; font-family: var(--font-serif); }
+  .legend { display: flex; gap: 24px; justify-content: center; font-family: var(--font-sans); font-size: 11px; margin-bottom: 14px; }
+  .legend .k { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+  .legend .mem .k { background: var(--accent); }
+  .legend .inp .k { background: #2a2a2a; }
+  .legend .bia .k { background: var(--text-muted); }
+  .crow { font-size: 16px; font-variant-numeric: tabular-nums; line-height: 2.0; }
+  .crow .lhs { color: var(--text); display: inline-block; min-width: 28px; }
+  .mem { color: var(--accent); }
+  .inp { color: var(--text); }
+  .bia { color: var(--text-muted); }
+  .crow .eqd { color: var(--text-muted); margin: 0 4px; }
+  .crow .res { color: var(--accent); font-weight: 700; }
+  .hrow { font-size: 16px; font-variant-numeric: tabular-nums; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rail); }
+  .hrow .res { color: var(--accent); font-weight: 700; }
+
+  .ctrls { display: flex; gap: 8px; justify-content: center; align-items: center; margin: 18px 0 4px 0; }
+  .ctrls button { font-family: var(--font-sans); font-size: 13px; padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; }
+  .ctrls button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .ctrls button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .ctrls .primary { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 18px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>The RNN Hidden State, Computed</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · WHAT IS BEING COMPARED AGAINST WHAT</div>
+
+  <div class="eqline">$$h_t = \tanh(W_h\,h_{t-1} + W_x\,x_t + b)$$</div>
+  <div style="text-align:center; font-family:var(--font-sans); font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+    fixed weights: &nbsp; $W_h = \begin{bmatrix}0.5 & 0.1\\-0.1 & 0.6\end{bmatrix}$ &nbsp; $W_x = \begin{bmatrix}0.4 & 0.0\\0.1 & 0.3\end{bmatrix}$ &nbsp; $b = [0.0,\,0.1]$ &nbsp; · &nbsp; a 2-number hidden state, so every step is followable
+  </div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="chips" id="chips"></div>
+  <div class="stepind" id="stepind"></div>
+
+  <div class="refframe">
+    <div class="rflab" id="rflab"></div>
+    <div id="refbarwrap"></div>
+    <div class="refcall" id="refcall"></div>
+  </div>
+
+  <div class="calc">
+    <div class="legend">
+      <span class="mem"><span class="k"></span>carried memory &nbsp;$W_h\,h_{t-1}$</span>
+      <span class="inp"><span class="k"></span>new input &nbsp;$W_x\,x_t$</span>
+      <span class="bia"><span class="k"></span>bias $b$</span>
+    </div>
+    <div class="crow"><span class="lhs">$z_1$</span> <span class="eqd">=</span> <span id="z1"></span></div>
+    <div class="crow"><span class="lhs">$z_2$</span> <span class="eqd">=</span> <span id="z2"></span></div>
+    <div class="hrow" id="hrow"></div>
+  </div>
+
+  <div class="ctrls">
+    <button id="prevBtn">◀ back</button>
+    <button id="nextBtn" class="primary">read next token ▶</button>
+    <button id="playBtn">play</button>
+    <button id="resetBtn">reset</button>
+  </div>
+
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  const Wh = [[0.5,0.1],[-0.1,0.6]], Wx = [[0.4,0.0],[0.1,0.3]], b = [0.0,0.1];
+  const KEEP = 0.6; // scalar proxy for how much each earlier token echoes per step
+  const EX = {
+    protein: {
+      tokens:['C','V','Q','L','V','E','S','G','G','C'],
+      feat:{ C:[0.3,0.0],V:[0.8,0.0],Q:[-0.3,0.0],L:[0.9,0.0],E:[-0.5,-0.9],S:[-0.2,0.0],G:[-0.1,0.0] },
+      partner:0, seeker:9,
+      partnerLabel:'Cys @ pos 1', seekerLabel:'Cys @ pos 10',
+      task:'The two <span class="part">cysteines</span> must pair into a disulfide bond — so the model must let position 10 <span class="seek">recognize</span> position 1.'
+    },
+    sentence: {
+      tokens:['The','antibody','that','the','lab','made','binds'],
+      feat:{ 'The':[0.1,-0.3],'antibody':[0.8,0.6],'that':[-0.4,0.1],'the':[0.1,-0.3],'lab':[0.5,0.3],'made':[-0.2,-0.5],'binds':[0.7,0.5] },
+      partner:1, seeker:6,
+      partnerLabel:'"antibody" (subject)', seekerLabel:'"binds" (verb)',
+      task:'The verb <span class="seek">"binds"</span> must agree with its subject <span class="part">"antibody"</span> — so it must <span class="seek">recognize</span> a word five positions back.'
+    }
+  };
+  let exKey='protein', t=1, playing=null;
+
+  const f = n => (n<0?'−':'')+Math.abs(n).toFixed(2);
+  const tanh = Math.tanh;
+  function xOf(ex,i){ return ex.feat[ex.tokens[i]]; }
+
+  function hiddens(ex, upto){
+    const H=[[0,0]];
+    for(let k=1;k<=upto;k++){
+      const hp=H[k-1], x=xOf(ex,k-1);
+      const z=[ Wh[0][0]*hp[0]+Wh[0][1]*hp[1] + Wx[0][0]*x[0]+Wx[0][1]*x[1] + b[0],
+                Wh[1][0]*hp[0]+Wh[1][1]*hp[1] + Wx[1][0]*x[0]+Wx[1][1]*x[1] + b[1] ];
+      H.push([tanh(z[0]),tanh(z[1])]);
+    }
+    return H;
+  }
+
+  function zline(r, hp, x){
+    const mem = `<span class="mem">(${f(Wh[r][0])})(${f(hp[0])}) + (${f(Wh[r][1])})(${f(hp[1])})</span>`;
+    const inp = `<span class="inp">(${f(Wx[r][0])})(${f(x[0])}) + (${f(Wx[r][1])})(${f(x[1])})</span>`;
+    const bia = `<span class="bia">${f(b[r])}</span>`;
+    const z = Wh[r][0]*hp[0]+Wh[r][1]*hp[1] + Wx[r][0]*x[0]+Wx[r][1]*x[1] + b[r];
+    return `${mem} <span class="eqd">+</span> ${inp} <span class="eqd">+</span> ${bia} <span class="eqd">=</span> <span class="res">${f(z)}</span>`;
+  }
+
+  // composition of the summary h_{t-1}: each already-read token i contributes ~KEEP^((t-1)-(i+1))
+  function refframe(ex){
+    const wrap = document.getElementById('refbarwrap');
+    const call = document.getElementById('refcall');
+    document.getElementById('rflab').innerHTML =
+      `The RNN compares the current token only against <b>one blurred summary</b> $h_{t-1}$. Here is what that summary is actually made of — how loudly each earlier residue still echoes:`;
+    if (t<=1){
+      wrap.innerHTML = `<div class="refempty">summary is empty &nbsp;($h_0 = [0, 0]$) — the first token has nothing to compare against yet</div>`;
+      call.innerHTML = '';
+      if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('rflab'), wrap]);
+      return;
+    }
+    // positions 0..t-2 are in the summary; influence = KEEP^((t-1)-(idx+1))
+    const idxs = []; for(let i=0;i<=t-2;i++) idxs.push(i);
+    const infl = idxs.map(i => Math.pow(KEEP, (t-1)-(i+1)));
+    const sum = infl.reduce((a,c)=>a+c,0);
+    let bars = '<div class="refbar">';
+    idxs.forEach((i,k)=>{
+      const pct = 100*infl[k]/sum;
+      const isP = (i===ex.partner);
+      const lab = pct>7 ? `${ex.tokens[i]} ${pct.toFixed(0)}%` : (isP?`${pct.toFixed(0)}%`:'');
+      bars += `<div class="refseg ${isP?'partner':''}" style="flex:${infl[k]} 0 0;" title="pos ${i+1} (${ex.tokens[i]}): ${pct.toFixed(1)}%">${lab}</div>`;
+    });
+    bars += '</div>';
+    wrap.innerHTML = bars;
+
+    // seeker callout
+    const partnerInSummary = (ex.partner <= t-2);
+    const pPct = partnerInSummary ? 100*Math.pow(KEEP,(t-1)-(ex.partner+1))/sum : 0;
+    if ((t-1)===ex.seeker){
+      call.innerHTML = `⚠ ${ex.seekerLabel} is here, searching for its partner — but ${ex.partnerLabel} is only <b>${pPct.toFixed(1)}%</b> of the summary. The signal has faded; the recognition fails.`;
+    } else if (partnerInSummary){
+      call.innerHTML = `${ex.partnerLabel} is still in the summary, but already shrinking: now <b>${pPct.toFixed(1)}%</b>.`;
+    } else {
+      call.innerHTML = '';
+    }
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('rflab'), wrap, call]);
+  }
+
+  function render(){
+    const ex=EX[exKey], n=ex.tokens.length;
+    document.getElementById('recog').innerHTML = `<b>Recognition task.</b> ${ex.task}`;
+    document.getElementById('chips').innerHTML = ex.tokens.map((tk,i)=>{
+      const cls = i===t-1?'cur':i<t-1?'past':'';
+      const pc = i===ex.partner?'partner':'';
+      const tag = i===ex.partner?'<span class="tag">partner</span>':(i===ex.seeker?'<span class="tag">seeker</span>':'');
+      return `<div class="chip ${cls} ${pc}">${tag}${tk}</div>`;
+    }).join('');
+    const H=hiddens(ex,t), hp=H[t-1], x=xOf(ex,t-1), ht=H[t];
+    document.getElementById('stepind').innerHTML =
+      `Step ${t} of ${n} — reading token <strong style="color:var(--accent)">"${ex.tokens[t-1]}"</strong>, &nbsp; x<sub>t</sub> = [${f(x[0])}, ${f(x[1])}] &nbsp;·&nbsp; carried summary h<sub>t−1</sub> = [${f(hp[0])}, ${f(hp[1])}]`;
+    refframe(ex);
+    document.getElementById('z1').innerHTML = zline(0,hp,x);
+    document.getElementById('z2').innerHTML = zline(1,hp,x);
+    document.getElementById('hrow').innerHTML =
+      `<strong>h<sub>t</sub></strong> = [ tanh(${f(Wh[0][0]*hp[0]+Wh[0][1]*hp[1]+Wx[0][0]*x[0]+Wx[0][1]*x[1]+b[0])}), tanh(${f(Wh[1][0]*hp[0]+Wh[1][1]*hp[1]+Wx[1][0]*x[0]+Wx[1][1]*x[1]+b[1])}) ] = <span class="res">[ ${f(ht[0])}, ${f(ht[1])} ]</span> &nbsp;<span class="bia" style="font-size:13px;">← the new, even more blurred summary</span>`;
+    document.getElementById('bridge').innerHTML =
+      `This is the trap: the model never compares ${ex.seekerLabel} <em>against</em> ${ex.partnerLabel} <strong>directly</strong>. It only ever compares the current token against <strong>one summary vector</strong> — and the <span class="mem" style="color:var(--accent);font-weight:700;">purple carried-memory term</span> shrinks that summary by $W_h$ (≈ 0.6) every step. By the time the partner is needed, it is ≈ $0.6^{39}\\approx10^{-9}$ of the summary. <strong>The reference frame is wrong: current-token-vs-blur, never token-vs-token.</strong> Fixing the reference frame is exactly what attention does.`;
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('bridge'), document.getElementById('stepind')]);
+    document.getElementById('prevBtn').disabled = t<=1;
+    document.getElementById('nextBtn').disabled = t>=n;
+  }
+
+  function step(d){ const n=EX[exKey].tokens.length; t=Math.max(1,Math.min(n,t+d)); render(); }
+  function play(){ if(playing){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';return;}
+    document.getElementById('playBtn').textContent='pause';
+    playing=setInterval(()=>{const n=EX[exKey].tokens.length; if(t>=n){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';} else step(1);},1500); }
+  document.getElementById('nextBtn').addEventListener('click',()=>step(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>step(-1));
+  document.getElementById('playBtn').addEventListener('click',play);
+  document.getElementById('resetBtn').addEventListener('click',()=>{if(playing){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';}t=1;render();});
+  document.querySelectorAll('[data-ex]').forEach(btn=>btn.addEventListener('click',()=>{exKey=btn.dataset.ex;t=1;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

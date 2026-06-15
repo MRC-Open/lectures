@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — The LSTM Memory Highway, Computed</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 10px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+  .eqline { text-align: center; font-size: 18px; margin: 2px 0 8px 0; }
+
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 700px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog .seek { color: var(--accent); font-weight: 700; }
+  .recog .part { font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+  .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 6px 0 4px 0; }
+  .chip { font-family: var(--font-serif); font-size: 16px; padding: 8px 12px; border: 1.5px solid var(--rule); border-radius: 6px; min-width: 30px; text-align: center; color: var(--text-muted); position: relative; }
+  .chip.past { color: var(--text); }
+  .chip.cur { border-color: var(--accent); border-width: 2.5px; color: var(--accent); font-weight: 700; background: var(--accent-faint); }
+  .chip.partner { border-style: dashed; border-color: var(--accent); color: var(--accent); }
+  .chip .tag { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-family: var(--font-sans); font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .stepind { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); margin: 10px 0 12px 0; }
+
+  .refframe { max-width: 720px; margin: 0 auto 16px; }
+  .rflab { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 6px; }
+  .rflab b { color: var(--text); }
+  .refbar { display: flex; height: 34px; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; background: white; }
+  .refseg { display: flex; align-items: center; justify-content: center; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); border-right: 1px solid white; min-width: 0; overflow: hidden; white-space: nowrap; background: #efeaf6; }
+  .refseg.partner { background: var(--accent); color: white; font-weight: 700; }
+  .refempty { display: flex; align-items: center; justify-content: center; height: 34px; border: 1px dashed var(--rule); border-radius: 5px; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); font-style: italic; }
+  .refcall { text-align: center; font-family: var(--font-sans); font-size: 13px; margin-top: 8px; color: var(--accent); font-weight: 600; min-height: 18px; }
+
+  .gates { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 720px; margin: 0 auto 10px auto; }
+  .gate { border: 1px solid var(--rule); border-radius: 6px; padding: 8px 14px; text-align: center; font-family: var(--font-serif); }
+  .gate .gl { font-family: var(--font-sans); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 3px; }
+  .gate .gv { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .gate.forget .gv { color: var(--accent); font-weight: 700; }
+  .gatenote { text-align:center; font-family:var(--font-sans); font-size:11px; color:var(--text-muted); font-style:italic; margin: -2px auto 12px; max-width: 660px; }
+
+  .calc { border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; max-width: 720px; margin: 0 auto; font-family: var(--font-serif); }
+  .legend { display: flex; gap: 26px; justify-content: center; font-family: var(--font-sans); font-size: 11px; margin-bottom: 14px; }
+  .legend .k { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+  .legend .keep .k { background: var(--accent); }
+  .legend .write .k { background: #2a2a2a; }
+  .crow { font-size: 16px; font-variant-numeric: tabular-nums; line-height: 2.0; }
+  .crow .lhs { color: var(--text); display: inline-block; min-width: 30px; }
+  .keep { color: var(--accent); }
+  .write { color: var(--text); }
+  .crow .eqd { color: var(--text-muted); margin: 0 5px; }
+  .crow .res { color: var(--accent); font-weight: 700; }
+  .crow .anno { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 720px; margin: 16px auto 0; }
+  .cc { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; text-align: center; }
+  .cc.lstm { border-color: var(--accent); }
+  .cc .ccl { font-family: var(--font-sans); font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; margin-bottom: 4px; }
+  .cc.rnn .ccl { color: #b4453a; }
+  .cc.lstm .ccl { color: var(--accent); }
+  .cc .ccv { font-family: var(--font-serif); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cc.rnn .ccv { color: #b4453a; }
+  .cc.lstm .ccv { color: var(--accent); }
+  .cc .ccd { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+  .ctrls { display: flex; gap: 8px; justify-content: center; align-items: center; margin: 18px 0 4px 0; }
+  .ctrls button { font-family: var(--font-sans); font-size: 13px; padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; }
+  .ctrls button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .ctrls button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .ctrls .primary { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 18px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+  .bridge .warn { color: #b4453a; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>The LSTM Memory Highway, Computed</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · A BETTER SUMMARY — BUT STILL THE WRONG REFERENCE FRAME</div>
+
+  <div class="eqline">$$c_t = f_t \odot c_{t-1} \;+\; i_t \odot \tilde{c}_t$$</div>
+  <div style="text-align:center; font-family:var(--font-sans); font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+    the cell state $c_t$ updates by <b>keeping</b> ($f_t \odot c_{t-1}$, the forget gate lets old memory through) <b>plus writing</b> ($i_t \odot \tilde{c}_t$, the input gate adds new info). $\odot$ = multiply element by element.
+  </div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="chips" id="chips"></div>
+  <div class="stepind" id="stepind"></div>
+
+  <div class="refframe">
+    <div class="rflab" id="rflab"></div>
+    <div id="refbarwrap"></div>
+    <div class="refcall" id="refcall"></div>
+  </div>
+
+  <div class="gates" id="gates"></div>
+  <div class="gatenote">Each gate is itself a little neuron — $\sigma(\text{weights}\cdot\text{inputs})$ from slide 4, squashed into $(0,1)$. The forget gate has learned to stay near <b>1</b>: "keep the old memory."</div>
+
+  <div class="calc">
+    <div class="legend">
+      <span class="keep"><span class="k"></span>keep old memory &nbsp;$f_t \odot c_{t-1}$</span>
+      <span class="write"><span class="k"></span>write new info &nbsp;$i_t \odot \tilde{c}_t$</span>
+    </div>
+    <div class="crow"><span class="lhs">$c_1$</span> <span class="eqd">=</span> <span id="c1"></span></div>
+    <div class="crow"><span class="lhs">$c_2$</span> <span class="eqd">=</span> <span id="c2"></span></div>
+  </div>
+
+  <div class="compare">
+    <div class="cc rnn">
+      <div class="ccl">RNN — multiplies token 1 by ≈0.6 each step</div>
+      <div class="ccv" id="rnnv">—</div>
+      <div class="ccd" id="rnnd"></div>
+    </div>
+    <div class="cc lstm">
+      <div class="ccl">LSTM — keeps token 1 via f ≈0.9 each step</div>
+      <div class="ccv" id="lstmv">—</div>
+      <div class="ccd" id="lstmd"></div>
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <button id="prevBtn">◀ back</button>
+    <button id="nextBtn" class="primary">read next token ▶</button>
+    <button id="playBtn">play</button>
+    <button id="resetBtn">reset</button>
+  </div>
+
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  const bf=[2.0,2.0], wf=[0.6,0.6];   // forget
+  const bi=[-0.3,-0.1], wi=[0.9,0.9]; // input
+  const bc=[0.1,0.1], wc=[0.8,0.8];   // candidate
+  const RNN_KEEP = 0.6;
+
+  const EX = {
+    protein: {
+      tokens:['C','V','Q','L','V','E','S','G','G','C'],
+      feat:{ C:[0.3,0.0],V:[0.8,0.0],Q:[-0.3,0.0],L:[0.9,0.0],E:[-0.5,-0.9],S:[-0.2,0.0],G:[-0.1,0.0] },
+      partner:0, seeker:9,
+      partnerLabel:'Cys @ pos 1', seekerLabel:'Cys @ pos 10',
+      task:'The two <span class="part">cysteines</span> must pair into a disulfide bond — so the model must let position 10 <span class="seek">recognize</span> position 1.'
+    },
+    sentence: {
+      tokens:['The','antibody','that','the','lab','made','binds'],
+      feat:{ 'The':[0.1,-0.3],'antibody':[0.8,0.6],'that':[-0.4,0.1],'the':[0.1,-0.3],'lab':[0.5,0.3],'made':[-0.2,-0.5],'binds':[0.7,0.5] },
+      partner:1, seeker:6,
+      partnerLabel:'"antibody" (subject)', seekerLabel:'"binds" (verb)',
+      task:'The verb <span class="seek">"binds"</span> must agree with its subject <span class="part">"antibody"</span> — so it must <span class="seek">recognize</span> a word five positions back.'
+    }
+  };
+  let exKey='protein', t=1, playing=null;
+
+  const sig = x => 1/(1+Math.exp(-x));
+  const f = n => (n<0?'−':'')+Math.abs(n).toFixed(2);
+  function xOf(ex,i){ return ex.feat[ex.tokens[i]]; }
+
+  function gatesAt(ex,k){
+    const x=xOf(ex,k-1);
+    return {
+      x,
+      f:[sig(bf[0]+wf[0]*x[0]), sig(bf[1]+wf[1]*x[1])],
+      i:[sig(bi[0]+wi[0]*x[0]), sig(bi[1]+wi[1]*x[1])],
+      ct:[Math.tanh(bc[0]+wc[0]*x[0]), Math.tanh(bc[1]+wc[1]*x[1])]
+    };
+  }
+  function avgForgetAt(ex,k){ const g=gatesAt(ex,k); return (g.f[0]+g.f[1])/2; }
+  function cells(ex,upto){
+    const C=[[0,0]];
+    for(let k=1;k<=upto;k++){
+      const g=gatesAt(ex,k), cp=C[k-1];
+      C.push([ g.f[0]*cp[0]+g.i[0]*g.ct[0], g.f[1]*cp[1]+g.i[1]*g.ct[1] ]);
+    }
+    return C;
+  }
+
+  function cline(r, g, cp){
+    const keep = `<span class="keep">(${f(g.f[r])})(${f(cp[r])})</span>`;
+    const write = `<span class="write">(${f(g.i[r])})(${f(g.ct[r])})</span>`;
+    const val = g.f[r]*cp[r] + g.i[r]*g.ct[r];
+    return `${keep} <span class="eqd">+</span> ${write} <span class="eqd">=</span> <span class="res">${f(val)}</span> <span class="anno">&nbsp;keep ${(g.f[r]*100).toFixed(0)}% of old + write new</span>`;
+  }
+
+  // influence of token at index i on c_{t-1} = product of forget gates from step i+2 .. t-1
+  function inflLSTM(ex,i){ let p=1; for(let k=i+2;k<=t-1;k++) p*=avgForgetAt(ex,k); return p; }
+
+  function refframe(ex){
+    const wrap = document.getElementById('refbarwrap');
+    const call = document.getElementById('refcall');
+    document.getElementById('rflab').innerHTML =
+      `Even the LSTM compares the current token only against <b>one summary</b> $c_{t-1}$. But the additive highway keeps far more of each earlier residue — watch the partner's slice survive:`;
+    if (t<=1){
+      wrap.innerHTML = `<div class="refempty">cell state is empty &nbsp;($c_0 = [0, 0]$) — nothing to compare against yet</div>`;
+      call.innerHTML=''; if (window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('rflab'),wrap]); return;
+    }
+    const idxs=[]; for(let i=0;i<=t-2;i++) idxs.push(i);
+    const infl = idxs.map(i=>inflLSTM(ex,i));
+    const sum = infl.reduce((a,c)=>a+c,0);
+    let bars='<div class="refbar">';
+    idxs.forEach((i,k)=>{
+      const pct=100*infl[k]/sum, isP=(i===ex.partner);
+      const lab = pct>7 ? `${ex.tokens[i]} ${pct.toFixed(0)}%` : (isP?`${pct.toFixed(0)}%`:'');
+      bars += `<div class="refseg ${isP?'partner':''}" style="flex:${infl[k]} 0 0;" title="pos ${i+1} (${ex.tokens[i]}): ${pct.toFixed(1)}%">${lab}</div>`;
+    });
+    bars+='</div>'; wrap.innerHTML=bars;
+
+    const partnerIn=(ex.partner<=t-2);
+    const pPct = partnerIn ? 100*inflLSTM(ex,ex.partner)/sum : 0;
+    if ((t-1)===ex.seeker){
+      call.innerHTML = `✓ ${ex.seekerLabel} is here — and ${ex.partnerLabel} is still <b>${pPct.toFixed(1)}%</b> of the summary (vs ≈0.7% in the RNN). Findable — but still buried in a blend, not compared directly.`;
+    } else if (partnerIn){
+      call.innerHTML = `${ex.partnerLabel} is holding at <b>${pPct.toFixed(1)}%</b> of the summary — the highway keeps it alive.`;
+    } else call.innerHTML='';
+    if (window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('rflab'),wrap,call]);
+  }
+
+  function render(){
+    const ex=EX[exKey], n=ex.tokens.length;
+    document.getElementById('recog').innerHTML = `<b>Recognition task.</b> ${ex.task}`;
+    document.getElementById('chips').innerHTML = ex.tokens.map((tk,i)=>{
+      const cls=i===t-1?'cur':i<t-1?'past':'', pc=i===ex.partner?'partner':'';
+      const tag=i===ex.partner?'<span class="tag">partner</span>':(i===ex.seeker?'<span class="tag">seeker</span>':'');
+      return `<div class="chip ${cls} ${pc}">${tag}${tk}</div>`;
+    }).join('');
+    const g=gatesAt(ex,t), C=cells(ex,t), cp=C[t-1];
+    document.getElementById('stepind').innerHTML =
+      `Step ${t} of ${n} — reading <strong style="color:var(--accent)">"${ex.tokens[t-1]}"</strong> &nbsp;·&nbsp; carried cell state c<sub>t−1</sub> = [${f(cp[0])}, ${f(cp[1])}]`;
+    refframe(ex);
+    document.getElementById('gates').innerHTML =
+      `<div class="gate forget"><div class="gl">forget gate f<sub>t</sub></div><div class="gv">[${f(g.f[0])}, ${f(g.f[1])}]</div></div>
+       <div class="gate"><div class="gl">input gate i<sub>t</sub></div><div class="gv">[${f(g.i[0])}, ${f(g.i[1])}]</div></div>
+       <div class="gate"><div class="gl">candidate c&#771;<sub>t</sub></div><div class="gv">[${f(g.ct[0])}, ${f(g.ct[1])}]</div></div>`;
+    document.getElementById('c1').innerHTML = cline(0,g,cp);
+    document.getElementById('c2').innerHTML = cline(1,g,cp);
+
+    const rnnRet = Math.pow(RNN_KEEP, t-1);
+    const lstmProd = (function(){ let p0=1,p1=1; for(let k=1;k<=t-1;k++){const gg=gatesAt(ex,k); p0*=gg.f[0]; p1*=gg.f[1];} return (p0+p1)/2; })();
+    document.getElementById('rnnv').textContent = rnnRet>=0.01?rnnRet.toFixed(2):rnnRet.toExponential(1);
+    document.getElementById('lstmv').textContent = lstmProd>=0.01?lstmProd.toFixed(2):lstmProd.toExponential(1);
+    document.getElementById('rnnd').innerHTML = `= 0.6<sup>${t-1}</sup> of token 1 left`;
+    document.getElementById('lstmd').innerHTML = `≈ 0.9<sup>${t-1}</sup> of token 1 left`;
+
+    document.getElementById('bridge').innerHTML =
+      `The <span class="keep" style="color:var(--accent);font-weight:700;">purple keep-term</span> multiplies old memory by <strong>f ≈ 0.9</strong> and <strong>adds</strong> new info, so ${ex.partnerLabel} stays findable far longer. But look at the reference frame: ${ex.seekerLabel} is <em>still</em> only ever compared against <strong>one summary</strong> — never against ${ex.partnerLabel} <strong>directly</strong>. <span class="warn">And the chain is unbroken: each step still waits for the one before it.</span> Attention fixes both at once — every token compared <strong>directly</strong> against every other, all at the same time.`;
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('bridge')]);
+    document.getElementById('prevBtn').disabled = t<=1;
+    document.getElementById('nextBtn').disabled = t>=n;
+  }
+
+  function step(d){ const n=EX[exKey].tokens.length; t=Math.max(1,Math.min(n,t+d)); render(); }
+  function play(){ if(playing){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';return;}
+    document.getElementById('playBtn').textContent='pause';
+    playing=setInterval(()=>{const n=EX[exKey].tokens.length; if(t>=n){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';} else step(1);},1500); }
+  document.getElementById('nextBtn').addEventListener('click',()=>step(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>step(-1));
+  document.getElementById('playBtn').addEventListener('click',play);
+  document.getElementById('resetBtn').addEventListener('click',()=>{if(playing){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';}t=1;render();});
+  document.querySelectorAll('[data-ex]').forEach(btn=>btn.addEventListener('click',()=>{exKey=btn.dataset.ex;t=1;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

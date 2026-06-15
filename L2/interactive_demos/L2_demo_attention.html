@@ -9,119 +9,49 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <link rel="stylesheet" href="../../mrc_styles.css">
 <style>
-  /* Interactive self-attention: click a token (query), see where it attends. */
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 10px; max-width: 720px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 7px 14px; }
+  .recog .seek { color: var(--accent); font-weight: 700; }
+  .recog .part { font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 
-  .tokens-row {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin: 8px 0 6px 0;
-  }
-  .token {
-    font-family: var(--font-serif);
-    font-size: 21px;
-    padding: 12px 20px;
-    border: 1.5px solid var(--rule);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.18s, border-color 0.18s, color 0.18s;
-    color: var(--text);
-    position: relative;
-  }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 8px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .tokens-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 4px 0; }
+  .token { font-family: var(--font-serif); font-size: 19px; padding: 11px 16px; border: 1.5px solid var(--rule); border-radius: 6px; cursor: pointer; transition: background 0.18s, border-color 0.18s, color 0.18s; color: var(--text); position: relative; }
   .token:hover { border-color: var(--accent); }
-  .token.query {
-    border-color: var(--accent);
-    border-width: 2.5px;
-    font-weight: 700;
-  }
-  .token .wt {
-    position: absolute;
-    top: -10px; right: -8px;
-    font-family: var(--font-sans);
-    font-size: 10px;
-    background: var(--accent);
-    color: white;
-    border-radius: 8px;
-    padding: 1px 6px;
-    opacity: 0;
-    transition: opacity 0.18s;
-  }
+  .token.query { border-color: var(--accent); border-width: 2.5px; font-weight: 700; }
+  .token.partner { border-style: dashed; border-color: var(--accent); }
+  .token .tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-family: var(--font-sans); font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .token .wt { position: absolute; bottom: -10px; right: -8px; font-family: var(--font-sans); font-size: 10px; background: var(--accent); color: white; border-radius: 8px; padding: 1px 6px; opacity: 0; transition: opacity 0.18s; }
   .token.show-wt .wt { opacity: 1; }
-  .hint {
-    text-align: center;
-    color: var(--text-muted);
-    font-style: italic;
-    font-size: 14px;
-    margin-bottom: 22px;
-  }
+  .hint { text-align: center; color: var(--text-muted); font-style: italic; font-size: 13px; margin-bottom: 18px; }
 
-  .main-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 36px;
-    align-items: start;
-    margin-bottom: 18px;
-  }
-  .panel-label {
-    font-family: var(--font-sans);
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-bottom: 14px;
-  }
+  .main-row { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; margin-bottom: 16px; }
+  .panel-label { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
 
-  /* attention weight bars */
-  .bar-row {
-    display: grid;
-    grid-template-columns: 86px 1fr 56px;
-    gap: 12px;
-    align-items: center;
-    padding: 7px 0;
-    font-size: 15px;
-  }
+  .bar-row { display: grid; grid-template-columns: 92px 1fr 50px; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
   .bar-row .tk { font-family: var(--font-serif); color: var(--text); text-align: right; }
   .bar-row .tk.self { color: var(--accent); font-weight: 700; }
-  .bar-track { height: 22px; background: var(--rail); border-radius: 2px; overflow: hidden; }
+  .bar-row .tk.partner { color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+  .bar-track { height: 20px; background: var(--rail); border-radius: 2px; overflow: hidden; }
   .bar-fill { height: 100%; background: var(--accent); transition: width 0.22s ease-out; }
   .bar-row .wv { font-family: var(--font-serif); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; text-align: right; }
-  .score-note { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+  .score-note { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-top: 8px; font-style: italic; line-height: 1.5; }
 
-  /* attention heatmap */
   .heatmap { display: inline-block; }
   .hm-grid { display: grid; gap: 3px; }
-  .hm-cell {
-    width: 46px; height: 34px;
-    border-radius: 2px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-sans); font-size: 10px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .hm-rowlabel, .hm-collabel {
-    font-family: var(--font-serif); font-size: 12px; color: var(--text-muted);
-    display: flex; align-items: center; justify-content: center;
-  }
+  .hm-cell { width: 40px; height: 30px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .hm-rowlabel, .hm-collabel { font-family: var(--font-serif); font-size: 11px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
   .hm-rowlabel.qrow { color: var(--accent); font-weight: 700; }
+  .hm-collabel.pcol { color: var(--accent); font-weight: 700; }
 
-  .ctrl-row {
-    display: flex; align-items: center; gap: 16px;
-    margin: 8px 0 22px 0;
-    padding: 14px 18px;
-    border: 1px solid var(--rule); border-radius: 4px;
-    max-width: 560px;
-  }
-  .ctrl-row label { font-family: var(--font-serif); font-style: italic; font-size: 16px; min-width: 200px; }
+  .ctrl-row { display: flex; align-items: center; gap: 16px; margin: 8px auto 18px; padding: 14px 18px; border: 1px solid var(--rule); border-radius: 4px; max-width: 580px; }
+  .ctrl-row label { font-family: var(--font-serif); font-style: italic; font-size: 15px; min-width: 210px; }
   .ctrl-row input[type=range] { flex: 1; accent-color: var(--accent); }
   .ctrl-row .val { font-family: var(--font-serif); font-weight: 700; color: var(--accent); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
 
-  .bridge {
-    border-top: 1px solid var(--rule);
-    padding-top: 16px; margin-top: 8px;
-    font-size: 16px; line-height: 1.7; color: var(--text); text-align: center;
-  }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 8px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
   .bridge strong { color: var(--accent); font-weight: 700; }
 </style>
 </head>
@@ -130,12 +60,19 @@
 <div class="stage wide">
 
   <h1>Self-Attention, Live</h1>
-  <div class="subtitle">MRC LECTURE 2 · INTERACTIVE DEMO</div>
+  <div class="subtitle">MRC LECTURE 2 · INTERACTIVE · CLICK A QUERY · DRAG THE TEMPERATURE</div>
 
-  <div class="formula">$$\text{Attention}(Q,K,V) \;=\; \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
+  <div class="formula">$$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{Q K^\top}{\sqrt{d_k}}\right) V$$</div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
 
   <div class="tokens-row" id="tokens"></div>
-  <div class="hint">Click a word to make it the <em>query</em> — see how much it attends to every other word.</div>
+  <div class="hint">Click any token to make it the <em>query</em> — see how much it attends to every other token.</div>
 
   <div class="main-row">
     <div>
@@ -150,114 +87,108 @@
   </div>
 
   <div class="ctrl-row">
-    <label>temperature τ &nbsp;(= √dₖ)</label>
-    <input type="range" id="tau" min="0.12" max="1.6" step="0.02" value="0.4">
-    <div class="val" id="tauVal">0.40</div>
+    <label>temperature τ &nbsp;(this is the $\sqrt{d_k}$ knob)</label>
+    <input type="range" id="tau" min="0.5" max="4.0" step="0.05" value="1.41">
+    <div class="val" id="tauVal">1.41</div>
   </div>
 
-  <div class="bridge">
-    Each token builds a query and compares it — by <strong>dot product</strong> — against every token's key. <strong>Softmax</strong> turns those scores into attention weights. Lower the temperature and attention sharpens onto the single best match; raise it and attention spreads out. <strong>This is the same softmax-over-scores you saw in Lecture 1 — and the Boltzmann distribution in Lecture 4.</strong>
-  </div>
+  <div class="bridge" id="bridge"></div>
 
 </div>
 
 <script>
-  // 5-token sentence; 2D illustrative embeddings (Q = K = V = embedding).
-  const TOKENS = ["The", "antibody", "binds", "the", "antigen"];
-  const EMB = [
-    [-0.30, 0.85],  // The
-    [ 0.95, 0.25],  // antibody
-    [ 0.75, 0.55],  // binds
-    [-0.30, 0.85],  // the
-    [ 0.90, 0.15],  // antigen
-  ];
-  const N = TOKENS.length;
-  let query = 2;     // "binds"
-  let tau = 0.4;
-
-  function dot(a, b) { return a[0]*b[0] + a[1]*b[1]; }
-  function softmax(arr, t) {
-    const m = Math.max(...arr);
-    const ex = arr.map(s => Math.exp((s - m) / t));
-    const Z = ex.reduce((a,b)=>a+b, 0);
-    return ex.map(e => e / Z);
-  }
-  function attnRow(i, t) {
-    const scores = EMB.map(k => dot(EMB[i], k));
-    return { scores, weights: softmax(scores, t) };
-  }
-
-  const tokensEl = document.getElementById('tokens');
-  const barsEl = document.getElementById('bars');
-  const heatmapEl = document.getElementById('heatmap');
-  const scoreNote = document.getElementById('scoreNote');
-  const tauSlider = document.getElementById('tau');
-  const tauVal = document.getElementById('tauVal');
-
-  function buildTokens() {
-    tokensEl.innerHTML = TOKENS.map((t, i) =>
-      `<div class="token" data-i="${i}">${t}<span class="wt" id="wt-${i}"></span></div>`
-    ).join('');
-    tokensEl.querySelectorAll('.token').forEach(el => {
-      el.addEventListener('click', () => { query = parseInt(el.dataset.i); render(); });
-    });
-  }
-
-  function render() {
-    const { scores, weights } = attnRow(query, tau);
-
-    // token chips: tint by attention weight, mark query
-    tokensEl.querySelectorAll('.token').forEach((el, j) => {
-      el.classList.toggle('query', j === query);
-      el.classList.add('show-wt');
-      const a = weights[j];
-      el.style.background = `rgba(94, 58, 163, ${(0.08 + 0.82 * a).toFixed(3)})`;
-      el.style.color = a > 0.5 ? 'white' : 'var(--text)';
-      document.getElementById(`wt-${j}`).textContent = (a*100).toFixed(0) + '%';
-    });
-
-    // bars
-    barsEl.innerHTML = TOKENS.map((t, j) =>
-      `<div class="bar-row">
-         <div class="tk ${j===query?'self':''}">${t}</div>
-         <div class="bar-track"><div class="bar-fill" style="width:${(weights[j]*100).toFixed(1)}%"></div></div>
-         <div class="wv">${weights[j].toFixed(2)}</div>
-       </div>`
-    ).join('');
-    scoreNote.textContent =
-      `raw scores q·kⱼ = [${scores.map(s=>s.toFixed(2)).join(', ')}] → ÷τ → softmax → weights above`;
-
-    // heatmap (all queries × all keys)
-    let html = `<div class="hm-grid" style="grid-template-columns: 64px repeat(${N}, 46px);">`;
-    html += `<div class="hm-collabel"></div>`;
-    TOKENS.forEach(t => { html += `<div class="hm-collabel">${t.slice(0,4)}</div>`; });
-    for (let i = 0; i < N; i++) {
-      const w = attnRow(i, tau).weights;
-      html += `<div class="hm-rowlabel ${i===query?'qrow':''}">${TOKENS[i].slice(0,5)}</div>`;
-      for (let j = 0; j < N; j++) {
-        const a = w[j];
-        const txt = a >= 0.10 ? a.toFixed(2).slice(1) : '';
-        html += `<div class="hm-cell" style="background: rgba(94,58,163,${(0.06+0.9*a).toFixed(3)}); color:${a>0.5?'#fff':'var(--text-muted)'};">${txt}</div>`;
-      }
+  const WQ=[[0.8,0.3],[-0.2,0.9]], WK=[[0.9,-0.1],[0.2,0.8]], WV=[[0.4,0.6],[0.7,0.5]];
+  const EX = {
+    protein: {
+      tokens:['C','V','Q','L','V','E','S','G','G','C'],
+      emb:{ C:[0.9,0.4],V:[0.3,-0.8],Q:[-0.7,0.2],L:[0.4,-0.7],E:[-0.6,-0.5],S:[-0.2,0.6],G:[0.1,0.9] },
+      partner:0, seeker:9, partnerLabel:'Cys @ pos 1', seekerLabel:'Cys @ pos 10',
+      task:'Watch <span class="seek">Cys @ pos 10</span> find its disulfide <span class="part">partner at pos 1</span> — then click other residues to explore.'
+    },
+    sentence: {
+      tokens:['The','antibody','that','the','lab','made','binds'],
+      emb:{ 'The':[-0.3,0.8],'antibody':[0.9,0.3],'that':[-0.6,0.1],'the':[-0.3,0.8],'lab':[0.5,0.4],'made':[-0.2,-0.6],'binds':[0.85,0.35] },
+      partner:1, seeker:6, partnerLabel:'"antibody"', seekerLabel:'"binds"',
+      task:'Watch <span class="seek">"binds"</span> find its subject <span class="part">"antibody"</span> — then click other words to explore.'
     }
-    html += `</div>`;
-    heatmapEl.innerHTML = html;
+  };
+  let exKey='protein', query=EX.protein.seeker, tau=1.41;
 
-    tauVal.textContent = tau.toFixed(2);
+  const mv=(M,x)=>[M[0][0]*x[0]+M[0][1]*x[1], M[1][0]*x[0]+M[1][1]*x[1]];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1];
+  const embOf=(ex,i)=>ex.emb[ex.tokens[i]];
+  function softmax(arr,t){ const m=Math.max(...arr); const e=arr.map(s=>Math.exp((s-m)/t)); const Z=e.reduce((a,b)=>a+b,0); return e.map(x=>x/Z); }
+  function attnRow(ex,i,t){ const q=mv(WQ,embOf(ex,i)); const scores=ex.tokens.map((_,j)=>dot(q,mv(WK,embOf(ex,j)))); return {scores, weights:softmax(scores,t)}; }
+
+  const tokensEl=document.getElementById('tokens'), barsEl=document.getElementById('bars'),
+        heatmapEl=document.getElementById('heatmap'), scoreNote=document.getElementById('scoreNote'),
+        tauSlider=document.getElementById('tau'), tauVal=document.getElementById('tauVal');
+
+  function buildTokens(){
+    const ex=EX[exKey];
+    tokensEl.innerHTML=ex.tokens.map((t,i)=>{
+      const tag=i===ex.partner?'<span class="tag">partner</span>':(i===ex.seeker?'<span class="tag">seeker</span>':'');
+      return `<div class="token ${i===ex.partner?'partner':''}" data-i="${i}">${tag}${t}<span class="wt" id="wt-${i}"></span></div>`;
+    }).join('');
+    tokensEl.querySelectorAll('.token').forEach(el=>el.addEventListener('click',()=>{query=+el.dataset.i;render();}));
   }
 
-  tauSlider.addEventListener('input', e => { tau = parseFloat(e.target.value); render(); });
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
 
-  buildTokens();
-  render();
+  function render(){
+    const ex=EX[exKey], N=ex.tokens.length;
+    document.getElementById('recog').innerHTML=ex.task;
+    const {scores,weights}=attnRow(ex,query,tau);
+
+    tokensEl.querySelectorAll('.token').forEach((el,j)=>{
+      el.classList.toggle('query',j===query); el.classList.add('show-wt');
+      const a=weights[j], wmaxR=Math.max(...weights), t=a/wmaxR;
+      el.style.background=heat(t);
+      el.style.color=t>0.55?'white':'var(--text)';
+      document.getElementById(`wt-${j}`).textContent=(a*100).toFixed(0)+'%';
+    });
+
+    barsEl.innerHTML=ex.tokens.map((t,j)=>{
+      const cls=j===query?'self':(j===ex.partner?'partner':'');
+      return `<div class="bar-row"><div class="tk ${cls}">${j+1}. ${t}</div><div class="bar-track"><div class="bar-fill" style="width:${(weights[j]*100).toFixed(1)}%"></div></div><div class="wv">${weights[j].toFixed(2)}</div></div>`;
+    }).join('');
+    const top=weights.map((w,j)=>[j,w]).sort((a,b)=>b[1]-a[1])[0];
+    scoreNote.innerHTML=`raw scores q·kⱼ = [${scores.map(s=>s.toFixed(2)).join(', ')}]<br>÷ τ then softmax → weights above. Strongest match: <b style="color:var(--accent)">${ex.tokens[top[0]]}</b> (${(top[1]*100).toFixed(0)}%).`;
+
+    let html=`<div class="hm-grid" style="grid-template-columns: 56px repeat(${N}, 40px);">`;
+    html+=`<div class="hm-collabel"></div>`;
+    ex.tokens.forEach((t,j)=>{ html+=`<div class="hm-collabel ${j===ex.partner?'pcol':''}">${t.slice(0,4)}</div>`; });
+    for(let i=0;i<N;i++){
+      const w=attnRow(ex,i,tau).weights, rmax=Math.max(...w);
+      html+=`<div class="hm-rowlabel ${i===query?'qrow':''}">${ex.tokens[i].slice(0,5)}</div>`;
+      for(let j=0;j<N;j++){ const a=w[j], t=a/rmax; const txt=a>=0.10?a.toFixed(2).slice(1):''; html+=`<div class="hm-cell" style="background:${heat(t)};color:${t>0.55?'#fff':'var(--text)'};">${txt}</div>`; }
+    }
+    html+=`</div>`; heatmapEl.innerHTML=html;
+
+    tauVal.textContent=tau.toFixed(2);
+    document.getElementById('bridge').innerHTML=
+      `Each token builds a query and compares it — by <strong>dot product</strong> — against every key. <strong>Softmax</strong> turns the scores into weights. Drag the temperature: at <strong>low τ</strong> attention sharpens onto the single best match, at <strong>high τ</strong> it spreads out. The $\\sqrt{d_k}$ in the formula is exactly this temperature, set so scores stay in a stable range. <strong>This is the same softmax-over-scores from Lecture 1 — the Boltzmann distribution of Lecture 4.</strong>`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('bridge'),document.getElementById('recog')]);
+  }
+
+  tauSlider.addEventListener('input',e=>{tau=parseFloat(e.target.value);render();});
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{
+    exKey=b.dataset.ex; query=EX[exKey].seeker;
+    document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));
+    buildTokens(); render();
+  }));
+
+  buildTokens(); render();
 
   if (window.parent && window.parent !== window) {
     document.addEventListener('keydown', (e) => {
       if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
-      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
-      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
-      if (nextKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
-      else if (prevKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+      const nextKeys=['ArrowRight','PageDown'], prevKeys=['ArrowLeft','PageUp'];
+      if (nextKeys.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (prevKeys.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
     });
   }
 </script>

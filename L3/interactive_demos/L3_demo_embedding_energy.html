@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — What the Embeddings Carry</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 10px; max-width: 780px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 10px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .seqrow { display:flex; gap:6px; justify-content:center; margin: 4px 0 12px; }
+  .tok { font-family: var(--font-serif); font-size: 15px; padding: 7px 11px; border: 1.5px solid var(--rule); border-radius: 5px; min-width: 26px; text-align:center; color: var(--text-muted); cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  .tok:hover { border-color: var(--accent); color: var(--text); }
+  .tok.mask { border-style: dashed; border-color: var(--accent); border-width: 2.5px; color: var(--accent); font-weight: 700; background: var(--accent-faint); }
+  .ctx { text-align:center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 12px; }
+  .ctx b { color: var(--accent); font-style: normal; }
+
+  .cols { display:grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 860px; margin: 0 auto; align-items: start; }
+  .panel-lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; text-align:center; }
+  .prow { display:grid; grid-template-columns: 30px 1fr 44px 58px; gap: 8px; align-items:center; padding: 3px 0; font-size: 13px; }
+  .ptok { font-family: var(--font-serif); text-align:right; color: var(--text); }
+  .ptok.top { color: var(--accent); font-weight:700; }
+  .ptrack { height: 18px; background: var(--rail); border-radius: 3px; overflow:hidden; }
+  .pfill { height:100%; }
+  .pval { font-family: var(--font-serif); font-variant-numeric: tabular-nums; font-size: 12px; text-align:right; color: var(--text); }
+  .eval { font-family: var(--font-serif); font-variant-numeric: tabular-nums; font-size: 12px; text-align:right; color: var(--text-muted); }
+
+  svg.ladder { display:block; width:100%; height:auto; }
+  .lx { font-family: var(--font-sans); font-size:10px; fill: var(--text-muted); }
+  .ll { font-family: var(--font-serif); font-size:12px; }
+
+  .eq { text-align:center; font-size: 17px; margin: 18px auto 6px; max-width: 820px; }
+  .eqcap { text-align:center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; }
+  .callout { border: 1.5px solid var(--accent); background: var(--accent-faint); border-radius: 8px; padding: 12px 16px; max-width: 800px; margin: 14px auto 0; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; text-align:center; color: var(--text); }
+  .callout b { color: var(--accent); }
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin: 10px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width: 150px; height:10px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>What the Embeddings Carry</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · A BOLTZMANN DISTRIBUTION OVER THE ENERGY LANDSCAPE</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="seqrow" id="seqrow"></div>
+  <div class="ctx" id="ctx"></div>
+
+  <div class="cols">
+    <div>
+      <div class="panel-lab" id="problab">the model's distribution</div>
+      <div id="preds"></div>
+    </div>
+    <div>
+      <div class="panel-lab" id="enlab">…is an energy ladder</div>
+      <svg class="ladder" id="ladder" viewBox="0 0 360 300"></svg>
+    </div>
+  </div>
+
+  <div class="eq" id="eq"></div>
+  <div class="eqcap">the model's log-probabilities <em>are</em> energies — it never computed one, it learned them by predicting nature</div>
+
+  <div class="callout" id="callout"></div>
+  <div class="legend"><span id="legLo">low energy</span><div class="legbar"></div><span id="legHi">high energy</span></div>
+
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+  const EX = {
+    protein: {
+      recog:'Zoom into one prediction inside an antibody’s <b>CDR-H3</b>. The <b>AntiBERTy / ESM-2</b> softmax over the 20 amino acids is <b>not just a guess</b> — it is a <b>Boltzmann distribution over the local energy landscape</b>. Each residue’s probability encodes its <b>energy cost</b>: favoured = stable = low energy; disfavoured = destabilising = high energy. <b>Click any residue</b> — the landscape changes shape by position.',
+      seqFull:['C','A','R','V','L','I','Y','D','W'], defaultMask:4,
+      roles:['conserved start · disulfide','C-A-R motif','C-A-R motif','core packing','core packing','core packing','aromatic · variable','exposed · variable','conserved end · Trp'],
+      preds:{
+        0:[['C',0.94],['Y',0.02],['S',0.02],['F',0.02]],
+        1:[['A',0.66],['V',0.13],['T',0.11],['G',0.10]],
+        2:[['R',0.75],['K',0.13],['T',0.08],['G',0.04]],
+        3:[['V',0.30],['I',0.26],['L',0.22],['A',0.12],['F',0.07],['D',0.02],['K',0.01]],
+        4:[['L',0.34],['I',0.24],['V',0.18],['F',0.12],['M',0.06],['A',0.03],['Y',0.02],['D',0.006],['K',0.004]],
+        5:[['I',0.32],['L',0.27],['V',0.20],['F',0.11],['M',0.06],['A',0.04]],
+        6:[['Y',0.30],['F',0.24],['W',0.16],['H',0.12],['L',0.10],['S',0.08]],
+        7:[['D',0.26],['E',0.20],['G',0.18],['S',0.16],['N',0.12],['Y',0.08]],
+        8:[['W',0.90],['F',0.05],['Y',0.03],['L',0.02]]
+      },
+      kT:0.6, unit:'kcal/mol', enName:'ΔΔG (stability cost)',
+      legLo:'low energy · stable', legHi:'high energy · destabilising',
+      callout:'AntiBERTy never ran a force field. Yet at a packing position a buried charge — <b>D</b> or <b>K</b> — comes out <b>high-energy, unlikely</b>: it would destabilise the loop. So the model <b>predicts the mutation effect</b> (ΔΔG, developability liabilities) from <b>sequence alone</b> — because it learned the landscape by predicting <b>real antibody repertoires</b>.'
+    },
+    sentence: {
+      recog:'Zoom into one prediction. The model’s softmax over words is a distribution shaped like <b>Boltzmann’s</b>. The energy here is <b>surprisal</b> ($-\\ln P$): plausible words are low-energy; nonsense is high-energy. <b>Click any word</b> to mask it.',
+      seqFull:['The','antibody','binds','the','antigen'], defaultMask:2,
+      roles:['determiner','subject','verb','determiner','object'],
+      preds:{
+        0:[['The',0.88],['An',0.07],['This',0.05]],
+        1:[['antibody',0.55],['protein',0.18],['enzyme',0.15],['drug',0.12]],
+        2:[['binds',0.71],['blocks',0.14],['targets',0.09],['recognizes',0.05],['eats',0.006],['sleeps',0.001]],
+        3:[['the',0.90],['its',0.06],['a',0.04]],
+        4:[['antigen',0.50],['virus',0.22],['target',0.18],['receptor',0.10]]
+      },
+      kT:1, unit:'nats', enName:'surprisal (−ln P)',
+      legLo:'low energy · plausible', legHi:'high energy · nonsense',
+      callout:'The same machinery: <b>−log P is surprisal</b>, the model’s own training loss. “binds” is low-energy (expected); “sleeps” would be high-energy (a shock). The embedding carries <b>which words belong where</b> — meaning and grammar, learned from text alone.'
+    }
+  };
+  let exKey='protein', mask=EX.protein.defaultMask;
+
+  function render(){
+    const ex=EX[exKey];
+    document.getElementById('recog').innerHTML=ex.recog;
+    document.getElementById('legLo').textContent=ex.legLo;
+    document.getElementById('legHi').textContent=ex.legHi;
+    document.getElementById('enlab').innerHTML=`…is an energy ladder &nbsp;<span style="font-weight:400;text-transform:none;letter-spacing:0">${ex.enName}</span>`;
+    document.getElementById('seqrow').innerHTML=ex.seqFull.map((t,i)=>`<div class="tok ${i===mask?'mask':''}" data-i="${i}">${i===mask?'▢':t}</div>`).join('');
+    document.querySelectorAll('.seqrow .tok').forEach(el=>el.addEventListener('click',()=>{mask=+el.dataset.i;render();}));
+
+    const cands=ex.preds[mask], pmax=Math.max(...cands.map(c=>c[1]));
+    const topP=cands[0][1];
+    const depth = topP>=0.72
+      ? 'a <b>deep, narrow well</b> — one residue is required (conserved / structural)'
+      : 'a <b>graded landscape</b> — a favoured set, each alternative with its own energy cost';
+    document.getElementById('ctx').innerHTML=`click any ${exKey==='protein'?'residue':'word'} to mask it &nbsp;·&nbsp; position ${mask+1} <b>(${ex.roles[mask]})</b> → ${depth}`;
+    // energies relative to best: ΔE = kT ln(Pbest/P)
+    const E=cands.map(c=>ex.kT*Math.log(pmax/c[1]));
+    const Emax=Math.max(...E);
+
+    document.getElementById('preds').innerHTML=cands.map((c,i)=>
+      `<div class="prow"><div class="ptok ${i===0?'top':''}">${c[0]}</div>`+
+      `<div class="ptrack"><div class="pfill" style="width:${(c[1]*100).toFixed(0)}%;background:${heat(E[i]/Emax)}"></div></div>`+
+      `<div class="pval">${(c[1]*100<1?(c[1]*100).toFixed(1):(c[1]*100).toFixed(0))}%</div>`+
+      `<div class="eval">+${E[i].toFixed(1)}</div></div>`).join('');
+
+    // vertical energy ladder: favoured low (bottom), disfavoured high (top)
+    const T=14,B=276,X=150,W=300,Hd=300; const yOf=e=>B-(e/Emax)*(B-T);
+    let h='';
+    h+=`<line x1="${X-90}" y1="${T}" x2="${X-90}" y2="${B}" stroke="var(--rule)"/>`;
+    h+=`<text class="lx" x="${X-96}" y="${T+4}" text-anchor="end">high E</text>`;
+    h+=`<text class="lx" x="${X-96}" y="${B}" text-anchor="end">low E</text>`;
+    h+=`<text class="lx" x="${X-50}" y="${B+22}" text-anchor="middle">favoured ↑ stable, disfavoured ↑ unstable (${ex.unit})</text>`;
+    // place markers; nudge x for ones too close in y
+    let lastY=-99, col=0;
+    cands.forEach((c,i)=>{ let y=yOf(E[i]); if(Math.abs(y-lastY)<22){col++;} else {col=0;} lastY=y;
+      const cx=X-60+col*46;
+      h+=`<circle cx="${cx}" cy="${y}" r="12" fill="${heat(E[i]/Emax)}" stroke="white" stroke-width="1.5"/>`;
+      h+=`<text class="ll" x="${cx}" y="${y+4}" text-anchor="middle" fill="${E[i]/Emax>0.5?'#fff':'var(--text)'}">${c[0]}</text>`;
+      h+=`<text class="lx" x="${cx+18}" y="${y+4}" text-anchor="start">+${E[i].toFixed(1)}</text>`;
+    });
+    document.getElementById('ladder').innerHTML=h;
+
+    document.getElementById('eq').innerHTML=
+      `$$\\underbrace{P(a)=\\frac{e^{\\,s_a/\\sqrt{d_k}}}{\\sum_b e^{\\,s_b/\\sqrt{d_k}}}}_{\\text{model softmax}}=\\underbrace{\\frac{e^{-E_a/k_BT}}{\\sum_b e^{-E_b/k_BT}}}_{\\text{Boltzmann}}\\;\\Longrightarrow\\; E_a=-k_BT\\ln P(a)$$`;
+    document.getElementById('callout').innerHTML=ex.callout;
+    document.getElementById('bridge').innerHTML=
+      `These frozen embeddings carry the <strong>entire energy landscape of one molecule</strong> — structure, stability, function — for free. That is what you read out to build an SFM. But notice: it is the landscape of <strong>one</strong> molecule; it says nothing about which <em>two</em> molecules <strong>bind</strong>. For that, the last idea — <strong>contrastive learning</strong>.`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('eq'),document.getElementById('callout'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;mask=EX[exKey].defaultMask;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

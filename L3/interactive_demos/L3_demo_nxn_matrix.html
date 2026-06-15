@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — The N×N Similarity Matrix</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 800px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .mwrap { display:flex; gap: 28px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+  .grid { display:inline-grid; gap:3px; }
+  .ml { font-family: var(--font-serif); font-size:13px; color: var(--text-muted); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1; }
+  .ml.em { font-size:20px; }
+  .ml.seq { font-family: var(--font-serif); font-size:12px; letter-spacing:0.5px; color: var(--text); }
+  .ml .sub { font-family: var(--font-sans); font-size:8px; color: var(--text-muted); font-weight:400; margin-top:1px; }
+  .corner { font-family: var(--font-sans); font-size:9px; color: var(--text-muted); display:flex; align-items:flex-end; justify-content:center; }
+  .cell { width:62px; height:46px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:15px; font-variant-numeric:tabular-nums; cursor:pointer; transition: outline 0.1s; }
+  .cell.diag { outline: 2.5px solid var(--accent); outline-offset:-2px; }
+  .cell.sel { outline: 3px solid #111; outline-offset:-3px; z-index:2; }
+
+  .side { max-width: 320px; }
+  .side .sh { font-family: var(--font-sans); font-size:11px; letter-spacing:0.6px; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:6px; }
+  .detail { border:1px solid var(--rule); border-left:3px solid var(--accent); background:#fbfaff; border-radius:8px; padding:10px 14px; font-family: var(--font-serif); font-size:13px; line-height:1.8; font-variant-numeric:tabular-nums; }
+  .detail .mut { color: var(--text-muted); font-size:12px; }
+  .detail .res { color: var(--accent); font-weight:700; }
+  .detail .verdict { font-family: var(--font-sans); font-size:12px; font-weight:700; margin-top:4px; }
+  .score { display:flex; gap:14px; margin-top:14px; }
+  .sc { flex:1; border:1px solid var(--rule); border-radius:7px; padding:8px 10px; text-align:center; }
+  .sc .sl { font-family: var(--font-sans); font-size:10px; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-muted); }
+  .sc .sv { font-family: var(--font-serif); font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .sc .sw { font-family: var(--font-sans); font-size:10px; font-style:italic; }
+  .sc.diag .sv { color:#b4453a; } .sc.off .sv { color:#2c6fbf; }
+
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin: 12px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:150px; height:10px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 14px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The N×N Similarity Matrix — The Matching Game</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · SCORE A WHOLE BATCH AT ONCE</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="clip">CLIP · image ↔ text</button>
+    <button class="tbtn" data-ex="calm">SFM · antibody ↔ antigen</button>
+  </div>
+
+  <div class="mwrap">
+    <div>
+      <div class="grid" id="grid"></div>
+      <div class="legend"><span>0 · mismatch</span><div class="legbar"></div><span>1 · match</span><span style="margin-left:4px;font-style:italic;">cosine</span></div>
+    </div>
+    <div class="side">
+      <div class="sh">click a cell — its cosine, worked</div>
+      <div class="detail" id="detail"></div>
+      <div class="score">
+        <div class="sc diag"><div class="sl">diagonal</div><div class="sv" id="dav"></div><div class="sw">matches — push ↑</div></div>
+        <div class="sc off"><div class="sl">off-diagonal</div><div class="sv" id="oav"></div><div class="sw">mismatches — push ↓</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=n=>n.toFixed(2);
+  const dot=(a,b)=>a.reduce((s,_,i)=>s+a[i]*b[i],0);
+  const mag=a=>Math.sqrt(dot(a,a));
+  const cos=(a,b)=>dot(a,b)/(mag(a)*mag(b));
+
+  const EX = {
+    clip: {
+      recog:'To train, score a whole <b>batch</b> at once. Embed N images and N captions, then compute <b>every</b> image-vs-every-caption cosine — an <b>N×N matrix</b>. The N correct pairs sit on the <b>diagonal</b> (want ≈1); the N²−N wrong pairings fill the rest (want ≈0). Contrastive objective: <b>push the diagonal up, everything else down</b>.',
+      corner:'img \\ txt', rlw:44,
+      rows:[{l:'🐕',v:[0.9,0.2,0.1,0.1]},{l:'🐈',v:[0.5,0.8,0.1,0.2]},{l:'🚗',v:[0.1,0.1,0.9,0.2]},{l:'🍕',v:[0.1,0.2,0.2,0.9]}],
+      cols:[{l:'“dog”',v:[0.8,0.3,0.2,0.0]},{l:'“cat”',v:[0.4,0.7,0.0,0.2]},{l:'“car”',v:[0.2,0.0,0.8,0.3]},{l:'“pizza”',v:[0.0,0.3,0.1,0.8]}],
+      bridge:'How do you turn “diagonal up, rest down” into one number to minimise? <strong>Softmax each row</strong> — the matched column should win — then cross-entropy. That is the <strong>InfoNCE</strong> loss (next).'
+    },
+    calm: {
+      recog:'Now the same matrix, but every label is an <b>amino-acid sequence</b>: each antibody is its <b>CDR-H3</b> loop (the paratope), each antigen its <b>epitope</b> peptide. Encode each to a fingerprint, then compute every CDR-H3-vs-every-epitope cosine. Real binders are the <b>diagonal</b> (push ↑); every antibody against the <b>wrong</b> epitope is an in-batch <b>negative</b> (push ↓).',
+      corner:'H3 \\ epitope', rlw:80,
+      rows:[{l:'CARDYW',sub:'Ab1',v:[0.9,0.2,0.1,0.1]},{l:'CARGYW',sub:'Ab2',v:[0.5,0.8,0.1,0.2]},{l:'CARHPW',sub:'Ab3',v:[0.1,0.1,0.9,0.2]},{l:'CARWFW',sub:'Ab4',v:[0.1,0.2,0.2,0.9]}],
+      cols:[{l:'FNCYF',sub:'RBD',v:[0.8,0.3,0.2,0.0]},{l:'GVTQN',sub:'HA',v:[0.4,0.7,0.0,0.2]},{l:'ALDPS',sub:'PD-1',v:[0.2,0.0,0.8,0.3]},{l:'PVRWE',sub:'TNFα',v:[0.0,0.3,0.1,0.8]}],
+      bridge:'Same loss as CLIP — <strong>softmax each row</strong> so the true epitope wins, cross-entropy both ways. The free <strong>negatives</strong> (every wrong CDR-H3 ↔ epitope pairing) are why a few thousand real pairs suffice. That is <strong>InfoNCE</strong> (next).'
+    }
+  };
+  let exKey='clip', sel=[0,0];
+
+  function render(){
+    const ex=EX[exKey], n=ex.rows.length;
+    document.getElementById('recog').innerHTML=ex.recog;
+    const Mx=ex.rows.map(r=>ex.cols.map(c=>cos(r.v,c.v)));
+
+    const grid=document.getElementById('grid');
+    grid.style.gridTemplateColumns=`${ex.rlw}px repeat(${n}, 62px)`;
+    const lab=it=>`${it.l}${it.sub?`<span class="sub">${it.sub}</span>`:''}`;
+    let h=`<div class="corner">${ex.corner}</div>`+ex.cols.map(c=>`<div class="ml">${lab(c)}</div>`).join('');
+    for(let i=0;i<n;i++){
+      h+=`<div class="ml ${exKey==='clip'?'em':'seq'}">${lab(ex.rows[i])}</div>`;
+      for(let j=0;j<n;j++){ const v=Mx[i][j]; const cls=['cell']; if(i===j)cls.push('diag'); if(i===sel[0]&&j===sel[1])cls.push('sel');
+        h+=`<div class="${cls.join(' ')}" data-i="${i}" data-j="${j}" style="background:${heat(v)};color:${v>0.5?'#fff':'var(--text)'}">${f2(v)}</div>`; }
+    }
+    grid.innerHTML=h;
+    grid.querySelectorAll('.cell').forEach(el=>el.addEventListener('click',()=>{sel=[+el.dataset.i,+el.dataset.j];render();}));
+
+    // detail for selected cell
+    const R=ex.rows[sel[0]], C=ex.cols[sel[1]], d=dot(R.v,C.v), ma=mag(R.v), mb=mag(C.v), cv=d/(ma*mb), match=sel[0]===sel[1];
+    document.getElementById('detail').innerHTML=
+      `<span class="mut">${R.l} &nbsp;×&nbsp; ${C.l} ${match?'&nbsp;<b style="color:var(--accent)">(diagonal — a true pair)</b>':'&nbsp;(off-diagonal)'}</span><br>`+
+      `<span class="mut">dot:</span> ${R.v.map((x,k)=>`(${f2(x)})(${f2(C.v[k])})`).join('+')} = ${f2(d)}<br>`+
+      `<span class="mut">lengths:</span> |a| = √(${R.v.map(x=>f2(x*x)).join('+')}) = ${f2(ma)}, &nbsp; |b| = ${f2(mb)}<br>`+
+      `<span class="mut">cos:</span> ${f2(d)} / (${f2(ma)}×${f2(mb)}) = <span class="res" style="font-size:16px">${f2(cv)}</span>`+
+      `<div class="verdict" style="color:${heat(cv)}">${cv>=0.7?(match?'✓ should be HIGH — and it is':'⚠ a mismatch scoring high — training pushes it DOWN'):(match?'⚠ a true pair scoring low — push UP':'✓ should be LOW — and it is')}</div>`;
+
+    // scoreboard
+    let ds=0,os=0,oc=0; for(let i=0;i<n;i++)for(let j=0;j<n;j++){ if(i===j)ds+=Mx[i][j]; else {os+=Mx[i][j];oc++;} }
+    document.getElementById('dav').textContent=f2(ds/n);
+    document.getElementById('oav').textContent=f2(os/oc);
+
+    document.getElementById('bridge').innerHTML=ex.bridge;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;sel=[0,0];document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — Part B Recap</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.55; margin:4px auto 16px; max-width:860px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:9px 16px; }
+  .intro b { color: var(--accent); }
+  .journey { display:flex; align-items:stretch; justify-content:center; gap:6px; flex-wrap:wrap; max-width:1200px; margin:0 auto; }
+  .jc { width:142px; border:1px solid var(--rule); border-radius:8px; padding:10px 9px; display:flex; flex-direction:column; align-items:center; text-align:center; background:white; }
+  .jc.key { border-color: var(--accent); background: var(--accent-faint); }
+  .jv { height:58px; display:flex; align-items:center; justify-content:center; margin-bottom:7px; }
+  .jt { font-family: var(--font-sans); font-size:11.5px; font-weight:700; color: var(--text); line-height:1.2; margin-bottom:4px; }
+  .jc.key .jt { color: var(--accent); }
+  .jd { font-family: var(--font-serif); font-size:10.5px; line-height:1.35; color: var(--text-muted); }
+  .jarr { display:flex; align-items:center; color: var(--rule); font-size:16px; }
+  .punch { max-width:960px; margin:18px auto 0; border:1.5px solid var(--accent); background: var(--accent-faint); border-radius:8px; padding:12px 20px; text-align:center; font-family: var(--font-serif); font-size:16px; line-height:1.55; color: var(--text); }
+  .punch b { color: var(--accent); } .punch .eq { font-size:18px; margin:5px 0; }
+  .punch .small { font-family: var(--font-sans); font-size:12px; color: var(--text-muted); margin-top:4px; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Part B — Building the Specificity Foundation Model</h1>
+  <div class="subtitle">LECTURE 3 RECAP · FROM TWO ENCODERS TO ONE PHYSICS-PRESCRIBED MODEL</div>
+
+  <div class="intro">Lecture 3 in one view: two pretrained encoders, pooled to fingerprints, scored by cosine, batched into a matrix, and trained with <b>one loss</b> — which turns out to be the <b>Boltzmann selection probability</b>.</div>
+
+  <div class="journey" id="journey"></div>
+
+  <div class="punch">
+    <div><b>softmax = Boltzmann</b>, so InfoNCE <b>is</b> the physics — the architecture is <b>prescribed</b>, not searched.</div>
+    <div class="eq">$P(\text{bind}) = \dfrac{e^{\,\cos/\tau}}{\sum e^{\,\cos/\tau}} \;\equiv\; \dfrac{e^{-\Delta G/k_BT}}{Z}$</div>
+    <div class="small">That is why ~4,000–700,000 real pairs suffice across antibody, TF, MHC, CRISPR, miRNA, enzyme and drug domains — not CLIP’s 400 million.</div>
+  </div>
+</div>
+
+<script>
+  function heat(t){ if(t<0) return 'var(--rail)'; t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  function sgrid(vals, cw=12){ const R=vals.length, C=vals[0].length;
+    let s=`<svg viewBox="0 0 ${C*cw} ${R*cw}" width="${C*cw}" height="${R*cw}">`;
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++) s+=`<rect x="${c*cw}" y="${r*cw}" width="${cw-1.6}" height="${cw-1.6}" rx="1.4" fill="${heat(vals[r][c])}"/>`;
+    return s+`</svg>`; }
+  const col=v=>v.map(x=>[x]);
+
+  // landscape (energy) mini: a wavy line with low valleys
+  const vLand = `<svg viewBox="0 0 70 50" width="70" height="50"><path d="M2,14 Q12,40 22,20 Q32,4 42,30 Q52,46 60,18 L68,26" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="22" cy="20" r="3" fill="#2b6cb0"/><circle cx="42" cy="30" r="3" fill="#2b6cb0"/></svg>`;
+  // pool: matrix -> vector
+  const vPool = `<span style="display:inline-flex;gap:5px;align-items:center">${sgrid([[0.9,0.5,0.1,0.2],[0.2,0.8,0.3,0.6],[0.6,0.1,0.9,0.2],[0.1,0.3,0.2,0.8]],11)}<span style="color:var(--text-muted);font-size:13px">→</span>${sgrid(col([0.85,0.3,0.55,0.2]),13)}</span>`;
+  // cosine: two vectors + a number
+  const vCos = `<span style="display:inline-flex;gap:5px;align-items:center">${sgrid(col([0.85,0.3,0.2,0.1]),12)}${sgrid(col([0.8,0.35,0.25,0.05]),12)}<span style="font-family:var(--font-serif);color:#c83636;font-weight:700;font-size:14px">.98</span></span>`;
+  // N×N: 3x3 with red diagonal
+  const vNxN = sgrid([[0.98,0.4,0.2],[0.3,0.97,0.2],[0.2,0.3,0.98]].map(r=>r),16);
+  // InfoNCE: one row softmaxed -> a bar peaking
+  const vLoss = `<svg viewBox="0 0 64 50" width="64" height="50">${[0.70,0.21,0.06,0.03].map((p,i)=>`<rect x="${4+i*15}" y="${46-p*42}" width="11" height="${p*42}" rx="1.5" fill="${heat(p/0.70)}"/>`).join('')}</svg>`;
+  // symmetric: arrows both ways on a small grid
+  const vSym = `<span style="display:inline-flex;gap:3px;align-items:center"><span style="color:var(--accent);font-size:11px;font-weight:700">→<br>↓</span>${sgrid([[0.95,0.3,0.2],[0.3,0.95,0.2],[0.2,0.3,0.95]],12)}</span>`;
+  // shared space: tiny unit circle with two aligned arrows
+  const vSpace = `<svg viewBox="0 0 56 56" width="56" height="56"><circle cx="28" cy="28" r="22" fill="none" stroke="var(--rule)" stroke-dasharray="2 2"/><line x1="28" y1="28" x2="44" y2="12" stroke="#b07d2a" stroke-width="2"/><line x1="28" y1="28" x2="48" y2="16" stroke="var(--accent)" stroke-width="2"/><line x1="28" y1="28" x2="12" y2="40" stroke="#b07d2a" stroke-width="2"/><line x1="28" y1="28" x2="14" y2="46" stroke="var(--accent)" stroke-width="2"/></svg>`;
+
+  const STAGES=[
+    {t:'pretrained encoders', d:'ESM-2 / AntiBERTy already place molecules on an energy landscape', v:vLand},
+    {t:'pool → fingerprint', d:'collapse each matrix to one vector (the [CLS] token)', v:vPool},
+    {t:'cosine', d:'two fingerprints → one similarity number', v:vCos},
+    {t:'N×N matrix', d:'a whole batch at once — diagonal = true binders', v:vNxN},
+    {t:'InfoNCE', d:'softmax a row, −log the diagonal → one loss', v:vLoss, cls:'key'},
+    {t:'symmetric', d:'read both ways — binding is mutual', v:vSym},
+    {t:'the SFM', d:'one shared space where direction = binding; works across domains', v:vSpace, cls:'key'}
+  ];
+
+  document.getElementById('journey').innerHTML = STAGES.map((s,i)=>
+    `<div class="jc ${s.cls||''}"><div class="jv">${s.v}</div><div class="jt">${s.t}</div><div class="jd">${s.d}</div></div>`+
+    (i<STAGES.length-1?`<div class="jarr">→</div>`:'')
+  ).join('');
+
+  if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -2,67 +2,96 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MRC L2 Whiteboard — Scaled Dot-Product Attention</title>
+<title>MRC L2 Whiteboard — Scaled Dot-Product Attention (algebra + matrices)</title>
 <script>
   MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <link rel="stylesheet" href="../../mrc_styles.css">
-<link rel="stylesheet" href="../../mrc_whiteboard.css">
+<style>
+  body { padding-bottom: 116px; }
+  .panels { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 38px; align-items: start; margin-top: 14px; }
+
+  /* left: algebra */
+  .claim { border-left: 3px solid var(--accent); background: white; padding: 12px 20px; margin-bottom: 18px; }
+  .claim .lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 500; display:block; margin-bottom: 4px; }
+  .claim .eq { font-size: 18px; }
+  .astep { border: 1px solid var(--rule); border-radius: 4px; padding: 12px 16px; margin-bottom: 10px; opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s; }
+  .astep.on { opacity: 1; transform: none; }
+  .astep.cur { border-color: var(--accent); background: var(--accent-faint); }
+  .astep .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .astep .eq { font-size: 16px; }
+  .astep .note { font-size: 12.5px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+
+  /* right: matrices */
+  .visarea { min-height: 320px; }
+  .vis { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .block { text-align: center; }
+  .block-title { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px; }
+  .mat { display: inline-grid; gap: 4px; font-family: var(--font-serif); }
+  .clab, .rlab { font-size: 11px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .clab.mol, .rlab.mol { color: var(--accent); font-weight: 700; }
+  .cell { width: 46px; height: 34px; border:1.5px solid var(--rule); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:15px; font-variant-numeric: tabular-nums; color: var(--text); transition: background 0.2s; }
+  .cell.hl { background: #f1ebf8; }
+  .cell.hlstrong { background: var(--accent); color:#fff; font-weight:700; }
+  .op { font-family: var(--font-serif); font-size: 22px; color: var(--text-muted); align-self: center; }
+  .arrow { font-family: var(--font-sans); font-size: 12px; color: var(--accent); align-self: center; text-align:center; font-weight:600; }
+  .vis-calc { width:100%; text-align:center; margin-top:18px; font-family: var(--font-serif); font-size: 17px; min-height: 26px; font-variant-numeric: tabular-nums; line-height: 1.9; }
+  .vis-calc .res { color: var(--accent); font-weight: 700; font-size: 20px; }
+  .vis-calc .mut { color: var(--text-muted); }
+  .vis-note { text-align:center; font-size:12.5px; color:var(--text-muted); font-style:italic; margin-top:14px; max-width: 480px; margin-left:auto; margin-right:auto; }
+  .vis-calc .pick { color: var(--accent); font-weight: 700; }
+  .boltz { border: 1.5px solid var(--accent); background: var(--accent-faint); border-radius: 6px; padding: 11px 16px; margin: 14px auto 0; max-width: 500px; font-family: var(--font-sans); font-size: 12.5px; color: var(--text); line-height: 1.6; font-style: normal; text-align: center; }
+  .boltz b { color: var(--accent); }
+  .boltz .hd { display:block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.5; }
+  .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btns .primary:hover:not(:disabled) { background: #4d2f87; color: white; }
+</style>
 </head>
 <body>
 
-<div class="stage">
+<div class="stage wide">
+  <h1>Scaled Dot-Product Attention, Computed</h1>
+  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD + MATRIX · THE ALGEBRA ON THE LEFT, ONE TOKEN'S PATH ON THE RIGHT</div>
 
-  <h1>Deriving Scaled Dot-Product Attention</h1>
-  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD · THREE STAGES, THREE OPERATIONS FROM LECTURE 1</div>
+  <div class="panels">
+    <div class="algebra">
+      <div class="claim">
+        <span class="lab">Goal — build this equation</span>
+        <div class="eq">$$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
+      </div>
+      <div class="astep" data-s="1"><div class="lab">Source · Q, K, V are three learned views of the same embedding</div><div class="eq">$\mathbf{q}_i = W_Q\mathbf{x}_i,\;\; \mathbf{k}_i = W_K\mathbf{x}_i,\;\; \mathbf{v}_i = W_V\mathbf{x}_i$</div><div class="note">$\mathbf{x}_i$ = token $i$'s embedding (from the pretrained PLM/LLM); $W_Q,W_K,W_V$ are learned during training</div></div>
+      <div class="astep" data-s="2"><div class="lab">Stage 1 · all pairwise scores (matrix multiply)</div><div class="eq">$S = QK^\top,\quad S_{ij} = \mathbf{q}_i\cdot\mathbf{k}_j$</div><div class="note">row $i$ of $S$ = token $i$'s score against every key</div></div>
+      <div class="astep" data-s="3"><div class="lab">Stage 2a · scale by √dₖ (the temperature)</div><div class="eq">$\tilde{S} = \dfrac{QK^\top}{\sqrt{d_k}}$</div><div class="note">keeps softmax in its sensitive range — same $\tau$ as $k_BT$</div></div>
+      <div class="astep" data-s="4"><div class="lab">Stage 2b · softmax each row → weights &nbsp;(the convergence equation)</div><div class="eq">$A_{ij} = \dfrac{e^{\tilde S_{ij}}}{\sum_k e^{\tilde S_{ik}}}$</div><div class="note">a probability distribution (sums to 1) — and the same form as Boltzmann $e^{-E/k_BT}/Z$</div></div>
+      <div class="astep" data-s="5"><div class="lab">Stage 3 · aggregate values (weighted sum)</div><div class="eq">$\mathbf{o}_i = \sum_{j} A_{ij}\,\mathbf{v}_j$</div><div class="note">the output is a blend of value vectors, weighted by attention</div></div>
+      <div class="astep" data-s="6"><div class="lab">Assemble the three stages &nbsp;∎</div><div class="eq">$\text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$</div></div>
+    </div>
 
-  <div class="claim">
-    <span class="label">Goal — build this equation</span>
-    <div class="eq">$$\text{Attention}(Q,K,V) \;=\; \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
-  </div>
-
-  <div class="setup">
-    Each of $n$ tokens carries three learned vectors: a query $\mathbf{q}_i$ ("what am I looking for?"), a key $\mathbf{k}_i$ ("what do I offer?"), and a value $\mathbf{v}_i$ ("what information do I carry?"). Stacked as rows, they form matrices $Q, K, V$. We build attention in three stages — each one an operation from Lecture 1.
-  </div>
-
-  <div class="step" data-step="1">
-    <div class="step-label">Stage 1 · All pairwise compatibility scores (matrix multiplication)</div>
-    <div class="step-eq">
-      $$S = QK^\top \in \mathbb{R}^{n\times n}, \qquad S_{ij} = \sum_{l=1}^{d_k} Q_{il}K_{jl} = \mathbf{q}_i \cdot \mathbf{k}_j$$
+    <div class="visarea">
+      <div class="vis" id="vis"></div>
+      <div class="vis-calc" id="viscalc"></div>
+      <div class="vis-note" id="visnote"></div>
     </div>
   </div>
-
-  <div class="step" data-step="2">
-    <div class="step-label">Stage 2a · Scale by √dₖ (the temperature)</div>
-    <div class="step-eq">$$\tilde{S} = \frac{QK^\top}{\sqrt{d_k}}$$</div>
-  </div>
-
-  <div class="step" data-step="3">
-    <div class="step-label">Stage 2b · Softmax each row → a probability distribution</div>
-    <div class="step-eq">
-      $$A = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right), \qquad A_{ij} = \frac{\exp(\mathbf{q}_i\cdot\mathbf{k}_j/\sqrt{d_k})}{\sum_{k}\exp(\mathbf{q}_i\cdot\mathbf{k}_k/\sqrt{d_k})}$$
-    </div>
-  </div>
-
-  <div class="step" data-step="4">
-    <div class="step-label">Stage 3 · Aggregate values, weighted by attention (weighted sum)</div>
-    <div class="step-eq">$$O = AV, \qquad \mathbf{o}_i = \sum_{j=1}^{n} A_{ij}\,\mathbf{v}_j$$</div>
-  </div>
-
-  <div class="step qed" data-step="5">
-    <div class="step-label">Assemble the three stages &nbsp;∎</div>
-    <div class="step-eq">$$\text{Attention}(Q,K,V) \;=\; \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V$$</div>
-  </div>
-
 </div>
 
 <div class="control-bar">
-  <div class="stage-inner">
+  <div class="inner">
     <div class="step-caption" id="caption"></div>
     <div class="step-counter" id="counter"></div>
-    <div class="step-buttons">
-      <button id="prevBtn">← Previous</button>
+    <div class="btns">
+      <button id="prevBtn">← Back</button>
       <button id="nextBtn" class="primary">Next →</button>
       <button id="resetBtn">Reset</button>
     </div>
@@ -70,16 +99,148 @@
 </div>
 
 <script>
-  window.STEP_CAPTIONS = [
-    "Press <strong>Next</strong> or → to build the attention equation.",
-    "<strong>Stage 1.</strong> Multiply $Q$ by $K^\\top$. By the definition of matrix multiplication (Lecture 1), entry $(i,j)$ is exactly the dot product $\\mathbf{q}_i\\cdot\\mathbf{k}_j$ — the compatibility of token $i$'s query with token $j$'s key. One matrix product gives <em>all</em> pairwise scores.",
-    "<strong>Stage 2a.</strong> Divide every score by $\\sqrt{d_k}$. This is the temperature — the next derivation shows why it keeps softmax in its sensitive regime. It is the same $\\tau$ as $k_BT$ in the Boltzmann distribution.",
-    "<strong>Stage 2b.</strong> Apply softmax to each row. Each row of $A$ becomes a probability distribution: for token $i$, how much does it attend to every other token? Positivity, normalization, rank-preservation — all inherited from softmax.",
-    "<strong>Stage 3.</strong> Multiply the attention weights $A$ by the values $V$. Each output $\\mathbf{o}_i$ is a weighted average of all value vectors, weighted by how much token $i$ attends to each. Information flows along attention.",
-    "Three stages — matrix multiply, temperature-scaled softmax, weighted sum — assemble into the attention equation. Every piece came from Lecture 1. ∎"
+  // 3 tokens, d_k = 2 — small enough that every stage is followable
+  const Q=[[2,0],[1,2],[0,1]], K=[[2,1],[0,2],[1,0]], V=[[1,0],[0,1],[1,1]];
+  // provenance: token 1's embedding x₁ projected by three learned matrices → q₁,k₁,v₁ (= row 1 of Q,K,V)
+  const X1=[1,1], WQ=[[1,1],[1,-1]], WK=[[1,1],[1,0]], WV=[[1,0],[1,-1]];
+  const TOK=['t₁','t₂','t₃'], DK=2, SQ=Math.sqrt(DK);
+  const I=0; // focus token (row 1)
+  const Kt=[0,1].map(c=>K.map(r=>r[c]));
+  const dot=(a,b)=>a.reduce((s,_,l)=>s+a[l]*b[l],0);
+  const S=Q.map(qi=>K.map(kj=>dot(qi,kj)));
+  const scaled=S[I].map(v=>v/SQ);
+  const ex=scaled.map(Math.exp), Z=ex.reduce((a,b)=>a+b,0);
+  const A=S.map(row=>{ const e=row.map(v=>Math.exp(v/SQ)); const z=e.reduce((a,b)=>a+b,0); return e.map(v=>v/z); });
+  const Arow=A[I];
+  const o=[0,1].map(c=>Arow.reduce((s,w,j)=>s+w*V[j][c],0));
+  const O=A.map(a=>[0,1].map(c=>a.reduce((s,w,j)=>s+w*V[j][c],0)));
+  const f2=n=>n.toFixed(2);
+
+  function mat(data, rLab, cLab, opts={}) {
+    const nr=data.length, nc=data[0].length, hr=opts.hlRows||[], hcl=opts.hlCols||[], hc=opts.hlCell;
+    let h=`<div class="mat" style="grid-template-columns:${rLab?'auto ':''}repeat(${nc},46px);">`;
+    if (cLab){ if(rLab) h+=`<div></div>`; cLab.forEach(c=> h+=`<div class="clab ${opts.cMol?'mol':''}">${c}</div>`); }
+    for(let r=0;r<nr;r++){
+      if (rLab) h+=`<div class="rlab ${opts.rMol?'mol':''}">${rLab[r]}</div>`;
+      for(let c=0;c<nc;c++){
+        let cls='cell';
+        if (hc && hc[0]===r && hc[1]===c) cls+=' hlstrong';
+        else if (hr.includes(r)||hcl.includes(c)) cls+=' hl';
+        h+=`<div class="${cls}">${typeof data[r][c]==='number' && !Number.isInteger(data[r][c]) ? f2(data[r][c]) : data[r][c]}</div>`;
+      }
+    }
+    return h+`</div>`;
+  }
+  const block=(t,m)=>`<div class="block"><div class="block-title">${t}</div>${m}</div>`;
+  const vis=document.getElementById('vis'), viscalc=document.getElementById('viscalc'), visnote=document.getElementById('visnote');
+
+  function renderVis(stage){
+    if(stage==='source'){
+      const proj=(lab,res,role)=>`<div class="block"><div class="block-title">${lab}</div>${mat([res],null,['',''],{hlRows:[0]})}<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:5px;">${role}</div></div>`;
+      vis.innerHTML =
+        `<div style="display:flex;flex-direction:column;gap:14px;align-items:center;width:100%;">`+
+          block('<span style="color:var(--accent)">x₁</span> · token 1\'s embedding', mat([X1],null,['',''],{hlRows:[0]}))+
+          `<div style="font-family:var(--font-sans);font-size:12px;color:var(--accent);font-weight:600;">↓ three learned matrices &nbsp;W_Q &nbsp;W_K &nbsp;W_V</div>`+
+          `<div style="display:flex;gap:18px;flex-wrap:wrap;justify-content:center;">`+
+            proj('q₁ = W_Q x₁', Q[0], 'what I look for')+
+            proj('k₁ = W_K x₁', K[0], 'what I offer')+
+            proj('v₁ = W_V x₁', V[0], 'what I hand over')+
+          `</div>`+
+        `</div>`;
+      viscalc.innerHTML=`<span class="mut">e.g. the value:</span> v₁ = W_V·x₁ = [ (1)(1)+(0)(1),&nbsp; (1)(1)+(−1)(1) ] = <span class="res">[1, 0]</span>`;
+      visnote.innerHTML=
+        `<div class="boltz"><span class="hd">Where do Q, K, V come from?</span>`+
+        `All three are <b>learned projections of the same token embedding</b> $\\mathbf{x}$ — the vector the pretrained PLM/LLM already gives each residue or word (ESM-2: 1280 numbers; 2 here). The attention layer learns three matrices: $W_Q$ pulls out "what to look for," $W_K$ "what to offer," $W_V$ "what to hand over." `+
+        `<b>V is no more mysterious than Q or K</b> — the same embedding through a third learned lens, trained to carry the information worth passing on. The same three matrices project every token to fill the rows of $Q,K,V$.</div>`;
+    } else if(stage==='inputs'){
+      vis.innerHTML = block('<span style="color:var(--accent)">Q</span> · what I look for', mat(Q,TOK,['',''],{rMol:true}))
+        + block('<span style="color:var(--accent)">K</span> · what I offer', mat(K,TOK,['',''],{rMol:true}))
+        + block('<span style="color:var(--accent)">V</span> · what I hand over', mat(V,TOK,['',''],{rMol:true}));
+      viscalc.innerHTML='';
+      visnote.innerHTML='Each token carries three learned vectors. <b>Q</b> and <b>K</b> decide <i>who attends to whom</i> — a question meeting a label. <b>V</b> is different: it is the <b>information a token actually hands over</b> when something attends to it. In a protein, a residue\'s <b>value</b> carries its chemistry — hydrophobicity, charge, size, "I am a cysteine." Q/K route the attention; <b>V is the payload that flows</b>. We follow <b>token 1</b> (top row).';
+    } else if(stage==='S'){
+      vis.innerHTML = block('Q', mat(Q,TOK,null,{rMol:true,hlRows:[I]}))
+        + `<div class="op">×</div>` + block('Kᵀ', mat(Kt,null,TOK,{cMol:true}))
+        + `<div class="op">=</div>` + block('S = QKᵀ', mat(S,TOK,TOK,{rMol:true,cMol:true,hlRows:[I],hlCell:[I,0]}));
+      viscalc.innerHTML=`<span class="mut">S₁₁ = q₁·k₁ =</span> (${Q[I][0]})(${K[0][0]}) + (${Q[I][1]})(${K[0][1]}) = <span class="res">${S[I][0]}</span> &nbsp;&nbsp;<span class="mut">→ row 1 of S = [${S[I].join(', ')}]</span>`;
+      visnote.innerHTML='Every cell of S is one dot product (the Lecture 1 result). Row 1 holds token 1\'s scores against all three keys.';
+    } else if(stage==='scale'){
+      vis.innerHTML = block('row 1 of S', mat([S[I]],null,TOK,{cMol:true}))
+        + `<div class="arrow">÷ √dₖ<br>= ÷√2 ≈ ÷1.41</div>`
+        + block('scaled', mat([scaled],null,TOK,{cMol:true,hlRows:[0]}));
+      viscalc.innerHTML=`[${S[I].join(', ')}] <span class="mut">÷ 1.41 =</span> <span class="res">[${scaled.map(f2).join(', ')}]</span>`;
+      visnote.innerHTML='Dividing by √dₖ shrinks the scores so softmax stays in its sensitive range — the next whiteboard proves why dₖ is the right amount.';
+    } else if(stage==='softmax'){
+      vis.innerHTML = block('scaled scores', mat([scaled],null,TOK,{cMol:true}))
+        + `<div class="arrow">softmax</div>`
+        + block('A · weights', mat([Arow],null,TOK,{cMol:true,hlRows:[0]}));
+      viscalc.innerHTML=
+        `<span class="mut">partition function</span> &nbsp; Z = e<sup>${f2(scaled[0])}</sup> + e<sup>${f2(scaled[1])}</sup> + e<sup>${f2(scaled[2])}</sup> = ${ex.map(f2).join(' + ')} = <b>${f2(Z)}</b><br>` +
+        `A₁₁ = e<sup>${f2(scaled[0])}</sup> / Z = ${f2(ex[0])} / ${f2(Z)} = <span class="pick">${f2(Arow[0])}</span> &nbsp;<span class="mut">← biggest score, exponentially dominant</span><br>` +
+        `A₁₂ = e<sup>${f2(scaled[1])}</sup> / Z = ${f2(ex[1])} / ${f2(Z)} = <span class="res">${f2(Arow[1])}</span><br>` +
+        `A₁₃ = e<sup>${f2(scaled[2])}</sup> / Z = ${f2(ex[2])} / ${f2(Z)} = <span class="res">${f2(Arow[2])}</span>`;
+      visnote.innerHTML=
+        `<div class="boltz"><span class="hd">This is the convergence equation</span>`+
+        `Softmax <b>is</b> the Boltzmann distribution: &nbsp;$A_{ij} = \\dfrac{e^{\\,s_{ij}/\\sqrt{d_k}}}{Z}$ &nbsp;has the exact form of &nbsp;$P(\\text{state}) = \\dfrac{e^{-E/k_BT}}{Z}$. `+
+        `The score acts as $-$energy, $\\sqrt{d_k}$ as temperature $k_BT$, and $Z$ is the partition function. A higher score wins <b>exponentially</b> — that is how 0.77 emerged from a score of just ${f2(scaled[0])}.</div>`;
+    } else if(stage==='aggregate'){
+      vis.innerHTML = block('weights A₁', mat([Arow],null,TOK,{cMol:true}))
+        + `<div class="op">×</div>` + block('V', mat(V,TOK,['',''],{rMol:true}))
+        + `<div class="op">=</div>` + block('o₁', mat([o],null,['',''],{hlRows:[0]}));
+      viscalc.innerHTML=`<span class="mut">o₁ =</span> ${Arow.map((w,j)=>`${f2(w)}·v${j+1}`).join(' + ')} = <span class="res">[${o.map(f2).join(', ')}]</span>`;
+      visnote.innerHTML='Token 1\'s new vector is a blend of the <b>value</b> vectors — mostly v₁ and v₃, the tokens it attended to. <b>Attending to a token copies its payload in.</b> In a protein, when Cys attends to its partner Cys, it pulls in that residue\'s value — "I can form a disulfide" — exactly the information the model needs to register the bond.';
+    } else { // assemble
+      vis.innerHTML = block('A = softmax(QKᵀ/√dₖ)', mat(A,TOK,TOK,{rMol:true,cMol:true,hlRows:[I]}))
+        + `<div class="op">×</div>` + block('V', mat(V,TOK,['',''],{rMol:true}))
+        + `<div class="op">=</div>` + block('O', mat(O,TOK,['',''],{rMol:true,hlRows:[I]}));
+      viscalc.innerHTML=`<span class="res">Attention(Q,K,V) = softmax(QKᵀ/√dₖ) V</span>`;
+      visnote.innerHTML='Done for all tokens at once: each output row is its token\'s attention-weighted blend of values. Three operations from Lecture 1. ∎';
+    }
+  }
+
+  const STEPS=[
+    {reveal:1, stage:'source', caption:`<strong>Where Q, K, V come from.</strong> They are not three separate inputs — each is a <strong>learned projection of the same token embedding</strong> $\\mathbf{x}$ (from the pretrained PLM/LLM). $W_Q,W_K,W_V$ are learned during training. <strong>V is the third lens — "what to hand over."</strong> Press <strong>Next</strong>.`},
+    {reveal:1, stage:'inputs', caption:`Stacking every token's $\\mathbf{q},\\mathbf{k},\\mathbf{v}$ as rows gives the matrices $Q,K,V$. Here are the ones we will use — we follow <strong>token 1</strong> (top row) through all three stages.`},
+    {reveal:2, stage:'S', caption:`<strong>Stage 1.</strong> $S = QK^\\top$. By matrix multiplication, cell $(i,j)$ is the dot product $\\mathbf{q}_i\\cdot\\mathbf{k}_j$. One product gives every pairwise score; row 1 is token 1's scores.`},
+    {reveal:3, stage:'scale', caption:`<strong>Stage 2a.</strong> Divide every score by $\\sqrt{d_k}$. This is the temperature — the same $\\tau$ as $k_BT$ in the Boltzmann distribution.`},
+    {reveal:4, stage:'softmax', caption:`<strong>Stage 2b — the convergence equation.</strong> Exponentiate each score, divide by the partition function $Z$. Watch each probability emerge cell by cell: the biggest score takes <strong>0.77</strong>, dominating <em>exponentially</em>. This is softmax = Boltzmann, the heart of the course.`},
+    {reveal:5, stage:'aggregate', caption:`<strong>Stage 3.</strong> Multiply the weights by $V$. Token 1's output is a weighted blend of the value vectors — information flows along attention.`},
+    {reveal:6, stage:'assemble', caption:`All three stages — matrix multiply, scaled softmax, weighted sum — for every token at once. That is the attention equation. ∎`},
   ];
+
+  let step=0;
+  const caption=document.getElementById('caption'), counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+
+  function show(n){
+    step=Math.max(0,Math.min(STEPS.length-1,n));
+    const st=STEPS[step];
+    document.querySelectorAll('.astep').forEach(el=>{
+      const s=parseInt(el.dataset.s);
+      el.classList.toggle('on', s<=st.reveal);
+      el.classList.toggle('cur', s===st.reveal);
+    });
+    renderVis(st.stage);
+    caption.innerHTML=st.caption;
+    counter.textContent=`STEP ${step} / ${STEPS.length-1}`;
+    prevBtn.disabled=step===0; nextBtn.disabled=step===STEPS.length-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.querySelector('.algebra'),caption,document.querySelector('.visarea')]);
+  }
+  function next(){ if(step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if(step>0) show(step-1); else esc('prev'); }
+  function esc(d){ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+
+  nextBtn.addEventListener('click',next);
+  prevBtn.addEventListener('click',prev);
+  document.getElementById('resetBtn').addEventListener('click',()=>show(0));
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){ e.preventDefault(); prev(); }
+  });
+
+  show(0);
 </script>
-<script src="../../mrc_whiteboard.js"></script>
 
 </body>
 </html>

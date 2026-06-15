@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Part A Recap</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.55; margin:4px auto 16px; max-width:840px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:9px 16px; }
+  .intro b { color: var(--accent); }
+  .journey { display:flex; align-items:stretch; justify-content:center; gap:6px; flex-wrap:wrap; max-width:1180px; margin:0 auto; }
+  .jc { width:140px; border:1px solid var(--rule); border-radius:8px; padding:10px 9px; display:flex; flex-direction:column; align-items:center; text-align:center; background:white; }
+  .jc.bad { border-color:#c98; background:#fdf6f2; } .jc.good { border-color: var(--accent); background: var(--accent-faint); }
+  .jv { height:58px; display:flex; align-items:center; justify-content:center; margin-bottom:7px; }
+  .jt { font-family: var(--font-sans); font-size:11.5px; font-weight:700; color: var(--text); line-height:1.2; margin-bottom:4px; }
+  .jc.bad .jt { color:#b5651d; } .jc.good .jt { color: var(--accent); }
+  .jd { font-family: var(--font-serif); font-size:10.5px; line-height:1.35; color: var(--text-muted); }
+  .jarr { display:flex; align-items:center; color: var(--rule); font-size:16px; }
+  .punch { max-width:920px; margin:18px auto 0; border:1.5px solid var(--accent); background: var(--accent-faint); border-radius:8px; padding:12px 20px; text-align:center; font-family: var(--font-serif); font-size:16px; line-height:1.55; color: var(--text); }
+  .punch b { color: var(--accent); }
+  .punch .eq { font-size:18px; margin:4px 0; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Part A — Building the Recognition Engine</h1>
+  <div class="subtitle">LECTURE 2 RECAP · FROM A SEQUENCE TO ATTENTION</div>
+
+  <div class="intro">Lecture 2 in one view: how the molecule became a <b>matrix</b>, why reading it left-to-right failed, and how <b>attention</b> — three operations from Lecture 1 — fixed it.</div>
+
+  <div class="journey" id="journey"></div>
+
+  <div class="punch">
+    <div>Attention is just <b>dot-product</b> · <b>softmax</b> · <b>weighted sum</b> — the three Lecture-1 operations, arranged to <b>recognize</b>.</div>
+    <div class="eq">$\text{Attention}(Q,K,V)=\text{softmax}\!\left(\dfrac{QK^\top}{\sqrt{d_k}}\right)V$</div>
+  </div>
+</div>
+
+<script>
+  function heat(t){ if(t<0) return 'var(--rail)'; t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  function sgrid(vals, cw=12){ const R=vals.length, C=vals[0].length;
+    let s=`<svg viewBox="0 0 ${C*cw} ${R*cw}" width="${C*cw}" height="${R*cw}">`;
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++) s+=`<rect x="${c*cw}" y="${r*cw}" width="${cw-1.6}" height="${cw-1.6}" rx="1.4" fill="${heat(vals[r][c])}"/>`;
+    return s+`</svg>`; }
+  const col=v=>v.map(x=>[x]);
+  const arr=(n,f)=>Array.from({length:n},(_,i)=>f(i));
+
+  // mini-visual builders
+  const vVec   = sgrid(col([0.92,0.30,0.62,0.12]),14);
+  const vMat   = sgrid([[0.9,0.5,0.1,0.2,0.7],[0.2,0.8,0.3,0.6,0.1],[0.6,0.1,0.9,0.2,0.4],[0.1,0.3,0.2,0.8,0.6]]);
+  const vDecay = sgrid(arr(4,r=>arr(4,c=> c>r? -1 : 0.95*Math.pow(0.55, r-c) )));
+  const vAttn  = sgrid([[0.95,0.2,0.1,0.85],[0.2,0.9,0.3,0.2],[0.1,0.3,0.92,0.2],[0.85,0.2,0.2,0.95]]);
+  const vSelfCross = `<span style="display:inline-flex;gap:8px;align-items:center">${sgrid(arr(3,r=>arr(3,c=> r===c?0.92:0.2)),11)}${sgrid([[0.95,0.2,0.1,0.2,0.3],[0.2,0.9,0.2,0.1,0.2],[0.1,0.2,0.2,0.9,0.85]],11)}</span>`;
+  const vEnc   = `<span style="display:inline-flex;gap:5px;align-items:center">${sgrid([[0.9,0.5,0.1,0.2],[0.2,0.8,0.3,0.6],[0.6,0.1,0.9,0.2],[0.1,0.3,0.2,0.8]],11)}<span style="color:var(--text-muted);font-size:13px">→</span>${sgrid(col([0.8,0.4,0.5,0.3]),13)}</span>`;
+
+  const STAGES=[
+    {t:'molecule → vector', d:'each residue or word becomes a list of numbers', v:vVec},
+    {t:'sequence → matrix', d:'a sequence is a list of those vectors — one column each', v:vMat},
+    {t:'RNN / LSTM', d:'read left→right; distant tokens fade — recognition can’t cross the gap', v:vDecay, cls:'bad'},
+    {t:'attention · q·k', d:'compare any two directly — distance-blind, by content', v:vAttn, cls:'good'},
+    {t:'self ◻ vs cross ▭', d:'read yourself (square) — or read a partner (rectangle = binding)', v:vSelfCross},
+    {t:'encoder', d:'stack the layers → one context-aware vector per molecule', v:vEnc}
+  ];
+
+  document.getElementById('journey').innerHTML = STAGES.map((s,i)=>
+    `<div class="jc ${s.cls||''}"><div class="jv">${s.v}</div><div class="jt">${s.t}</div><div class="jd">${s.d}</div></div>`+
+    (i<STAGES.length-1?`<div class="jarr">→</div>`:'')
+  ).join('');
+
+  if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

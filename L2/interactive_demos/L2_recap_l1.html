@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Recap of Session 1</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.5; margin:4px auto 14px; max-width:840px; color: var(--text); }
+  .intro b { color: var(--accent); }
+  .grid4 { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:920px; margin:0 auto; }
+  .card { border:1px solid var(--rule); border-radius:9px; padding:13px 16px; background:white; display:flex; gap:14px; align-items:center; }
+  .card .vis { flex:0 0 150px; display:flex; align-items:center; justify-content:center; }
+  .card .body { flex:1; }
+  .card .op { font-family: var(--font-sans); font-size:13px; font-weight:700; color: var(--accent); margin-bottom:3px; }
+  .card .wm { font-family: var(--font-serif); font-size:13px; font-variant-numeric:tabular-nums; line-height:1.5; color: var(--text); }
+  .card .wm .res { color: var(--accent); font-weight:700; }
+  .card .wd { font-family: var(--font-sans); font-size:11px; color: var(--text-muted); margin-top:3px; }
+  .mat { display:inline-grid; gap:2px; }
+  .mc { width:24px; height:22px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:10px; color:var(--text); }
+  .bars { display:flex; gap:4px; align-items:flex-end; height:54px; }
+  .bar { width:20px; border-radius:2px 2px 0 0; display:flex; align-items:flex-start; justify-content:center; }
+  .bar span { font-family: var(--font-sans); font-size:8px; color:#fff; margin-top:1px; }
+  .arrow { font-family: var(--font-sans); color: var(--text-muted); font-size:14px; margin:0 3px; }
+  .punch { text-align:center; font-family: var(--font-serif); font-size:15px; line-height:1.5; color: var(--text); max-width:840px; margin:18px auto 0; border-top:1px solid var(--rule); padding-top:13px; }
+  .punch b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Recap — The Four Tools from Session 1</h1>
+  <div class="subtitle">LECTURE 2 · EVERYTHING TODAY IS BUILT FROM THESE</div>
+
+  <div class="intro">Before we build attention, get back in the frame: a molecule is a <b>vector</b>, recognition is a <b>score</b>, and a score becomes a <b>probability</b>. Four operations do all of it.</div>
+
+  <div class="grid4" id="grid"></div>
+
+  <div class="punch">Attention is nothing but these four, stacked: <b>matrix-multiply</b> to score every pair, <b>scale</b>, <b>softmax</b> to choose, then <b>blend</b>. Today we assemble them.</div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f1=n=>n.toFixed(1);
+  function mat(data,max){ const R=data.length,C=data[0].length; let h=`<div class="mat" style="grid-template-columns:repeat(${C},24px)">`;
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++){ const v=data[r][c],t=v/max; h+=`<div class="mc" style="background:${heat(t)};color:${t>0.55?'#fff':'var(--text)'}">${f1(v)}</div>`; }
+    return h+`</div>`; }
+  function vcol(v,max){ return mat(v.map(x=>[x]),max); }
+
+  // shared little vectors
+  const a=[0.9,0.2,0.5], b=[0.8,0.3,0.4];
+  const dotAB = a.reduce((s,x,i)=>s+x*b[i],0);            // 0.98
+  const cosAB = dotAB/(Math.sqrt(a.reduce((s,x)=>s+x*x,0))*Math.sqrt(b.reduce((s,x)=>s+x*x,0)));
+
+  // 1 — dot product
+  const c1 = `<span style="display:inline-flex;gap:6px;align-items:center">${vcol(a,1)}<span class="arrow">·</span>${vcol(b,1)}<span class="arrow">=</span><span style="font-family:var(--font-serif);color:#c83636;font-weight:700;font-size:17px">${dotAB.toFixed(2)}</span></span>`;
+  // 2 — matrix mult QKᵀ  (2 antibodies × 2 antigens)
+  const S=[[0.98,0.31],[0.27,0.91]];
+  const c2 = `<span style="display:inline-flex;gap:5px;align-items:center"><span style="font-family:var(--font-serif);font-size:11px;color:var(--text-muted)">Q&nbsp;Kᵀ</span><span class="arrow">→</span>${mat(S,1)}</span>`;
+  // 3 — cosine
+  const c3 = `<span style="display:inline-flex;gap:6px;align-items:center">${vcol(a,1)}<span class="arrow">∠</span>${vcol(b,1)}<span class="arrow">=</span><span style="font-family:var(--font-serif);color:var(--accent);font-weight:700;font-size:17px">${cosAB.toFixed(2)}</span></span>`;
+  // 4 — softmax
+  const z=[2.0,1.0,0.1], e=z.map(v=>Math.exp(v/0.5)), Z=e.reduce((x,y)=>x+y,0), p=e.map(v=>v/Z), pmax=Math.max(...p);
+  const c4 = `<div class="bars">`+p.map((pi,i)=>`<div class="bar" style="height:${(pi/pmax*52).toFixed(0)}px;background:${heat(pi/pmax)}"><span>${(pi*100).toFixed(0)}</span></div>`).join('')+`</div>`;
+
+  const CARDS=[
+    {op:'① Dot product · a·b', vis:c1, wm:`(0.9)(0.8)+(0.2)(0.3)+(0.5)(0.4) = <span class="res">${dotAB.toFixed(2)}</span>`, wd:'compatibility score between two vectors'},
+    {op:'② Matrix multiply · QKᵀ', vis:c2, wm:`every antibody · every antigen, in one step → an <span class="res">N×N</span> score matrix`, wd:'all pairwise scores at once'},
+    {op:'③ Cosine similarity', vis:c3, wm:`a·b ÷ (|a| |b|) = <span class="res">${cosAB.toFixed(2)}</span> &nbsp;<span style="color:var(--text-muted)">(length-free, −1…+1)</span>`, wd:'a normalized, comparable score'},
+    {op:'④ Softmax · z/τ', vis:c4, wm:`[2.0, 1.0, 0.1] ÷ τ → <span class="res">[70%, 24%, 6%]</span>`, wd:'scores → a probability distribution'}
+  ];
+  document.getElementById('grid').innerHTML = CARDS.map(c=>
+    `<div class="card"><div class="vis">${c.vis}</div><div class="body"><div class="op">${c.op}</div><div class="wm">${c.wm}</div><div class="wd">${c.wd}</div></div></div>`
+  ).join('');
+
+  if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

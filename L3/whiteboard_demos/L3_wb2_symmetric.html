@@ -8,76 +8,169 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <link rel="stylesheet" href="../../mrc_styles.css">
-<link rel="stylesheet" href="../../mrc_whiteboard.css">
+<style>
+  body { padding-bottom: 116px; }
+  .panels { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 36px; align-items: start; margin-top: 14px; }
+  .claim { border-left: 3px solid var(--accent); background: white; padding: 12px 20px; margin-bottom: 16px; }
+  .claim .lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 500; display:block; margin-bottom: 4px; }
+  .claim .eq { font-size: 17px; }
+  .astep { border: 1px solid var(--rule); border-radius: 4px; padding: 11px 15px; margin-bottom: 9px; opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s; }
+  .astep.on { opacity: 1; transform: none; }
+  .astep.cur { border-color: var(--accent); background: var(--accent-faint); }
+  .astep .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 5px; }
+  .astep .eq { font-size: 14px; }
+  .astep .note { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 5px; }
+
+  .visarea { min-height: 320px; }
+  .vlab { font-family: var(--font-sans); font-size: 11px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; text-align:center; margin-bottom:10px; }
+  .vis { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+  .dirarrow { font-family: var(--font-sans); font-size:13px; font-weight:700; color: var(--accent); line-height:1.4; text-align:center; }
+  .mat { display:inline-grid; gap:2px; }
+  .ml { font-family: var(--font-serif); font-size:11px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .ml.seq { font-size:10px; }
+  @keyframes cellin { from { opacity:0; transform:scale(0.78); } to { opacity:1; transform:none; } }
+  .mc { width:48px; height:30px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:12px; color: var(--text); font-variant-numeric:tabular-nums; animation: cellin 0.3s ease-out both; }
+  .mc.diag { outline:2px solid var(--accent); outline-offset:-2px; z-index:1; }
+
+  .viscalc { width:100%; max-width:600px; margin:14px auto 0; font-family: var(--font-serif); font-size:13.5px; min-height:24px; font-variant-numeric:tabular-nums; line-height:1.75; text-align:left; }
+  .viscalc.ctr { text-align:center; }
+  .viscalc .res { color: var(--accent); font-weight:700; font-size:16px; } .viscalc .mut { color: var(--text-muted); }
+  .wk { border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; padding:9px 14px; background:#fbfaff; }
+  .wk .wh { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:5px; }
+  .wk .wl { line-height:1.75; } .wk b { font-weight:700; }
+  .visnote { text-align:center; font-size:12px; color:var(--text-muted); font-style:italic; margin-top:10px; max-width:460px; margin-left:auto; margin-right:auto; }
+  .visnote b { color: var(--accent); font-style:normal; }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.5; } .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+</style>
 </head>
 <body>
 
-<div class="stage">
+<div class="stage wide">
+  <h1>The Symmetric Loss — Matching Both Ways</h1>
+  <div class="subtitle">MRC LECTURE 3 · WHITEBOARD + MATRIX · BINDING IS MUTUAL</div>
 
-  <h1>The Symmetric Loss</h1>
-  <div class="subtitle">MRC LECTURE 3 · WHITEBOARD · BIDIRECTIONAL TRAINING FROM BINDING SYMMETRY</div>
-
-  <div class="claim">
-    <span class="label">Claim</span>
-    <div class="eq">$$\mathcal{L}_{\text{sym}} = \tfrac{1}{2}\big(\mathcal{L}_{\text{agent}\to\text{target}} + \mathcal{L}_{\text{target}\to\text{agent}}\big)$$</div>
-  </div>
-
-  <div class="setup">
-    InfoNCE applied to the rows of the similarity matrix asks "for each agent, which target?" But binding is symmetric — the free energy of a complex doesn't care which partner you call the agent. The loss must reflect that. We add the column-wise direction and average.
-  </div>
-
-  <div class="step" data-step="1">
-    <div class="step-label">Step 1 · Agent → target (softmax over each row)</div>
-    <div class="step-eq">
-      $$\mathcal{L}_{\text{agent}\to\text{target}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$
+  <div class="panels">
+    <div class="algebra">
+      <div class="claim"><span class="lab">Goal — build this</span><div class="eq">$$\mathcal{L}=\tfrac12\big(\mathcal{L}_{q\to k}+\mathcal{L}_{k\to q}\big)$$</div></div>
+      <div class="astep" data-s="1"><div class="lab">Step 1 · the cosine matrix (recap)</div><div class="eq">$S_{ij}=\cos(\mathbf{q}_i,\mathbf{k}_j)/\tau$</div><div class="note">antibodies down, antigens across (slide 30)</div></div>
+      <div class="astep" data-s="2"><div class="lab">Step 2 · softmax each ROW → antibody picks antigen</div><div class="eq">$\mathcal{L}_{q\to k}=-\tfrac1N\sum_i\log\dfrac{e^{S_{ii}}}{\sum_j e^{S_{ij}}}$</div><div class="note">this is the InfoNCE of the last slide</div></div>
+      <div class="astep" data-s="3"><div class="lab">Step 3 · softmax each COLUMN → antigen picks antibody</div><div class="eq">$\mathcal{L}_{k\to q}=-\tfrac1N\sum_j\log\dfrac{e^{S_{jj}}}{\sum_i e^{S_{ij}}}$</div><div class="note">the same matrix, read down the columns</div></div>
+      <div class="astep" data-s="4"><div class="lab">Step 4 · average the two directions &nbsp;∎</div><div class="eq">$\mathcal{L}=\tfrac12(\mathcal{L}_{q\to k}+\mathcal{L}_{k\to q})$</div></div>
     </div>
-  </div>
-
-  <div class="step" data-step="2">
-    <div class="step-label">Step 2 · Target → agent (softmax over each column)</div>
-    <div class="step-eq">
-      $$\mathcal{L}_{\text{target}\to\text{agent}} = -\frac{1}{N}\sum_{j=1}^{N}\log\frac{\exp(S_{jj})}{\sum_{i=1}^{N}\exp(S_{ij})}$$
-    </div>
-  </div>
-
-  <div class="step" data-step="3">
-    <div class="step-label">Step 3 · The physical constraint</div>
-    <div class="step-eq">
-      $$\Delta G_{AB} = \Delta G_{BA} \;\;\Rightarrow\;\; \text{sim}(\mathbf{q}_A,\mathbf{k}_B) = \text{sim}(\mathbf{q}_B,\mathbf{k}_A)$$
-    </div>
-  </div>
-
-  <div class="step qed" data-step="4">
-    <div class="step-label">Step 4 · Average both directions &nbsp;∎</div>
-    <div class="step-eq">
-      $$\mathcal{L}_{\text{sym}} = \tfrac{1}{2}\big(\mathcal{L}_{\text{agent}\to\text{target}} + \mathcal{L}_{\text{target}\to\text{agent}}\big)$$
-    </div>
-  </div>
-
-</div>
-
-<div class="control-bar">
-  <div class="stage-inner">
-    <div class="step-caption" id="caption"></div>
-    <div class="step-counter" id="counter"></div>
-    <div class="step-buttons">
-      <button id="prevBtn">← Previous</button>
-      <button id="nextBtn" class="primary">Next →</button>
-      <button id="resetBtn">Reset</button>
+    <div class="visarea">
+      <div class="vlab" id="vlab"></div>
+      <div class="vis" id="vis"></div>
+      <div class="viscalc" id="viscalc"></div>
+      <div class="visnote" id="visnote"></div>
     </div>
   </div>
 </div>
+
+<div class="control-bar"><div class="inner">
+  <div class="step-caption" id="caption"></div>
+  <div class="step-counter" id="counter"></div>
+  <div class="btns"><button id="prevBtn">← Back</button><button id="nextBtn" class="primary">Next →</button><button id="resetBtn">Reset</button></div>
+</div></div>
 
 <script>
-  window.STEP_CAPTIONS = [
-    "Press <strong>Next</strong> or → to begin.",
-    "<strong>Step 1.</strong> Softmax over each <em>row</em> of the similarity matrix: for agent $i$, which target wins? This is the InfoNCE loss from the previous derivation — it constrains the embedding from the agent's point of view only.",
-    "<strong>Step 2.</strong> Now softmax over each <em>column</em>: for target $j$, which agent wins? Same matrix, perpendicular direction. This constrains the embedding from the target's point of view — a constraint the row-wise loss never imposed.",
-    "<strong>Step 3.</strong> Why we need both: binding free energy is a property of the complex, $\\Delta G_{AB} = \\Delta G_{BA}$. So the embedding must score the pair the same in either direction. Only training both directions enforces that symmetry.",
-    "<strong>Step 4.</strong> Average the two. CLIP introduced this symmetric loss empirically because it gave better embeddings; the MRC framework <em>derives</em> it — binding symmetry requires bidirectional training. (Triplet, BCE, and margin losses each violate one of the five axioms — see the reference worksheet.) ∎"
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=n=>n.toFixed(2);
+  const dot=(a,b)=>a.reduce((s,_,i)=>s+a[i]*b[i],0), cos=(a,b)=>dot(a,b)/(Math.sqrt(dot(a,a))*Math.sqrt(dot(b,b)));
+  const TAU=0.25;
+  const AB=['CARDYW','CARGYW','CARHPW','CARWFW'], AG=['FNCYF','GVTQN','ALDPS','PVRWE'];
+  const Q=[[0.90,0.20,0.10,0.10],[0.5,0.8,0.1,0.2],[0.1,0.1,0.9,0.2],[0.1,0.2,0.2,0.9]];
+  const K=[[0.80,0.30,0.20,0.00],[0.4,0.7,0.0,0.2],[0.2,0.0,0.8,0.3],[0.0,0.3,0.1,0.8]];
+  const S=Q.map(q=>K.map(k=>cos(q,k)));
+  const sm=a=>{const m=Math.max(...a),e=a.map(x=>Math.exp(x-m)),Z=e.reduce((p,c)=>p+c,0);return e.map(x=>x/Z);};
+  const Prow=S.map(r=>sm(r.map(c=>c/TAU)));
+  const Pcol=[0,1,2,3].map(j=>sm(S.map(r=>r[j]).map(c=>c/TAU))); // Pcol[j][i]
+  const Lrow=Prow.reduce((s,p,i)=>s-Math.log(p[i]),0)/4;
+  const Lcol=Pcol.reduce((s,p,j)=>s-Math.log(p[j]),0)/4;
+  const Lsym=(Lrow+Lcol)/2;
+
+  function mat(data,rl,cl,opts={}){ const nr=data.length,nc=data[0].length;
+    let h=`<div class="mat" style="grid-template-columns:${rl?'58px ':''}repeat(${nc},48px)">`;
+    if(cl){ if(rl)h+=`<div></div>`; cl.forEach(c=>h+=`<div class="ml seq">${c}</div>`);}
+    for(let r=0;r<nr;r++){ if(rl)h+=`<div class="ml seq">${rl[r]}</div>`;
+      for(let c=0;c<nc;c++){ const v=data[r][c],cls=['mc']; if(r===c)cls.push('diag');
+        const delay=(opts.dir==='col'?(c*nr+r):(r*nc+c))*0.04;
+        h+=`<div class="${cls.join(' ')}" style="animation-delay:${delay}s;background:${heat(opts.tint(v))};color:${opts.tint(v)>0.5?'#fff':'var(--text)'}">${f2(v)}</div>`; } }
+    return h+`</div>`; }
+  const work=(title,lines)=>`<div class="wk"><div class="wh">${title}</div>${lines.map(l=>`<div class="wl">${l}</div>`).join('')}</div>`;
+  const vis=document.getElementById('vis'),vlab=document.getElementById('vlab'),viscalc=document.getElementById('viscalc'),visnote=document.getElementById('visnote');
+
+  function renderVis(st){
+    if(st==='matrix'){ vlab.textContent='the cosine matrix — antibodies × antigens';
+      vis.innerHTML=mat(S,AB,AG,{tint:v=>v});
+      { const q=Q[0],k=K[0],dp=dot(q,k),mq=Math.sqrt(dot(q,q)),mk=Math.sqrt(dot(k,k));
+        viscalc.innerHTML=work('plug in the numbers — one cell, S₁₁', [
+          `S₁₁ = (q₁·k₁)/(|q₁|·|k₁|) = ${f2(dp)} / (${f2(mq)} × ${f2(mk)}) = <span class="res">${f2(S[0][0])}</span>`,
+          `read this matrix two ways: <b style="color:var(--accent)">→ by rows</b> (antibody picks antigen) &nbsp;and&nbsp; <b style="color:var(--accent)">↓ by columns</b> (antigen picks antibody)`
+        ]); }
+      visnote.innerHTML='An antibody must pick its antigen — <b>and</b> the antigen must pick the antibody. Binding is mutual.';
+    } else if(st==='rows'){ vlab.textContent='Direction 1 · softmax each ROW → antibody picks antigen';
+      vis.innerHTML=`<div class="dirarrow">→<br>→<br>→<br>→</div>`+mat(Prow,AB,AG,{tint:v=>v,dir:'row'});
+      { const e0=S[0].map(c=>Math.exp(c/TAU)),Z0=e0.reduce((a,b)=>a+b,0);
+        viscalc.innerHTML=work('plug in the numbers — softmax the anchor ROW (→)', [
+          `row CARDYW ÷ τ = [${S[0].map(c=>f2(c/TAU)).join(',  ')}]`,
+          `P(diagonal) = ${f2(e0[0])} / (${e0.map(f2).join(' + ')}) = <span class="res">${f2(Prow[0][0])}</span>`,
+          `ℒ₁ = −log(${f2(Prow[0][0])}) = ${(-Math.log(Prow[0][0])).toFixed(2)} &nbsp;→&nbsp; ℒ<sub>q→k</sub> = avg of 4 rows = <span class="res">${Lrow.toFixed(2)}</span>`
+        ]); }
+      visnote.innerHTML='Given the antibody, which antigen? This is exactly the <b>InfoNCE</b> from the last slide.';
+    } else if(st==='cols'){ vlab.textContent='Direction 2 · softmax each COLUMN → antigen picks antibody';
+      const Pc=AB.map((_,i)=>AG.map((_,j)=>Pcol[j][i]));
+      vis.innerHTML=mat(Pc,AB,AG,{tint:v=>v,dir:'col'})+`<div class="dirarrow" style="align-self:flex-start;margin-top:18px">↓ ↓ ↓ ↓</div>`;
+      { const col0=S.map(r=>r[0]),ec=col0.map(c=>Math.exp(c/TAU)),Zc=ec.reduce((a,b)=>a+b,0);
+        viscalc.innerHTML=work('plug in the numbers — softmax the anchor COLUMN (↓)', [
+          `column FNCYF ÷ τ = [${col0.map(c=>f2(c/TAU)).join(',  ')}]`,
+          `P(diagonal) = ${f2(ec[0])} / (${ec.map(f2).join(' + ')}) = <span class="res">${f2(Pcol[0][0])}</span>`,
+          `−log(${f2(Pcol[0][0])}) = ${(-Math.log(Pcol[0][0])).toFixed(2)} &nbsp;→&nbsp; ℒ<sub>k→q</sub> = avg of 4 columns = <span class="res">${Lcol.toFixed(2)}</span>`
+        ]); }
+      visnote.innerHTML='Same matrix, read <b>down the columns</b>: given the antigen, which antibody? The transpose direction.';
+    } else { vlab.textContent='same matrix, both readings → average → the symmetric loss';
+      vis.innerHTML=`<div class="dirarrow">→<br>→<br>→<br>→</div>`+mat(S,AB,AG,{tint:v=>v})+`<div class="dirarrow" style="align-self:flex-start;margin-top:18px">↓ ↓ ↓ ↓</div>`;
+      viscalc.innerHTML=work('plug in the numbers — average the two readings', [
+        `read <b>→</b> (each row): &nbsp; ℒ<sub>q→k</sub> = <b>${Lrow.toFixed(2)}</b> &nbsp;<span class="mut">(antibody → antigen, from step 2)</span>`,
+        `read <b>↓</b> (each column): &nbsp; ℒ<sub>k→q</sub> = <b>${Lcol.toFixed(2)}</b> &nbsp;<span class="mut">(antigen → antibody, from step 3)</span>`,
+        `ℒ = ½ (${Lrow.toFixed(2)} + ${Lcol.toFixed(2)}) = <span class="res">${Lsym.toFixed(2)}</span> &nbsp;<span class="mut">— a pair is “right” only when BOTH directions pick it</span>`
+      ]);
+      visnote.innerHTML='Same cosine matrix, read <b>→ and ↓</b>; the <b>diagonal</b> (outlined) is where both directions must agree. The loss CLIP minimises — and every SFM. cos ↔ −ΔG, τ ↔ k_BT. ∎';
+    }
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([vlab,viscalc,visnote]);
+  }
+
+  const STEPS=[
+    {reveal:1,stage:'matrix',cap:`The cosine matrix from the last slide — antibodies down, antigens across. InfoNCE used it <strong>one way</strong>. But binding is <strong>mutual</strong>. Press <strong>Next</strong>.`},
+    {reveal:2,stage:'rows',cap:`<strong>Direction 1.</strong> Softmax each <strong>row</strong>: given the antibody, the Boltzmann probability over antigens. −log the diagonal, average → $\\mathcal{L}_{q\\to k}$. (This is the InfoNCE you just built.)`},
+    {reveal:3,stage:'cols',cap:`<strong>Direction 2.</strong> Softmax each <strong>column</strong>: given the antigen, the probability over antibodies. The <em>same matrix</em>, read the other way → $\\mathcal{L}_{k\\to q}$.`},
+    {reveal:4,stage:'sym',cap:`<strong>Average both.</strong> The symmetric loss. CLIP does exactly this — image→text and text→image. A pair is right only when <strong>both</strong> sides choose each other. ∎`}
   ];
+
+  let step=0; const caption=document.getElementById('caption'),counter=document.getElementById('counter'),prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn');
+  function show(n){ step=Math.max(0,Math.min(STEPS.length-1,n)); const st=STEPS[step];
+    document.querySelectorAll('.astep').forEach(el=>{const s=+el.dataset.s; el.classList.toggle('on',s<=st.reveal); el.classList.toggle('cur',s===st.reveal);});
+    renderVis(st.stage); caption.innerHTML=st.cap; counter.textContent=`STEP ${step+1} / ${STEPS.length}`; prevBtn.disabled=step===0; nextBtn.disabled=step===STEPS.length-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.querySelector('.algebra'),caption]); }
+  function next(){ if(step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if(step>0) show(step-1); else esc('prev'); }
+  function esc(d){ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+  nextBtn.addEventListener('click',next); prevBtn.addEventListener('click',prev); document.getElementById('resetBtn').addEventListener('click',()=>show(0));
+  document.addEventListener('keydown',e=>{ if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName))return;
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){e.preventDefault();next();} else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();prev();} });
+  show(0);
 </script>
-<script src="../../mrc_whiteboard.js"></script>
 
 </body>
 </html>

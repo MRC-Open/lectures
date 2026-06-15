@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Multi-Head Attention</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .formula { text-align: center; font-size: 17px; margin: 2px 0 10px 0; }
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 740px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 14px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .seclab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; text-align: center; margin: 6px 0 8px; }
+
+  /* feature heatmap (the source vectors) */
+  .fwrap { display: flex; justify-content: center; margin-bottom: 16px; }
+  .fgrid { display: inline-grid; gap: 2px; }
+  .flab { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; }
+  .ftok { font-family: var(--font-serif); font-size: 14px; color: var(--text); display: flex; align-items: center; justify-content: center; height: 24px; }
+  .fcell { width: 46px; height: 26px; border-radius: 2px; }
+
+  /* head rows */
+  .heads { max-width: 760px; margin: 0 auto; }
+  .head { border: 1px solid var(--rule); border-radius: 7px; padding: 10px 14px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .head:hover { border-color: var(--accent); }
+  .head.sel { border-color: var(--accent); background: var(--accent-faint); }
+  .head .htop { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .head .hname { font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--accent); }
+  .head .hcdr { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); }
+  .head .hprobe { font-family: var(--font-serif); font-size: 14px; font-style: italic; color: var(--text); }
+  .head .hpick { margin-left: auto; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); }
+  .head .hpick b { color: var(--accent); }
+  .hrow { display: flex; gap: 6px; flex-wrap: wrap; }
+  .htok { font-family: var(--font-serif); font-size: 15px; padding: 6px 12px; border: 1.5px solid var(--rule); border-radius: 5px; min-width: 26px; text-align: center; }
+  .htok.top { border-color: var(--accent); border-width: 2px; }
+
+  /* detail table for selected head */
+  .detail { border: 1px solid var(--accent); border-radius: 7px; padding: 12px 16px; max-width: 760px; margin: 4px auto 0; background: white; }
+  .detail .dh { font-family: var(--font-sans); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+  table.dt { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  table.dt th { font-family: var(--font-sans); font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); font-weight: 600; padding: 3px 8px; text-align: left; }
+  table.dt td { font-family: var(--font-serif); font-size: 13px; padding: 3px 8px; border-top: 1px solid var(--rail); }
+  table.dt tr.top td { background: var(--accent-faint); }
+  .dt .q { color: var(--accent); }
+  .dt .sc { font-weight: 700; }
+  .dwbar { display:inline-block; height:10px; background: var(--accent); border-radius:2px; vertical-align: middle; }
+
+  .concat { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); margin: 14px auto 0; max-width: 740px; line-height: 1.6; }
+  .concat b { color: var(--accent); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Multi-Head Attention</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · MANY QUESTIONS AT ONCE — LIKE AN ANTIBODY'S CDR LOOPS</div>
+
+  <div class="formula">$$\text{MultiHead} = \text{Concat}(\text{head}_1,\ldots,\text{head}_H)\,W_O, \qquad \text{head}_h = \text{Attention}(QW_Q^h,\,KW_K^h,\,VW_V^h)$$</div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Antibody · Antigen · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="seclab" id="srclab"></div>
+  <div class="fwrap"><div class="fgrid" id="fgrid"></div></div>
+
+  <div class="seclab" id="headlab"></div>
+  <div class="heads" id="heads"></div>
+
+  <div class="detail" id="detail"></div>
+
+  <div class="concat" id="concat"></div>
+
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  const TAU=0.45;
+  const EX = {
+    protein: {
+      who:'antibody', srcname:'epitope residues', querier:'The antibody’s paratope',
+      recog:'An <b>antibody</b> recognizes an antigen through <b>several CDR loops at once</b> — each loop contacts a different part of the epitope and probes a different chemistry. Multi-head attention is the same idea: <b>each head is a CDR loop</b>, asking its own question of the antigen.',
+      tokens:['Phe','Lys','Asp','Leu','Trp','Gly'],
+      short:['F','K','D','L','W','G'],
+      feats:['hydrophobic','charge','aromatic'],
+      vecs:{ F:[0.8,0.0,0.9], K:[0.1,0.9,0.0], D:[0.1,-0.9,0.0], L:[0.9,0.0,0.0], W:[0.7,0.0,1.0], G:[0.0,0.0,0.0] },
+      heads:[
+        {name:'Head 1', cdr:'≈ CDR-H3', probe:'“where is a hydrophobic pocket?”', q:[1,0,0]},
+        {name:'Head 2', cdr:'≈ CDR-H2', probe:'“where is a complementary charge?”', q:[0,1,0]},
+        {name:'Head 3', cdr:'≈ CDR-H1', probe:'“where is an aromatic ring?”', q:[0,0,1]}
+      ],
+      concat:'Each CDR loop locks onto a different residue. <b>Concatenate the head outputs and project (W_O)</b> → the full paratope grips the whole epitope at once. Six CDR loops in a real antibody = six heads.'
+    },
+    sentence: {
+      who:'word', srcname:'sentence', querier:'The word “binds”',
+      recog:'The word <b>“binds”</b> needs several relations at once: its <b>subject</b>, its <b>object</b>, its <b>modifier</b>. Multi-head attention gives it <b>one head per relation</b> — each asking a different question of the same sentence.',
+      tokens:['The','antibody','binds','the','antigen','tightly'],
+      short:['The','antibody','binds','the','antigen','tightly'],
+      feats:['subject-like','object-like','modifier-like'],
+      vecs:{ 'The':[0,0,0], 'antibody':[1,0,0], 'binds':[0.2,0.2,0], 'the':[0,0,0], 'antigen':[0,1,0], 'tightly':[0,0,1] },
+      heads:[
+        {name:'Head 1', cdr:'syntax', probe:'“who is the subject?”', q:[1,0,0]},
+        {name:'Head 2', cdr:'meaning', probe:'“what is the object?”', q:[0,1,0]},
+        {name:'Head 3', cdr:'modifier', probe:'“how / how much?”', q:[0,0,1]}
+      ],
+      concat:'Each head pulls in a different relation — subject, object, modifier. <b>Concatenate and project (W_O)</b> → “binds” now carries all three at once.'
+    }
+  };
+  let exKey='protein', sel=0;
+
+  const dot=(a,b)=>a.reduce((s,_,l)=>s+a[l]*b[l],0);
+  const keyOf=(ex,i)=>ex.vecs[ex.short[i]];
+  function softmax(a){ const m=Math.max(...a); const e=a.map(v=>Math.exp((v-m)/TAU)); const Z=e.reduce((x,y)=>x+y,0); return e.map(v=>v/Z); }
+  function headWeights(ex,h){ const s=ex.tokens.map((_,i)=>dot(h.q,keyOf(ex,i))); return {s, w:softmax(s)}; }
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const tint=v=>heat(Math.max(0,Math.min(1,v)));
+  const f2=n=>(n<0?'−':'')+Math.abs(n).toFixed(2);
+
+  function render(){
+    const ex=EX[exKey], n=ex.tokens.length;
+    document.getElementById('recog').innerHTML=`<b>Recognition.</b> ${ex.recog}`;
+    document.getElementById('srclab').textContent=`what the ${ex.who} sees — the ${ex.srcname} as feature vectors`;
+    document.getElementById('headlab').textContent=`${ex.heads.length} heads probe the same sequence in parallel — each its own learned Wq/Wk/Wv`;
+
+    // feature heatmap
+    const fg=document.getElementById('fgrid');
+    fg.style.gridTemplateColumns=`120px repeat(${n}, 46px)`;
+    let fh=`<div></div>`+ex.short.map(t=>`<div class="ftok">${t}</div>`).join('');
+    ex.feats.forEach((fname,r)=>{
+      fh+=`<div class="flab">${fname}</div>`;
+      for(let i=0;i<n;i++){ const v=keyOf(ex,i)[r]; fh+=`<div class="fcell" style="background:${tint((v+0)/1)}" title="${ex.short[i]}: ${f2(v)}"></div>`; }
+    });
+    fg.innerHTML=fh;
+
+    // head rows
+    const hh=ex.heads.map((h,hi)=>{
+      const {w}=headWeights(ex,h); const wmax=Math.max(...w); const top=w.indexOf(wmax);
+      const chips=ex.tokens.map((t,i)=>`<div class="htok ${i===top?'top':''}" style="background:${tint(w[i]/wmax)};color:${w[i]/wmax>0.55?'#fff':'var(--text)'}" title="${(w[i]*100).toFixed(0)}%">${ex.short[i]}</div>`).join('');
+      return `<div class="head ${hi===sel?'sel':''}" data-h="${hi}">
+        <div class="htop"><span class="hname">${h.name}</span><span class="hcdr">${h.cdr}</span><span class="hprobe">${h.probe}</span>
+          <span class="hpick">locks onto <b>${ex.tokens[top]}</b> (${(w[top]*100).toFixed(0)}%)</span></div>
+        <div class="hrow">${chips}</div></div>`;
+    }).join('');
+    document.getElementById('heads').innerHTML=hh;
+    document.querySelectorAll('.head').forEach(el=>el.addEventListener('click',()=>{sel=+el.dataset.h;render();}));
+
+    // detail table for selected head
+    const h=ex.heads[sel], {s,w}=headWeights(ex,h), top=w.indexOf(Math.max(...w));
+    const qf=h.q.indexOf(1);
+    let rows=`<tr><th>${ex.srcname.split(' ')[0]}</th><th>key vector</th><th>score = q·k</th><th>weight (softmax)</th></tr>`;
+    for(let i=0;i<n;i++){
+      rows+=`<tr class="${i===top?'top':''}"><td>${ex.tokens[i]}</td><td>[${keyOf(ex,i).map(f2).join(', ')}]</td>`+
+        `<td><span class="q">q</span>·k = ${qf>=0?`pull out "${ex.feats[qf]}" = <span class="sc">${f2(s[i])}</span>`:`<span class="sc">${f2(s[i])}</span>`}</td>`+
+        `<td><span class="dwbar" style="width:${(w[i]*90).toFixed(0)}px"></span> ${(w[i]*100).toFixed(0)}%</td></tr>`;
+    }
+    document.getElementById('detail').innerHTML=`<div class="dh">Inside ${h.name} ${h.cdr} — its query asks ${h.probe}</div><table class="dt">${rows}</table>`;
+
+    document.getElementById('concat').innerHTML=ex.concat;
+    document.getElementById('bridge').innerHTML=
+      `One head asks <strong>one</strong> question; multi-head asks <strong>many in parallel</strong>, each with its own learned projections, then <strong>concatenates</strong> the answers. Like an antibody reading an antigen with all its CDR loops at once — or a word tracking subject, object, and modifier together. More heads = more kinds of recognition, computed simultaneously.`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog')]);
+  }
+
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{
+    exKey=b.dataset.ex; sel=0;
+    document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));
+    render();
+  }));
+
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

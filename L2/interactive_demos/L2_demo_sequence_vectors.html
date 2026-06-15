@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — A Sequence Is a List of Vectors</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 16px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .plot-wrap { background: white; }
+  svg.viz { display: block; width: 100%; height: auto; }
+  .dimlabel { font-family: var(--font-sans); font-size: 11px; fill: var(--text-muted); }
+  .chip { fill: white; stroke: var(--rule); stroke-width: 1.5; cursor: pointer; }
+  .chip.dep { stroke: var(--accent); stroke-width: 2.5; }
+  .chip.focus { fill: var(--accent-faint); }
+  .chiptext { font-family: var(--font-serif); font-size: 15px; fill: var(--text); pointer-events: none; }
+  .chiprole { font-family: var(--font-sans); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; fill: var(--accent); font-weight: 600; pointer-events: none; }
+  .cell { stroke: white; stroke-width: 1; }
+  .colout { fill: none; stroke: var(--accent); stroke-width: 2.4; }
+  .arc { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 4 3; }
+  .arclabel { font-family: var(--font-sans); font-size: 11px; fill: var(--accent); font-weight: 600; }
+  .colcap { font-family: var(--font-sans); font-size: 10px; fill: var(--text-muted); }
+
+  .readout { text-align: center; font-family: var(--font-serif); font-size: 16px; margin: 14px 0 6px 0; min-height: 24px; }
+  .readout .nm { color: var(--accent); font-weight: 700; }
+  .readout .vec { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  .note { font-size: 14px; color: var(--text-muted); font-style: italic; line-height: 1.6; text-align: center; max-width: 660px; margin: 8px auto 0 auto; }
+  .note b { color: var(--accent); font-style: normal; }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 20px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>A Sequence Is a List of Vectors</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · WHAT THE MODEL ACTUALLY SEES</div>
+
+  <div class="setup">
+    In Session 1, a single molecule became a <em>vector</em> — a list of numbers. A sequence is just a <strong>list of these vectors</strong>, one per position. Below, each <strong>column</strong> is one token's vector (its "embedding"); the rows are its dimensions. Click a token to read its vector.
+  </div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="plot-wrap"><svg class="viz" id="viz" viewBox="0 0 780 300"></svg></div>
+
+  <div class="readout" id="readout"></div>
+  <div class="note" id="note"></div>
+
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  const EX = {
+    protein: {
+      tokens: ['C','V','Q','L','V','E','S','G','G','C'],
+      dims: ['hydrophobic','charge','size','polar','aromatic','flexible'],
+      vecs: {
+        C:[0.3,0.0,-0.2,0.4,-0.6,-0.4], V:[0.8,0.0,0.1,-0.5,-0.6,-0.2],
+        Q:[-0.3,0.0,0.3,0.7,-0.6,0.2], L:[0.9,0.0,0.4,-0.6,-0.6,-0.1],
+        E:[-0.5,-0.9,0.2,0.8,-0.6,0.3], S:[-0.2,0.0,-0.3,0.6,-0.6,0.4],
+        G:[-0.1,0.0,-0.9,0.1,-0.6,0.9]
+      },
+      src:0, tgt:9, srcRole:'Cys', tgtRole:'Cys',
+      realDim: 1280, realName: 'ESM-2',
+      dep: 'The two <strong>cysteines</strong> must pair to form a <strong>disulfide bond</strong> — so their vectors must come to depend on each other. But they sit at opposite ends of the list.',
+      bridge: 'Notice the two cysteine columns are <strong>identical</strong> right now — the same residue gives the same starting vector. The job of the network is to let position 1 and position 10 <strong>update each other’s vectors</strong> so the model knows they bond. That requires crossing the whole sequence.'
+    },
+    sentence: {
+      tokens: ['The','antibody','that','the','lab','made','binds'],
+      dims: ['dim 1','dim 2','dim 3','dim 4','dim 5','dim 6'],
+      vecs: {
+        'The':[0.1,-0.3,0.2,-0.5,0.4,-0.2], 'antibody':[0.8,0.6,-0.3,0.2,-0.7,0.5],
+        'that':[-0.4,0.1,0.5,-0.2,0.3,-0.6], 'the':[0.1,-0.3,0.2,-0.5,0.4,-0.2],
+        'lab':[0.5,0.3,-0.1,0.4,-0.4,0.2], 'made':[-0.2,-0.5,0.6,0.1,0.2,-0.3],
+        'binds':[0.7,0.5,-0.4,0.3,-0.6,0.6]
+      },
+      src:1, tgt:6, srcRole:'subject', tgtRole:'verb',
+      realDim: 768, realName: 'a language model',
+      dep: 'The verb <strong>"binds"</strong> depends on its subject <strong>"antibody"</strong> — to agree, their vectors must come to depend on each other. But several words sit between them.',
+      bridge: 'For the model to use "binds" correctly, the vector at <strong>"binds"</strong> must absorb information from <strong>"antibody"</strong> — five words back. The network has to move information across that gap.'
+    }
+  };
+  let exKey = 'protein', focus = null;
+
+  function vecOf(ex, i){ return ex.vecs[ex.tokens[i]]; }
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  function color(v){ return heat((v+1)/2); }
+  function fmt(v){ return (v<0?'−':'')+Math.abs(v).toFixed(1); }
+
+  const LABELW = 100, CHIPY = 52, CHIP_H = 30, GRID_TOP = 86, CELL_H = 30;
+  const viz = document.getElementById('viz');
+
+  function render() {
+    const ex = EX[exKey];
+    const n = ex.tokens.length, m = ex.dims.length;
+    const cellW = Math.min(86, Math.max(46, (700 - LABELW) / n));
+    const Wd = LABELW + n*cellW, Hd = GRID_TOP + m*CELL_H + 14;
+    viz.setAttribute('viewBox', `0 0 ${Wd} ${Hd}`);
+    const cx = i => LABELW + (i+0.5)*cellW;
+
+    let h = '';
+    // dependency arc above the two chips
+    const xs = cx(ex.src), xt = cx(ex.tgt), midx = (xs+xt)/2;
+    h += `<path class="arc" d="M ${xs} 36 Q ${midx} 2 ${xt} 36"/>`;
+    h += `<text class="arclabel" x="${midx}" y="14" text-anchor="middle">must depend on each other</text>`;
+
+    // chips
+    for (let i=0;i<n;i++){
+      const dep = (i===ex.src||i===ex.tgt), foc = (i===focus);
+      const w = cellW-8;
+      h += `<rect class="chip ${dep?'dep':''} ${foc?'focus':''}" data-i="${i}" x="${cx(i)-w/2}" y="${CHIPY-CHIP_H/2}" width="${w}" height="${CHIP_H}" rx="6"/>`;
+      h += `<text class="chiptext" x="${cx(i)}" y="${CHIPY+5}" text-anchor="middle">${ex.tokens[i]}</text>`;
+      if (i===ex.src) h += `<text class="chiprole" x="${cx(i)}" y="${CHIPY-22}" text-anchor="middle">${ex.srcRole}</text>`;
+      if (i===ex.tgt) h += `<text class="chiprole" x="${cx(i)}" y="${CHIPY-22}" text-anchor="middle">${ex.tgtRole}</text>`;
+    }
+
+    // dim labels
+    for (let j=0;j<m;j++)
+      h += `<text class="dimlabel" x="${LABELW-10}" y="${GRID_TOP + j*CELL_H + CELL_H/2 + 4}" text-anchor="end">${ex.dims[j]}</text>`;
+
+    // heatmap cells
+    for (let i=0;i<n;i++){
+      const v = vecOf(ex,i);
+      for (let j=0;j<m;j++){
+        const x = LABELW + i*cellW, y = GRID_TOP + j*CELL_H;
+        h += `<rect class="cell" x="${x+1}" y="${y+1}" width="${cellW-2}" height="${CELL_H-2}" fill="${color(v[j])}"/>`;
+      }
+    }
+    // outline focused / dependency columns
+    [ex.src, ex.tgt].forEach(i => {
+      h += `<rect class="colout" x="${LABELW+i*cellW+1}" y="${GRID_TOP+1}" width="${cellW-2}" height="${m*CELL_H-2}" rx="3"/>`;
+    });
+    if (focus!==null && focus!==ex.src && focus!==ex.tgt) {
+      h += `<rect class="colout" style="stroke-dasharray:4 3;" x="${LABELW+focus*cellW+1}" y="${GRID_TOP+1}" width="${cellW-2}" height="${m*CELL_H-2}" rx="3"/>`;
+    }
+    // "one column = one vector" caption
+    h += `<text class="colcap" x="${LABELW + 0.5*cellW}" y="${GRID_TOP + m*CELL_H + 12}" text-anchor="middle">↑ one column = one token's vector</text>`;
+
+    viz.innerHTML = h;
+    viz.querySelectorAll('.chip').forEach(el => el.addEventListener('click', () => { focus = +el.dataset.i; render(); update(); }));
+  }
+
+  function update() {
+    const ex = EX[exKey];
+    const ro = document.getElementById('readout');
+    if (focus===null) {
+      ro.innerHTML = `<span style="color:var(--text-muted);font-style:italic;">Click a token to read its vector.</span>`;
+    } else {
+      const v = vecOf(ex, focus);
+      ro.innerHTML = `<span class="nm">${ex.tokens[focus]}</span> → <span class="vec">[ ${v.map(fmt).join(',  ')} ]</span>`;
+    }
+    document.getElementById('note').innerHTML =
+      `We draw <b>${ex.dims.length} numbers</b> per token. A real ${ex.realName} vector has <b>${ex.realDim}</b> — far too many to draw. "<b>High-dimensional</b>" just means a long list of numbers: a single point in a space with that many axes. Same idea as Session 1, only longer.`;
+    document.getElementById('bridge').innerHTML = ex.dep + ' <br><br>' + ex.bridge;
+  }
+
+  document.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => {
+    exKey = b.dataset.ex; focus = null;
+    document.querySelectorAll('[data-ex]').forEach(x => x.classList.toggle('on', x.dataset.ex===exKey));
+    render(); update();
+  }));
+
+  render(); update();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','ArrowDown',' ','PageDown'], pv=['ArrowLeft','ArrowUp','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

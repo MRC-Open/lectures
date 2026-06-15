@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — AI Timeline</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.5; margin:4px auto 8px; max-width:860px; color: var(--text); }
+  .intro b { color: var(--accent); }
+  .tlwrap { max-width:1280px; margin:6px auto 0; }
+  svg { width:100%; height:auto; display:block; }
+  .yr { font-family: var(--font-serif); font-weight:700; font-variant-numeric:tabular-nums; }
+  .ti { font-family: var(--font-sans); font-weight:700; }
+  .de { font-family: var(--font-serif); fill: var(--text-muted); }
+  .era { font-family: var(--font-sans); font-size:10px; letter-spacing:1px; text-transform:uppercase; fill: var(--text-muted); font-weight:700; }
+  .legend { text-align:center; font-family: var(--font-sans); font-size:11px; color: var(--text-muted); margin-top:6px; }
+  .legend b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>From Neurons to Specificity Foundation Models</h1>
+  <div class="subtitle">LECTURE 2 · A 70-YEAR ARC, COMPRESSED</div>
+
+  <div class="intro">Every idea in this course is a link in one chain — from the first artificial <b>neuron</b> to <b>attention</b> to the <b>SFM</b>. The <b>★ milestones</b> feed directly into the model we build today.</div>
+
+  <div class="tlwrap"><svg id="tl" viewBox="0 0 1280 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="legend"><b>★</b> = a direct ingredient of the SFM &nbsp;·&nbsp; the same three operations (dot product · softmax · weighted sum) run through all of them</div>
+</div>
+
+<script>
+  const EV=[
+    {y:'1943', t:'The neuron', d:'McCulloch & Pitts'},
+    {y:'1958', t:'Perceptron', d:'Rosenblatt — learnable'},
+    {y:'1986', t:'Backprop', d:'Rumelhart·Hinton·Williams'},
+    {y:'1997', t:'LSTM', d:'Hochreiter & Schmidhuber'},
+    {y:'2012', t:'AlexNet', d:'deep learning takes off'},
+    {y:'2013', t:'Word2Vec', d:'words become vectors'},
+    {y:'2017', t:'Transformer', d:'“Attention Is All You Need”', star:true},
+    {y:'2018', t:'BERT / GPT', d:'pretrained language models'},
+    {y:'2020', t:'AlphaFold2', d:'structure from sequence'},
+    {y:'2021', t:'CLIP', d:'contrastive image–text', star:true},
+    {y:'2022', t:'ESM-2', d:'protein language models', star:true},
+    {y:'2026', t:'SFMs', d:'CALM, dtSFM, GenLoop', star:true}
+  ];
+  const W=1280, L=58, R=1208, AX=168, ACC='var(--accent)';
+  const xs=EV.map((_,i)=>L+i*(R-L)/(EV.length-1));
+  let s='';
+  // era bands (faint)
+  const bands=[[0,4,'foundations'],[4,8,'deep learning'],[8,12,'foundation models']];
+  bands.forEach(([a,b,lab],k)=>{ const x0=xs[a]-18, x1=xs[b-1]+18;
+    s+=`<rect x="${x0}" y="44" width="${x1-x0}" height="212" rx="8" fill="${k%2?'#fafafa':'#f4f1fa'}" opacity="0.7"/>`;
+    s+=`<text class="era" x="${(x0+x1)/2}" y="62" text-anchor="middle">${lab}</text>`; });
+  // axis line
+  s+=`<line x1="${L}" y1="${AX}" x2="${R}" y2="${AX}" stroke="var(--rule)" stroke-width="2"/>`;
+  s+=`<polygon points="${R},${AX} ${R-10},${AX-5} ${R-10},${AX+5}" fill="var(--rule)"/>`;
+  EV.forEach((e,i)=>{ const x=xs[i], up=i%2===0, col=e.star?ACC:'var(--text)';
+    // connector + dot
+    const ly = up? AX-12 : AX+12;
+    s+=`<line x1="${x}" y1="${AX}" x2="${x}" y2="${ly}" stroke="${e.star?ACC:'var(--rule)'}" stroke-width="1.4"/>`;
+    s+=`<circle cx="${x}" cy="${AX}" r="${e.star?6.5:4.5}" fill="${e.star?ACC:'#fff'}" stroke="${e.star?ACC:'var(--text-muted)'}" stroke-width="1.6"/>`;
+    if(e.star) s+=`<text x="${x}" y="${AX+3.5}" text-anchor="middle" style="font-size:9px;fill:#fff;font-weight:700">★</text>`;
+    // label block
+    const yY = up? AX-22 : AX+34, yT = up? AX-36 : AX+48, yD = up? AX-50 : AX+62;
+    s+=`<text class="yr" x="${x}" y="${yY}" text-anchor="middle" font-size="12" fill="${col}">${e.y}</text>`;
+    s+=`<text class="ti" x="${x}" y="${yT}" text-anchor="middle" font-size="12.5" fill="${col}">${e.t}</text>`;
+    s+=`<text class="de" x="${x}" y="${yD}" text-anchor="middle" font-size="9.5">${e.d}</text>`;
+  });
+  document.getElementById('tl').innerHTML=s;
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

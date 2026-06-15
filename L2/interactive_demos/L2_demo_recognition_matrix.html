@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — The Recognition Matrix</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 720px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog .seek { color: var(--accent); font-weight: 700; }
+  .recog .part { font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+  .toggles { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin: 2px 0 14px 0; }
+  .tgroup { display: flex; gap: 6px; align-items: center; }
+  .tgroup .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 14px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  /* the one-cell readout across architectures */
+  .triread { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 720px; margin: 0 auto 14px; }
+  .trc { border: 1px solid var(--rule); border-radius: 6px; padding: 8px 16px; text-align: center; min-width: 150px; }
+  .trc.on { border-color: var(--accent); background: var(--accent-faint); }
+  .trc .tl { font-family: var(--font-sans); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+  .trc .tv { font-family: var(--font-serif); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .trc.rnn .tv { color: #b4453a; }
+  .trc.lstm .tv { color: #b07d2a; }
+  .trc.attn .tv { color: var(--accent); }
+  .triread .tcap { width: 100%; text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
+
+  .mwrap { display: flex; justify-content: center; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+  .axisL { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); align-self: center; }
+  .matblock { }
+  .axisT { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 4px; }
+  .grid { display: grid; gap: 2px; }
+  .lbl { font-family: var(--font-serif); font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+  .lbl.col.part { color: var(--accent); font-weight: 700; }
+  .lbl.row { justify-content: flex-end; padding-right: 6px; }
+  .lbl.row.seek { color: var(--accent); font-weight: 700; cursor: pointer; }
+  .lbl.row { cursor: pointer; }
+  .cell { width: 38px; height: 30px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-sans); font-size: 9px; font-variant-numeric: tabular-nums; }
+  .cell.blocked { background: repeating-linear-gradient(45deg, #f4f4f4, #f4f4f4 3px, #ececec 3px, #ececec 6px); }
+  .cell.seekcell { outline: 2.5px solid var(--accent); outline-offset: -2px; z-index: 2; }
+  .rowhi { outline: 1.5px solid var(--accent); outline-offset: -1px; }
+  .colhi { box-shadow: inset 0 0 0 1.5px rgba(94,58,163,0.45); }
+
+  .blocklab { text-align: center; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin:8px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:120px; height:9px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .focusnote { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text); margin: 12px auto 0; max-width: 700px; min-height: 18px; }
+  .focusnote b { color: var(--accent); }
+  .caption { text-align: center; font-size: 14px; line-height: 1.6; color: var(--text); max-width: 720px; margin: 10px auto 0; }
+  .caption b { color: var(--accent); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>The Recognition Matrix</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · ONE PICTURE, THREE ARCHITECTURES — WHO CAN USE WHOM</div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="toggles">
+    <div class="tgroup"><span class="lab">Architecture</span>
+      <button class="tbtn" data-arch="rnn">RNN</button>
+      <button class="tbtn" data-arch="lstm">LSTM</button>
+      <button class="tbtn on" data-arch="attn">Attention</button>
+    </div>
+    <div class="tgroup"><span class="lab">Example</span>
+      <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+      <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+    </div>
+  </div>
+
+  <div class="triread" id="triread"></div>
+
+  <div class="mwrap">
+    <div class="axisL">i — this token ↓</div>
+    <div class="matblock">
+      <div class="axisT">j — the token it can draw on →</div>
+      <div class="grid" id="grid"></div>
+      <div class="blocklab" id="blocklab"></div>
+      <div class="legend"><span>0 · ignores</span><div class="legbar"></div><span>1 · draws from</span><span style="margin-left:4px;font-style:italic;">how much row i uses token j</span></div>
+    </div>
+  </div>
+
+  <div class="focusnote" id="focusnote"></div>
+  <div class="caption" id="caption"></div>
+
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const WQ=[[0.8,0.3],[-0.2,0.9]], WK=[[0.9,-0.1],[0.2,0.8]];
+  const SQRT_DK=Math.SQRT2, RNN_K=0.6, LSTM_K=0.9;
+  const EX = {
+    protein: {
+      tokens:['C','V','Q','L','V','E','S','G','G','C'],
+      emb:{ C:[0.9,0.4],V:[0.3,-0.8],Q:[-0.7,0.2],L:[0.4,-0.7],E:[-0.6,-0.5],S:[-0.2,0.6],G:[0.1,0.9] },
+      partner:0, seeker:9,
+      partnerLabel:'Cys @ pos 1', seekerLabel:'Cys @ pos 10',
+      task:'The two <span class="part">cysteines</span> must pair into a disulfide bond — so position 10 must <span class="seek">recognize</span> position 1.'
+    },
+    sentence: {
+      tokens:['The','antibody','that','the','lab','made','binds'],
+      emb:{ 'The':[-0.3,0.8],'antibody':[0.9,0.3],'that':[-0.6,0.1],'the':[-0.3,0.8],'lab':[0.5,0.4],'made':[-0.2,-0.6],'binds':[0.85,0.35] },
+      partner:1, seeker:6,
+      partnerLabel:'"antibody"', seekerLabel:'"binds"',
+      task:'The verb <span class="seek">"binds"</span> must agree with its subject <span class="part">"antibody"</span> — five positions back.'
+    }
+  };
+  let arch='attn', exKey='protein', focusRow=null;
+
+  const mv=(M,x)=>[M[0][0]*x[0]+M[0][1]*x[1], M[1][0]*x[0]+M[1][1]*x[1]];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1];
+  const embOf=(ex,i)=>ex.emb[ex.tokens[i]];
+
+  // row distribution: how much token i draws on each token j (sums to 1)
+  function row(ex,i,a){
+    const n=ex.tokens.length; let w=new Array(n).fill(0);
+    if(a==='attn'){
+      const q=mv(WQ,embOf(ex,i));
+      const s=ex.tokens.map((_,j)=>dot(q,mv(WK,embOf(ex,j))));
+      const m=Math.max(...s); const e=s.map(v=>Math.exp((v-m)/SQRT_DK)); const Z=e.reduce((p,c)=>p+c,0);
+      w=e.map(v=>v/Z);
+    } else {
+      const k=(a==='rnn')?RNN_K:LSTM_K;
+      for(let j=0;j<=i;j++) w[j]=Math.pow(k,i-j);
+      const Z=w.reduce((p,c)=>p+c,0); w=w.map(v=>v/Z);
+    }
+    return w;
+  }
+  function matrix(ex,a){ return ex.tokens.map((_,i)=>row(ex,i,a)); }
+  function partnerShare(ex,a){ return row(ex,ex.seeker,a)[ex.partner]; }
+
+  const fpct=v=> v>=0.001 ? (v*100).toFixed(v>=0.1?0:1)+'%' : (v*100).toExponential(1)+'%';
+
+  function render(){
+    const ex=EX[exKey], n=ex.tokens.length;
+    if(focusRow===null) focusRow=ex.seeker;
+    document.getElementById('recog').innerHTML=`<b>Recognition task.</b> ${ex.task}`;
+
+    // tri-readout (always all three, for the partner cell)
+    const shares={rnn:partnerShare(ex,'rnn'), lstm:partnerShare(ex,'lstm'), attn:partnerShare(ex,'attn')};
+    document.getElementById('triread').innerHTML =
+      `<div class="trc rnn ${arch==='rnn'?'on':''}"><div class="tl">RNN</div><div class="tv">${fpct(shares.rnn)}</div></div>
+       <div class="trc lstm ${arch==='lstm'?'on':''}"><div class="tl">LSTM</div><div class="tv">${fpct(shares.lstm)}</div></div>
+       <div class="trc attn ${arch==='attn'?'on':''}"><div class="tl">Attention</div><div class="tv">${fpct(shares.attn)}</div></div>
+       <div class="tcap">how much the <b>seeker</b> (${ex.seekerLabel}) can draw on the <b>partner</b> (${ex.partnerLabel}) — the single highlighted cell, black → dim → bright</div>`;
+
+    // matrix
+    const M=matrix(ex,arch);
+    const grid=document.getElementById('grid');
+    grid.style.gridTemplateColumns=`58px repeat(${n}, 38px)`;
+    let h=`<div class="lbl"></div>`;
+    // column labels
+    for(let j=0;j<n;j++) h+=`<div class="lbl col ${j===ex.partner?'part':''}">${ex.tokens[j]}<sub>${j+1}</sub></div>`;
+    for(let i=0;i<n;i++){
+      h+=`<div class="lbl row ${i===ex.seeker?'seek':''}" data-row="${i}">${ex.tokens[i]}<sub>${i+1}</sub></div>`;
+      const rmax=Math.max(...M[i]);
+      for(let j=0;j<n;j++){
+        const blocked=(arch!=='attn' && j>i);
+        if(blocked){ h+=`<div class="cell blocked"></div>`; continue; }
+        const v=M[i][j], t=rmax>0?v/rmax:0;
+        const cls=['cell'];
+        if(i===focusRow) cls.push('rowhi');
+        if(j===ex.partner) cls.push('colhi');
+        if(i===ex.seeker && j===ex.partner) cls.push('seekcell');
+        const txt=v>=0.08?(v*100).toFixed(0):'';
+        h+=`<div class="${cls.join(' ')}" style="background:${heat(t)};color:${t>0.55?'#fff':'var(--text)'}" title="i=${i+1} draws ${fpct(v)} from j=${j+1}">${txt}</div>`;
+      }
+    }
+    grid.innerHTML=h;
+    grid.querySelectorAll('.lbl.row').forEach(el=>el.addEventListener('click',()=>{focusRow=+el.dataset.row;render();}));
+
+    document.getElementById('blocklab').innerHTML = (arch!=='attn')
+      ? '▦ blocked — these tokens come later; an RNN/LSTM reads left-to-right and cannot see ahead'
+      : 'every cell is open — attention reads in both directions at once';
+
+    // focus row note
+    const fr=M[focusRow], order=fr.map((v,j)=>[j,v]).filter(([j])=>!(arch!=='attn'&&j>focusRow)).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    document.getElementById('focusnote').innerHTML =
+      `Row <b>${ex.tokens[focusRow]}<sub>${focusRow+1}</sub></b> draws most from: ` +
+      order.map(([j,v])=>`${ex.tokens[j]}<sub>${j+1}</sub> ${fpct(v)}`).join(' · ') +
+      `  <span style="color:var(--text-muted)">(click any row label to inspect)</span>`;
+
+    const caps={
+      rnn:`<b>Lower-triangular and collapsing.</b> Each token sees only what came before, and only the last few strongly — the band fades by ×0.6 per step. The future (the blocked triangle) is invisible.`,
+      lstm:`<b>Same triangle, gentler fade.</b> The additive highway keeps earlier tokens alive far longer (×0.9 per step) — but the future is still invisible, and it is still computed one step at a time.`,
+      attn:`<b>The full grid, lit by content.</b> Every token reads every token — both directions — in one parallel step. Distance never enters; the partner is bright wherever it sits.`
+    };
+    document.getElementById('caption').innerHTML=caps[arch];
+
+    document.getElementById('bridge').innerHTML =
+      `Watch the one outlined cell — the <strong>seeker's row, the partner's column</strong>. Across the three architectures it goes <strong style="color:#b4453a">${fpct(shares.rnn)}</strong> → <strong style="color:#b07d2a">${fpct(shares.lstm)}</strong> → <strong>${fpct(shares.attn)}</strong>: near-black, dim, bright. Same recognition task, three reference frames. <strong>Attention's matrix is full and distance-blind</strong> — the architecture this whole session has been building toward.`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('bridge'),document.getElementById('recog')]);
+  }
+
+  document.querySelectorAll('[data-arch]').forEach(b=>b.addEventListener('click',()=>{arch=b.dataset.arch;document.querySelectorAll('[data-arch]').forEach(x=>x.classList.toggle('on',x.dataset.arch===arch));render();}));
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;focusRow=null;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

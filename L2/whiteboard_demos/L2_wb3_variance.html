@@ -2,68 +2,99 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MRC L2 Whiteboard — Why √dₖ</title>
+<title>MRC L2 Whiteboard — Why √dₖ (variance + picture)</title>
 <script>
   MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <link rel="stylesheet" href="../../mrc_styles.css">
-<link rel="stylesheet" href="../../mrc_whiteboard.css">
+<style>
+  body { padding-bottom: 116px; }
+  .panels { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 38px; align-items: start; margin-top: 14px; }
+
+  .claim { border-left: 3px solid var(--accent); background: white; padding: 12px 20px; margin-bottom: 18px; }
+  .claim .lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 500; display:block; margin-bottom: 4px; }
+  .claim .eq { font-size: 18px; }
+  .astep { border: 1px solid var(--rule); border-radius: 4px; padding: 12px 16px; margin-bottom: 10px; opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s; }
+  .astep.on { opacity: 1; transform: none; }
+  .astep.cur { border-color: var(--accent); background: var(--accent-faint); }
+  .astep .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .astep .eq { font-size: 16px; }
+  .astep .note { font-size: 12.5px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+
+  .visarea { min-height: 320px; }
+  .vis { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .block { text-align: center; }
+  .block-title { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px; }
+  .mat { display: inline-grid; gap: 4px; font-family: var(--font-serif); }
+  .clab, .rlab { font-size: 11px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .cell { width: 44px; height: 34px; border:1.5px solid var(--rule); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:15px; font-variant-numeric: tabular-nums; color: var(--text); }
+  .cell.pos { background:#efeaf6; } .cell.neg { background:#fbeceb; }
+  .op { font-family: var(--font-serif); font-size: 22px; color: var(--text-muted); align-self: center; }
+
+  /* bar charts (std growth + softmax weights) */
+  .barchart { width: 100%; max-width: 460px; margin: 0 auto; }
+  .brow { display: grid; grid-template-columns: 96px 1fr 64px; gap: 10px; align-items: center; padding: 5px 0; font-size: 13px; }
+  .brow .bl { font-family: var(--font-serif); color: var(--text); text-align: right; }
+  .brow .bl.hi { color: var(--accent); font-weight: 700; }
+  .btrack { height: 20px; background: var(--rail); border-radius: 2px; overflow: hidden; }
+  .bfill { height: 100%; background: var(--accent); transition: width 0.25s; }
+  .bfill.warn { background: #b4453a; }
+  .brow .bv { font-family: var(--font-serif); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; text-align: right; }
+
+  .vis-calc { width:100%; text-align:center; margin-top:18px; font-family: var(--font-serif); font-size: 17px; min-height: 26px; font-variant-numeric: tabular-nums; line-height: 1.9; }
+  .vis-calc .res { color: var(--accent); font-weight: 700; font-size: 20px; }
+  .vis-calc .mut { color: var(--text-muted); }
+  .vis-note { text-align:center; font-size:12.5px; color:var(--text-muted); font-style:italic; margin-top:14px; max-width: 480px; margin-left:auto; margin-right:auto; }
+  .boltz { border: 1.5px solid var(--accent); background: var(--accent-faint); border-radius: 6px; padding: 11px 16px; margin: 14px auto 0; max-width: 500px; font-family: var(--font-sans); font-size: 12.5px; color: var(--text); line-height: 1.6; font-style: normal; text-align: center; }
+  .boltz b { color: var(--accent); }
+  .boltz .hd { display:block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.5; }
+  .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btns .primary:hover:not(:disabled) { background: #4d2f87; color: white; }
+</style>
 </head>
 <body>
 
-<div class="stage">
-
+<div class="stage wide">
   <h1>Why Divide by √dₖ?</h1>
-  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD · THE VARIANCE ARGUMENT</div>
+  <div class="subtitle">MRC LECTURE 2 · WHITEBOARD + PICTURE · THE VARIANCE ARGUMENT, MADE CONCRETE</div>
 
-  <div class="claim">
-    <span class="label">Claim to prove</span>
-    <div class="eq">$$\text{Var}\!\left(\frac{\mathbf{q}\cdot\mathbf{k}}{\sqrt{d_k}}\right) = 1 \quad\text{for any } d_k$$</div>
-  </div>
+  <div class="panels">
+    <div class="algebra">
+      <div class="claim">
+        <span class="lab">Claim to prove</span>
+        <div class="eq">$$\text{Var}\!\left(\frac{\mathbf{q}\cdot\mathbf{k}}{\sqrt{d_k}}\right) = 1 \;\text{ for any } d_k$$</div>
+      </div>
+      <div class="astep" data-s="1"><div class="lab">Step 1 · the mean is zero</div><div class="eq">$\mathbb{E}[\mathbf{q}\cdot\mathbf{k}] = \sum_l \mathbb{E}[q_l]\,\mathbb{E}[k_l] = 0$</div><div class="note">a random query and key are, on average, orthogonal</div></div>
+      <div class="astep" data-s="2"><div class="lab">Step 2 · the variance equals dₖ</div><div class="eq">$\text{Var}(\mathbf{q}\cdot\mathbf{k}) = \sum_l 1 = d_k \;\Rightarrow\; \text{std}=\sqrt{d_k}$</div><div class="note">$d_k$ independent ±1 terms — a random walk; spread grows as $\sqrt{d_k}$</div></div>
+      <div class="astep" data-s="3"><div class="lab">Step 3 · so larger dₖ saturates softmax</div><div class="eq">$\text{std}=\sqrt{d_k}\uparrow \;\Rightarrow\; \text{scores}\uparrow \;\Rightarrow\; \text{softmax}\to\text{one-hot}$</div><div class="note">the same Step-2 growth, fed into softmax: bigger dₖ → flatter gradient</div></div>
+      <div class="astep" data-s="4"><div class="lab">Step 4 · scaling restores unit variance &nbsp;∎</div><div class="eq">$\text{Var}\!\left(\dfrac{\mathbf{q}\cdot\mathbf{k}}{\sqrt{d_k}}\right) = \dfrac{d_k}{d_k} = 1$</div><div class="note">scores back to order ±1, softmax stays graded, gradients stay alive</div></div>
+    </div>
 
-  <div class="setup">
-    Take a query $\mathbf{q}$ and key $\mathbf{k}$ in $\mathbb{R}^{d_k}$ whose components are independent, mean-0, variance-1 random numbers. We will show the raw dot product has standard deviation $\sqrt{d_k}$ — which makes softmax saturate as $d_k$ grows — and that dividing by $\sqrt{d_k}$ fixes it exactly.
-  </div>
-
-  <div class="step" data-step="1">
-    <div class="step-label">Step 1 · The mean of the dot product is zero</div>
-    <div class="step-eq">
-      $$\mathbb{E}[\mathbf{q}\cdot\mathbf{k}] = \sum_{l=1}^{d_k}\mathbb{E}[q_l]\,\mathbb{E}[k_l] = \sum_{l=1}^{d_k} 0\cdot 0 = 0$$
+    <div class="visarea">
+      <div class="vis" id="vis"></div>
+      <div class="vis-calc" id="viscalc"></div>
+      <div class="vis-note" id="visnote"></div>
     </div>
   </div>
-
-  <div class="step" data-step="2">
-    <div class="step-label">Step 2 · The variance equals dₖ</div>
-    <div class="step-eq">
-      $$\text{Var}(\mathbf{q}\cdot\mathbf{k}) = \sum_{l=1}^{d_k}\text{Var}(q_l k_l) = \sum_{l=1}^{d_k}\mathbb{E}[q_l^2]\,\mathbb{E}[k_l^2] = \sum_{l=1}^{d_k} 1\cdot 1 = d_k$$
-      $$\Rightarrow\quad \text{std} = \sqrt{d_k}$$
-    </div>
-  </div>
-
-  <div class="step" data-step="3">
-    <div class="step-label">Step 3 · The saturation problem</div>
-    <div class="step-eq">
-      $$d_k = 512 \;\Rightarrow\; \text{typical scores} \approx \pm 23,\quad \text{gaps} \sim 46$$
-      $$\frac{P_A}{P_B} = \exp(46) \approx 10^{20} \;\Rightarrow\; \text{softmax} \to \text{one-hot},\ \text{gradients} \to 0$$
-    </div>
-  </div>
-
-  <div class="step qed" data-step="4">
-    <div class="step-label">Step 4 · Scaling restores unit variance &nbsp;∎</div>
-    <div class="step-eq">
-      $$\text{Var}\!\left(\frac{\mathbf{q}\cdot\mathbf{k}}{\sqrt{d_k}}\right) = \frac{1}{d_k}\,\text{Var}(\mathbf{q}\cdot\mathbf{k}) = \frac{d_k}{d_k} = 1$$
-    </div>
-  </div>
-
 </div>
 
 <div class="control-bar">
-  <div class="stage-inner">
+  <div class="inner">
     <div class="step-caption" id="caption"></div>
     <div class="step-counter" id="counter"></div>
-    <div class="step-buttons">
-      <button id="prevBtn">← Previous</button>
+    <div class="btns">
+      <button id="prevBtn">← Back</button>
       <button id="nextBtn" class="primary">Next →</button>
       <button id="resetBtn">Reset</button>
     </div>
@@ -71,15 +102,110 @@
 </div>
 
 <script>
-  window.STEP_CAPTIONS = [
-    "Press <strong>Next</strong> or → to begin.",
-    "<strong>Step 1.</strong> The dot product is a sum of products $q_l k_l$. Since $q_l$ and $k_l$ are independent with mean 0, each term has expectation $0\\cdot 0 = 0$. On average a random query and key are <em>orthogonal</em> — neither compatible nor incompatible.",
-    "<strong>Step 2.</strong> Variance of a sum of independent terms is the sum of variances. Each $\\text{Var}(q_l k_l) = \\mathbb{E}[q_l^2]\\mathbb{E}[k_l^2] = 1$. Summing over $d_k$ components gives variance $d_k$ — so the standard deviation <strong>grows as $\\sqrt{d_k}$</strong>.",
-    "<strong>Step 3.</strong> The problem. At $d_k = 512$ typical scores are $\\pm 23$, so gaps between candidates are $\\sim 46$. Exponentiate that and one candidate gets a $10^{20}$ advantage — softmax collapses to one-hot and the gradient vanishes. The model can't learn.",
-    "<strong>Step 4.</strong> Divide by $\\sqrt{d_k}$. Variance scales by $1/d_k$, giving exactly 1 — for <em>any</em> dimension. Scores stay order $\\pm 1$, softmax stays graded, gradients stay alive. $\\sqrt{d_k}$ <strong>is the temperature</strong> $\\tau = k_BT$. ∎"
+  // a small d_k = 4 sample with ±1 components (mean 0, variance 1)
+  const qv=[1,-1,1,1], kv=[1,-1,-1,1];
+  const prod=qv.map((q,i)=>q*kv[i]);            // [1,1,-1,1]
+  const dotv=prod.reduce((a,b)=>a+b,0);          // 2  (= √4)
+  const DKS=[4,64,512];
+  const SQ512=Math.sqrt(512);
+  const ZN=[1,0,-1];                             // one fixed query–key pattern, in units of std
+  const softmax=(a,t=1)=>{const m=Math.max(...a);const e=a.map(v=>Math.exp((v-m)/t));const Z=e.reduce((x,y)=>x+y,0);return e.map(v=>v/Z);};
+  // step 3: the SAME pattern, raw scores = pattern × std(√dₖ); softmax saturates as dₖ grows
+  const satCases=DKS.map(d=>{const raw=ZN.map(z=>z*Math.sqrt(d)); return {d, raw, w:softmax(raw)};});
+  // step 4: divide raw by √dₖ → back to the pattern itself for ANY dₖ → stays graded
+  const wSc=softmax(ZN);
+  const f2=n=>n.toFixed(2);
+  const sgn=n=>(n<0?'−':'')+Math.abs(n);
+
+  function rowvec(vals, cls){ // single-row mat, optional per-cell pos/neg tint
+    let h=`<div class="mat" style="grid-template-columns:repeat(${vals.length},44px);">`;
+    vals.forEach(v=>{ const c = cls ? (v>0?'pos':v<0?'neg':'') : ''; h+=`<div class="cell ${c}">${sgn(v)}</div>`; });
+    return h+`</div>`;
+  }
+  const block=(t,m)=>`<div class="block"><div class="block-title">${t}</div>${m}</div>`;
+  function hbars(rows){ // rows: {label, frac, val, hi, warn}
+    return `<div class="barchart">`+rows.map(r=>
+      `<div class="brow"><div class="bl ${r.hi?'hi':''}">${r.label}</div><div class="btrack"><div class="bfill ${r.warn?'warn':''}" style="width:${Math.max(1,r.frac*100).toFixed(1)}%"></div></div><div class="bv">${r.val}</div></div>`
+    ).join('')+`</div>`;
+  }
+  function sgroup(dk, raw, w){ // compact softmax card for one d_k
+    const oneHot = dk>=64;
+    return `<div class="block"><div class="block-title">dₖ = ${dk}</div>`+
+      `<div style="font-family:var(--font-serif);font-size:11px;color:var(--text-muted);margin-bottom:8px;">scores [${raw.map(r=>r.toFixed(0)).join(', ')}]</div>`+
+      `<div style="width:150px;">`+
+      w.map((wt,i)=>`<div style="display:flex;align-items:center;gap:6px;margin:4px 0;"><span style="font-family:var(--font-serif);font-size:11px;width:12px;color:${i===0?'var(--accent)':'var(--text-muted)'};">${['A','B','C'][i]}</span><div style="flex:1;height:15px;background:var(--rail);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${Math.max(0,wt*100).toFixed(0)}%;background:${oneHot?'#b4453a':'var(--accent)'};"></div></div><span style="font-family:var(--font-serif);font-size:10px;width:34px;text-align:right;color:var(--text-muted);">${(wt*100)>=0.5?(wt*100).toFixed(0)+'%':'≈0'}</span></div>`).join('')+
+      `</div><div style="font-family:var(--font-sans);font-size:10px;font-style:italic;margin-top:6px;color:${oneHot?'#b4453a':'var(--text-muted)'};">${oneHot?'one-hot':'graded'}</div></div>`;
+  }
+
+  const vis=document.getElementById('vis'), viscalc=document.getElementById('viscalc'), visnote=document.getElementById('visnote');
+
+  function renderVis(stage){
+    if(stage==='setup'){
+      vis.innerHTML = block('q · query (dₖ = 4)', rowvec(qv,true)) + block('k · key', rowvec(kv,true));
+      viscalc.innerHTML='';
+      visnote.innerHTML='A toy query and key with <b>4 components</b>, each an independent random number with <b>mean 0, variance 1</b> (here ±1). Real models have dₖ = 64 or more. What is the size of their dot product?';
+    } else if(stage==='mean'){
+      vis.innerHTML = block('q', rowvec(qv,true)) + `<div class="op">·</div>` + block('k', rowvec(kv,true));
+      viscalc.innerHTML=`q·k = ${qv.map((q,i)=>`(${sgn(q)})(${sgn(kv[i])})`).join(' + ')} = ${prod.map(sgn).join(' + ')} = <span class="res">${dotv}</span>`;
+      visnote.innerHTML='Each term is ±1, equally likely either sign — so across random pairs the terms cancel and the <b>average dot product is 0</b>. A random query and key are, on average, orthogonal.';
+    } else if(stage==='variance'){
+      vis.innerHTML = hbars(DKS.map(d=>({label:`dₖ = ${d}`, frac:Math.sqrt(d)/SQ512, val:'±'+(d===512?'22.6':String(Math.sqrt(d))), hi:d===512})));
+      viscalc.innerHTML=`<span class="mut">typical |q·k| = std =</span> √dₖ : &nbsp; √4 = <span class="res">2</span>, &nbsp; √64 = <span class="res">8</span>, &nbsp; √512 ≈ <span class="res">22.6</span>`;
+      visnote.innerHTML='Mean 0, but the <b>spread</b> grows. Summing dₖ independent ±1 terms is a random walk — after dₖ steps the typical distance from 0 is <b>√dₖ</b>. More dimensions ⇒ bigger raw scores.';
+    } else if(stage==='saturate'){
+      vis.innerHTML = satCases.map(c=>sgroup(c.d, c.raw, c.w)).join('');
+      viscalc.innerHTML=`<span class="mut">same query–key pattern, raw scores = pattern × √dₖ → softmax. As dₖ grows, the top weight →</span> <span class="res">100%</span>`;
+      visnote.innerHTML=`The very $\\sqrt{d_k}$ growth from Step 2 is what breaks softmax. The <b>identical</b> pattern is graded at $d_k=4$, but by $d_k=64$ (a typical head size) the scores are big enough that softmax <b>collapses to one-hot</b> — one weight ≈ 1, the rest ≈ 0, and the gradient vanishes.`;
+    } else { // scale
+      vis.innerHTML = hbars([0,1,2].map(i=>({label:`cand. ${['A','B','C'][i]} · ${f2(ZN[i])}`, frac:wSc[i], val:(wSc[i]*100).toFixed(0)+'%', hi:i===0})));
+      viscalc.innerHTML=`<span class="mut">÷√dₖ undoes the growth → scores back to [${ZN.map(f2).join(', ')}] for <b>any</b> dₖ → softmax →</span> <span class="res">[${wSc.map(f2).join(', ')}]</span>`;
+      visnote.innerHTML=
+        `<div class="boltz"><span class="hd">√dₖ is the temperature</span>`+
+        `Dividing by $\\sqrt{d_k}$ exactly cancels the $\\sqrt{d_k}$ growth from Step 2 — scores return to order $\\pm1$ for <b>every</b> dimension, so softmax stays <b>graded</b> (the same weights whether $d_k=4$ or $512$). This $\\sqrt{d_k}$ is the temperature $\\tau = k_BT$ in the Boltzmann distribution — the same knob you dragged on the live demo.</div>`;
+    }
+  }
+
+  const STEPS=[
+    {reveal:0, stage:'setup', caption:`A query and key are just lists of numbers. How big is their dot product, and why does it matter? On the right, a 4-component toy example. Press <strong>Next</strong>.`},
+    {reveal:1, stage:'mean', caption:`<strong>Step 1.</strong> The dot product is a sum of products $q_l k_l$. Each $q_l,k_l$ is independent with mean 0, so each term averages to 0 — the <strong>mean dot product is 0</strong>. This sample happens to be ${dotv}; the average over random pairs is 0.`},
+    {reveal:2, stage:'variance', caption:`<strong>Step 2.</strong> Variance of a sum of independent terms adds: each term has variance 1, and there are $d_k$ of them, so $\\text{Var}=d_k$ and <strong>std $=\\sqrt{d_k}$</strong>. It is a random walk — more dimensions, wider spread.`},
+    {reveal:3, stage:'saturate', caption:`<strong>Step 3 — the problem, as a function of dₖ.</strong> Take Step 2's $\\sqrt{d_k}$ growth into softmax: the <em>same</em> query–key pattern is graded at $d_k=4$, but already <strong>one-hot by $d_k=64$</strong>. Bigger dimension ⇒ bigger scores ⇒ dead gradient.`},
+    {reveal:4, stage:'scale', caption:`<strong>Step 4.</strong> Divide by $\\sqrt{d_k}$: it cancels exactly the growth from Step 2, so variance $=1$ and the weights are <strong>graded for any dₖ</strong>. <strong>√dₖ is the temperature.</strong> ∎`},
   ];
+
+  let step=0;
+  const caption=document.getElementById('caption'), counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+
+  function show(n){
+    step=Math.max(0,Math.min(STEPS.length-1,n));
+    const st=STEPS[step];
+    document.querySelectorAll('.astep').forEach(el=>{
+      const s=parseInt(el.dataset.s);
+      el.classList.toggle('on', s<=st.reveal);
+      el.classList.toggle('cur', s===st.reveal);
+    });
+    renderVis(st.stage);
+    caption.innerHTML=st.caption;
+    counter.textContent=`STEP ${step} / ${STEPS.length-1}`;
+    prevBtn.disabled=step===0; nextBtn.disabled=step===STEPS.length-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.querySelector('.algebra'),caption,document.querySelector('.visarea')]);
+  }
+  function next(){ if(step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if(step>0) show(step-1); else esc('prev'); }
+  function esc(d){ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+
+  nextBtn.addEventListener('click',next);
+  prevBtn.addEventListener('click',prev);
+  document.getElementById('resetBtn').addEventListener('click',()=>show(0));
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){ e.preventDefault(); prev(); }
+  });
+
+  show(0);
 </script>
-<script src="../../mrc_whiteboard.js"></script>
 
 </body>
 </html>

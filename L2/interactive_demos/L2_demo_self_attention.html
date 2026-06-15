@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Self-Attention</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 740px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .mwrap { display: flex; justify-content: center; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .axisL { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); align-self: center; }
+  .axisT { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 4px; }
+  .grid { display: inline-grid; gap: 2px; }
+  .lbl { font-family: var(--font-serif); font-size: 13px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .lbl.row { justify-content:flex-end; padding-right:6px; cursor:pointer; }
+  .lbl.row.sel { color: var(--accent); font-weight: 700; }
+  .cell { width: 40px; height: 32px; border-radius: 2px; display:flex; align-items:center; justify-content:center; font-family: var(--font-sans); font-size: 9px; font-variant-numeric: tabular-nums; cursor:pointer; }
+  .rowhi { outline: 2px solid var(--accent); outline-offset:-2px; }
+
+  .wk { border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; padding:9px 14px; background:#fbfaff; max-width:640px; margin:14px auto 0; font-family: var(--font-serif); font-size:13px; font-variant-numeric:tabular-nums; text-align:left; }
+  .wk .wh { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:5px; }
+  .wk .wl { line-height:1.7; } .wk b { color: var(--text); font-weight:700; } .wk .res { color: var(--accent); font-weight:700; } .wk .mut { color: var(--text-muted); }
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:120px; height:9px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .readout { text-align:center; font-family: var(--font-sans); font-size: 13px; color: var(--text); margin: 12px auto 0; max-width: 700px; min-height: 18px; }
+  .readout b { color: var(--accent); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Self-Attention — A Molecule Reads Itself</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · Q, K, V ALL FROM ONE SEQUENCE</div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Antibody loop · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="mwrap">
+    <div class="axisL">query: residue i ↓</div>
+    <div>
+      <div class="axisT">key: residue j → &nbsp;(same sequence)</div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+  <div class="legend"><span>0 · ignores</span><div class="legbar"></div><span>1 · attends</span><span style="margin-left:4px;font-style:italic;">attention weight</span></div>
+
+  <div class="wk" id="wk"></div>
+  <div class="readout" id="readout"></div>
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=x=>(x<0?'−':'')+Math.abs(x).toFixed(2);
+  const WQ=[[0.8,0.3],[-0.2,0.9]], WK=[[0.9,-0.1],[0.2,0.8]], SQ=0.7;  // sharper softmax (illustrative)
+  const EX = {
+    protein: {
+      who:'antibody loop',
+      recog:'<b>Self-attention:</b> the query, key, and value all come from the <b>same molecule</b>. Each residue reads its own neighbours to build a context-aware embedding — before the antibody ever meets an antigen. Watch the two <b>cysteines</b> find each other across the loop.',
+      tokens:['Cys','Arg','Trp','Gly','Asp','Cys'], short:['C','R','W','G','D','C'],
+      emb:{ C:[0.9,0.4], R:[-0.7,0.5], W:[0.1,-0.95], G:[0.0,0.1], D:[-0.6,-0.6] },
+      note:'Identical residues attend to each other: the <b>two cysteines</b> (positions 1 and 6) find one another across the loop — the model registers the <b>disulfide pair</b> that closes it.'
+    },
+    sentence: {
+      who:'sentence',
+      recog:'<b>Self-attention:</b> every word reads the <b>same sentence</b> it lives in. A word\'s meaning becomes a blend of the words it attends to — context, computed.',
+      tokens:['The','antibody','that','binds','tightly'], short:['The','antibody','that','binds','tightly'],
+      emb:{ 'The':[-0.3,0.8], 'antibody':[0.9,0.3], 'that':[-0.5,0.2], 'binds':[0.85,0.35], 'tightly':[0.6,-0.4] },
+      note:'“binds” attends to “antibody” — its subject — and the two acquire a shared, context-aware representation.'
+    }
+  };
+  let exKey='protein', sel=0;
+  const mv=(M,x)=>[M[0][0]*x[0]+M[0][1]*x[1], M[1][0]*x[0]+M[1][1]*x[1]];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1];
+  const embOf=(ex,i)=>ex.emb[ex.short[i]];
+  function roww(ex,i){ const q=mv(WQ,embOf(ex,i)); const s=ex.tokens.map((_,j)=>dot(q,mv(WK,embOf(ex,j)))); const m=Math.max(...s); const e=s.map(v=>Math.exp((v-m)/SQ)); const Z=e.reduce((a,b)=>a+b,0); return e.map(v=>v/Z); }
+
+  function render(){
+    const ex=EX[exKey], n=ex.tokens.length;
+    document.getElementById('recog').innerHTML=ex.recog;
+    const M=ex.tokens.map((_,i)=>roww(ex,i));
+    const grid=document.getElementById('grid');
+    grid.style.gridTemplateColumns=`64px repeat(${n}, 40px)`;
+    let h=`<div class="lbl"></div>`+ex.short.map(t=>`<div class="lbl">${t}</div>`).join('');
+    for(let i=0;i<n;i++){
+      h+=`<div class="lbl row ${i===sel?'sel':''}" data-row="${i}">${ex.short[i]}</div>`;
+      const rmax=Math.max(...M[i]);
+      for(let j=0;j<n;j++){ const v=M[i][j], t=v/rmax; h+=`<div class="cell ${i===sel?'rowhi':''}" data-row="${i}" style="background:${heat(t)};color:${t>0.55?'#fff':'var(--text)'}">${v>=0.12?(v*100).toFixed(0):''}</div>`; }
+    }
+    grid.innerHTML=h;
+    grid.querySelectorAll('[data-row]').forEach(el=>el.addEventListener('click',()=>{sel=+el.dataset.row;render();}));
+    const w=M[sel], ranked=w.map((v,j)=>[j,v]).sort((a,b)=>b[1]-a[1]);
+    const top=ranked[0], other=ranked.find(([j])=>j!==sel);
+    const tag=(j)=>`<b>${ex.tokens[j]} (pos ${j+1})</b>`;
+    const msg = top[0]===sel
+      ? `${tag(sel)} attends mostly to itself, and among the rest most to ${tag(other[0])} (${(other[1]*100).toFixed(0)}%).`
+      : `${tag(sel)} attends most to ${tag(top[0])} (${(top[1]*100).toFixed(0)}%).`;
+    // worked math — where the matrix row comes from: embedding → q,k → raw score → softmax weights
+    const xi=embOf(ex,sel), qi=mv(WQ,xi), kt=mv(WK,embOf(ex,top[0]));
+    const sc=ex.tokens.map((_,j)=>dot(qi,mv(WK,embOf(ex,j))));
+    document.getElementById('wk').innerHTML=
+      `<div class="wh">where this matrix row comes from — ${ex.tokens[sel]} (pos ${sel+1}) reads the sequence</div>`+
+      `<div class="wl"><b>①</b> the residue's embedding x = [${f2(xi[0])}, ${f2(xi[1])}] is projected two ways: &nbsp;query q = W<sub>Q</sub>x = [${f2(qi[0])}, ${f2(qi[1])}], &nbsp;key kⱼ = W<sub>K</sub>xⱼ <span class="mut">(every residue j)</span></div>`+
+      `<div class="wl"><b>②</b> raw score sⱼ = q·kⱼ — e.g. to ${ex.tokens[top[0]]} (k=[${f2(kt[0])}, ${f2(kt[1])}]): (${f2(qi[0])})(${f2(kt[0])}) + (${f2(qi[1])})(${f2(kt[1])}) = <b>${f2(sc[top[0]])}</b> <span class="mut">— all scores [${sc.map(f2).join(', ')}]</span></div>`+
+      `<div class="wl"><b>③</b> softmax(score ÷ τ), τ=${SQ} → <b>the percentages in the matrix</b> [${w.map(v=>(v*100).toFixed(0)+'%').join(', ')}] → most on <span class="res">${ex.tokens[top[0]]}</span></div>`;
+    document.getElementById('readout').innerHTML=`${msg} ${ex.note}`;
+    document.getElementById('bridge').innerHTML=`The matrix is <strong>square</strong> — same sequence on both axes. Self-attention turns each residue's embedding into a blend of its context, giving every molecule a representation that already “knows” its own internal relationships. <strong>Next: what happens when the query comes from one molecule and the keys from another?</strong>`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('readout')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;sel=0;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -2,211 +2,177 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MRC L3 — The InfoNCE Matrix, Live</title>
+<title>MRC L3 — InfoNCE, From Cosines</title>
 <script>
   MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <link rel="stylesheet" href="../../mrc_styles.css">
 <style>
-  /* Interactive InfoNCE: an N×N similarity matrix; slide 'training' to pull
-     correct pairs (the diagonal) together and watch the loss fall. */
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 10px; max-width: 820px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 10px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
 
-  .main-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    align-items: start;
-    margin: 14px 0 20px 0;
-  }
-  .panel-label {
-    font-family: var(--font-sans); font-size: 11px; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--text-muted); font-weight: 500; margin-bottom: 14px;
-  }
+  .cols { display:flex; gap:26px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+  .grid { display:inline-grid; gap:3px; }
+  .ml { font-family: var(--font-serif); font-size:12px; color: var(--text-muted); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1; }
+  .ml.seq { font-family: var(--font-serif); font-size:11px; color: var(--text); cursor:pointer; padding:0 4px; }
+  .ml.seq.anchor { color: var(--accent); font-weight:700; }
+  .ml .sub { font-family: var(--font-sans); font-size:8px; color: var(--text-muted); }
+  .corner { font-family: var(--font-sans); font-size:9px; color: var(--text-muted); display:flex; align-items:flex-end; justify-content:center; }
+  .cell { width:50px; height:38px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:13px; font-variant-numeric:tabular-nums; }
+  .cell.diag { outline:2px solid var(--accent); outline-offset:-2px; }
+  .cell.arow { box-shadow: inset 0 0 0 2px #111; }
 
-  /* matrix heatmap */
-  .matrix-wrap { display: inline-block; }
-  .mx-grid { display: grid; gap: 4px; }
-  .mx-cell {
-    width: 64px; height: 46px; border-radius: 3px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-serif); font-size: 15px; font-variant-numeric: tabular-nums;
-    color: var(--text-muted);
-  }
-  .mx-cell.diag { outline: 2.5px solid var(--accent); outline-offset: -2.5px; }
-  .mx-corner, .mx-collabel, .mx-rowlabel {
-    font-family: var(--font-sans); font-size: 11px; color: var(--text-muted);
-    display: flex; align-items: center; justify-content: center; letter-spacing: 0.4px;
-  }
-  .mx-note { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 12px; }
-  .mx-note .pos { color: var(--accent); font-weight: 600; }
+  .panel { max-width:360px; }
+  .panel .ph { font-family: var(--font-sans); font-size:11px; letter-spacing:0.5px; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:6px; }
+  .rowcos { font-family: var(--font-serif); font-size:12px; color: var(--text-muted); margin-bottom:8px; font-variant-numeric:tabular-nums; }
+  .pbar { display:grid; grid-template-columns:74px 1fr 46px; gap:8px; align-items:center; padding:2px 0; font-size:12px; }
+  .pbar .pt { font-family: var(--font-serif); text-align:right; color: var(--text); }
+  .pbar .pt.match { color: var(--accent); font-weight:700; }
+  .ptrack { height:18px; background: var(--rail); border-radius:3px; overflow:hidden; }
+  .pfill { height:100%; }
+  .pbar .pv { font-family: var(--font-serif); font-variant-numeric:tabular-nums; text-align:right; }
+  .lossbox { border:1px solid var(--rule); border-radius:8px; padding:9px 14px; margin-top:10px; font-family: var(--font-serif); font-size:13px; text-align:center; line-height:1.7; }
+  .lossbox .res { color: var(--accent); font-weight:700; font-size:16px; }
 
-  /* readouts */
-  .readout-box { border: 1px solid var(--rule); border-radius: 4px; padding: 18px 22px; margin-bottom: 16px; }
-  .readout-row {
-    display: flex; justify-content: space-between; align-items: baseline;
-    padding: 8px 0; border-bottom: 1px solid var(--rail); font-size: 16px;
-  }
-  .readout-row:last-child { border-bottom: none; }
-  .readout-row .k { color: var(--text-muted); font-style: italic; }
-  .readout-row .v { font-family: var(--font-serif); font-variant-numeric: tabular-nums; font-weight: 700; }
-  .readout-row .v.big { font-size: 26px; color: var(--accent); }
-  .readout-row .v.good { color: #3a6b3a; }
+  .ctrl { display:flex; align-items:center; gap:14px; max-width:560px; margin:14px auto 0; padding:10px 16px; border:1px solid var(--rule); border-radius:6px; }
+  .ctrl label { font-family: var(--font-serif); font-style:italic; font-size:15px; min-width:190px; }
+  .ctrl input { flex:1; accent-color: var(--accent); }
+  .ctrl .v { font-family: var(--font-serif); font-weight:700; color:var(--accent); min-width:48px; text-align:right; font-variant-numeric:tabular-nums; }
 
-  .ctrl-box { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; margin-bottom: 16px; }
-  .slider-row { display: flex; align-items: center; gap: 14px; }
-  .slider-row label { font-family: var(--font-serif); font-style: italic; font-size: 16px; min-width: 130px; }
-  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
-  .slider-row .val { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--text-muted); min-width: 70px; text-align: right; }
+  .metrics { display:flex; gap:14px; justify-content:center; margin:12px auto 0; }
+  .met { border:1px solid var(--rule); border-radius:7px; padding:7px 16px; text-align:center; min-width:110px; }
+  .met .ml2 { font-family: var(--font-sans); font-size:10px; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-muted); }
+  .met .mv { font-family: var(--font-serif); font-size:22px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .met .mv.good { color:#3a6b3a; }
 
-  .bridge {
-    border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 6px;
-    font-size: 16px; line-height: 1.7; color: var(--text); text-align: center;
-  }
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin: 10px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:140px; height:10px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 14px; margin-top: 12px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
   .bridge strong { color: var(--accent); font-weight: 700; }
 </style>
 </head>
 <body>
 
 <div class="stage wide">
+  <h1>InfoNCE — Turning the Matrix Into One Loss</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · SOFTMAX A ROW OF COSINES · −log P(match)</div>
 
-  <h1>The InfoNCE Matrix, Live</h1>
-  <div class="subtitle">MRC LECTURE 3 · INTERACTIVE DEMO</div>
-
-  <div class="formula">$$\mathcal{L}_{\text{InfoNCE}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$</div>
-
-  <div class="setup">
-    Four antibody–antigen pairs in a mini-batch. The matrix holds every similarity $S_{ij}$; the <span style="color:var(--accent);font-weight:600;">outlined diagonal</span> is the correct pairs. Drag "training" to pull each agent toward its true target and watch the loss fall as the diagonal lights up.
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="clip">CLIP · image ↔ text</button>
+    <button class="tbtn" data-ex="calm">SFM · antibody ↔ antigen</button>
   </div>
 
-  <div class="main-row">
-
+  <div class="cols">
     <div>
-      <div class="panel-label">Similarity matrix Sᵢⱼ (rows = antibodies, cols = antigens)</div>
-      <div class="matrix-wrap" id="matrix"></div>
-      <div class="mx-note">Each row is softmaxed → the probability agent <em>i</em> picks each antigen. We want all the mass on the <span class="pos">diagonal</span>.</div>
+      <div class="grid" id="grid"></div>
+      <div class="legend"><span>0</span><div class="legbar"></div><span>1</span><span style="margin-left:4px;font-style:italic;">cosine</span></div>
     </div>
-
-    <div>
-      <div class="ctrl-box">
-        <div class="slider-row">
-          <label>training</label>
-          <input type="range" id="train" min="0" max="5" step="0.1" value="0.4">
-          <div class="val" id="trainVal">early</div>
-        </div>
-      </div>
-
-      <div class="readout-box">
-        <div class="readout-row">
-          <span class="k">InfoNCE loss</span>
-          <span class="v big" id="lossVal">—</span>
-        </div>
-        <div class="readout-row">
-          <span class="k">diagonal hit-rate (R@1)</span>
-          <span class="v" id="r1Val">—</span>
-        </div>
-        <div class="readout-row">
-          <span class="k">avg. P(correct pair)</span>
-          <span class="v" id="pVal">—</span>
-        </div>
-      </div>
-
-      <div style="font-size:14px;line-height:1.6;color:var(--text-muted);font-style:italic;">
-        Minimising this loss is what training does: it reshapes the encoders so binding partners land close in the shared space.
-      </div>
+    <div class="panel">
+      <div class="ph" id="ph"></div>
+      <div class="rowcos" id="rowcos"></div>
+      <div id="pbars"></div>
+      <div class="lossbox" id="lossbox"></div>
     </div>
-
   </div>
 
-  <div class="bridge">
-    The loss is small only when every agent puts its probability on the correct target. <strong>Minimising InfoNCE = maximising the Boltzmann probability of correct selection</strong> — the embedding space becomes a binding-energy landscape.
+  <div class="ctrl">
+    <label>temperature τ</label>
+    <input type="range" id="tau" min="0.08" max="1.0" step="0.02" value="0.25">
+    <div class="v" id="tauv">0.25</div>
+  </div>
+  <div class="metrics">
+    <div class="met"><div class="ml2">total loss</div><div class="mv" id="lossT"></div></div>
+    <div class="met"><div class="ml2">picks correct (R@1)</div><div class="mv" id="r1"></div></div>
+    <div class="met"><div class="ml2">avg P(match)</div><div class="mv" id="pAvg"></div></div>
   </div>
 
+  <div class="bridge" id="bridge"></div>
 </div>
 
 <script>
-  const N = 4;
-  const LABELS = ["Ab1", "Ab2", "Ab3", "Ab4"];
-  const COLS = ["Ag1", "Ag2", "Ag3", "Ag4"];
-  // fixed baseline off-diagonal "confusion" (illustrative), diagonal grows with training
-  const BASE = [
-    [0.0, 0.6, 0.3, 0.5],
-    [0.4, 0.0, 0.7, 0.2],
-    [0.5, 0.3, 0.0, 0.6],
-    [0.2, 0.5, 0.4, 0.0],
-  ];
-  let train = 0.4;
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=n=>n.toFixed(2);
+  const dot=(a,b)=>a.reduce((s,_,i)=>s+a[i]*b[i],0);
+  const cos=(a,b)=>dot(a,b)/(Math.sqrt(dot(a,a))*Math.sqrt(dot(b,b)));
 
-  function matrixS() {
-    const S = [];
-    for (let i = 0; i < N; i++) {
-      S.push([]);
-      for (let j = 0; j < N; j++) {
-        S[i][j] = (i === j) ? train : BASE[i][j];
-      }
+  const EX = {
+    clip: { corner:'img \\ txt', rlw:48, who:'image', tgt:'caption',
+      recog:'<b>InfoNCE</b> turns the matching matrix into <b>one number to minimise</b>. For each image, take its row of cosines, scale by temperature <b>τ</b>, and <b>softmax</b> — the matched caption should win. The loss is <b>−log P(match)</b>: small only when the model bets on the right pair. Same <b>softmax = Boltzmann</b>.',
+      rows:[{l:'🐕',v:[0.9,0.2,0.1,0.1]},{l:'🐈',v:[0.5,0.8,0.1,0.2]},{l:'🚗',v:[0.1,0.1,0.9,0.2]},{l:'🍕',v:[0.1,0.2,0.2,0.9]}],
+      cols:[{l:'dog',v:[0.8,0.3,0.2,0.0]},{l:'cat',v:[0.4,0.7,0.0,0.2]},{l:'car',v:[0.2,0.0,0.8,0.3]},{l:'pizza',v:[0.0,0.3,0.1,0.8]}],
+      bridge:'<strong>Minimising InfoNCE = maximising the Boltzmann probability that each image picks its true caption.</strong> Done both ways (rows and columns) it is the <strong>symmetric</strong> loss (next).' },
+    calm: { corner:'H3 \\ epi', rlw:78, who:'antibody', tgt:'epitope',
+      recog:'<b>InfoNCE</b> on amino-acid sequences. For each antibody CDR-H3, take its row of cosines to the epitopes, scale by <b>τ</b>, and <b>softmax</b> — the true epitope should win. The loss <b>−log P(match)</b> is small only when the model bets on the real binder. The embedding space becomes a <b>binding-energy landscape</b> ($\\cos\\leftrightarrow-\\Delta G$).',
+      rows:[{l:'CARDYW',sub:'Ab1',v:[0.9,0.2,0.1,0.1]},{l:'CARGYW',sub:'Ab2',v:[0.5,0.8,0.1,0.2]},{l:'CARHPW',sub:'Ab3',v:[0.1,0.1,0.9,0.2]},{l:'CARWFW',sub:'Ab4',v:[0.1,0.2,0.2,0.9]}],
+      cols:[{l:'FNCYF',sub:'RBD',v:[0.8,0.3,0.2,0.0]},{l:'GVTQN',sub:'HA',v:[0.4,0.7,0.0,0.2]},{l:'ALDPS',sub:'PD-1',v:[0.2,0.0,0.8,0.3]},{l:'PVRWE',sub:'TNFα',v:[0.0,0.3,0.1,0.8]}],
+      bridge:'<strong>Minimising InfoNCE = maximising the Boltzmann probability that each antibody picks its true antigen.</strong> Done both ways it is the <strong>symmetric</strong> loss (next).' },
+  };
+  let exKey='clip', anchor=0, tau=0.25;
+
+  function render(){
+    const ex=EX[exKey], n=ex.rows.length;
+    document.getElementById('recog').innerHTML=ex.recog;
+    const Mx=ex.rows.map(r=>ex.cols.map(c=>cos(r.v,c.v)));
+    const lab=it=>`${it.l}${it.sub?`<span class="sub">${it.sub}</span>`:''}`;
+
+    // matrix
+    const grid=document.getElementById('grid');
+    grid.style.gridTemplateColumns=`${ex.rlw}px repeat(${n}, 50px)`;
+    let h=`<div class="corner">${ex.corner}</div>`+ex.cols.map(c=>`<div class="ml">${lab(c)}</div>`).join('');
+    for(let i=0;i<n;i++){
+      h+=`<div class="ml seq ${i===anchor?'anchor':''}" data-i="${i}">${lab(ex.rows[i])}</div>`;
+      for(let j=0;j<n;j++){ const v=Mx[i][j]; const cls=['cell']; if(i===j)cls.push('diag'); if(i===anchor)cls.push('arow');
+        h+=`<div class="${cls.join(' ')}" data-i="${i}" style="cursor:pointer;background:${heat(v)};color:${v>0.5?'#fff':'var(--text)'}">${f2(v)}</div>`; }
     }
-    return S;
+    grid.innerHTML=h;
+    grid.querySelectorAll('.ml.seq, .cell').forEach(el=>el.addEventListener('click',()=>{anchor=+el.dataset.i;render();}));
+
+    // anchor row → softmax(cos/τ)
+    const row=Mx[anchor];
+    const logits=row.map(c=>c/tau), m=Math.max(...logits), e=logits.map(x=>Math.exp(x-m)), Z=e.reduce((a,b)=>a+b,0), P=e.map(x=>x/Z);
+    const pm=P[anchor], loss=-Math.log(pm);
+    document.getElementById('ph').innerHTML=`anchor: <span style="color:var(--accent);font-weight:700">${ex.rows[anchor].l}</span> — which ${ex.tgt} does it bind?`;
+    document.getElementById('rowcos').innerHTML=`cosines: ${ex.cols.map((c,j)=>`${c.l} <b style="color:var(--text)">${f2(row[j])}</b>`).join(' · ')}`;
+    const pmax=Math.max(...P);
+    document.getElementById('pbars').innerHTML=ex.cols.map((c,j)=>{
+      const match=j===anchor;
+      return `<div class="pbar"><div class="pt ${match?'match':''}">${c.l}${match?' ★':''}</div>`+
+        `<div class="ptrack"><div class="pfill" style="width:${(P[j]*100).toFixed(0)}%;background:${heat(P[j]/pmax)}"></div></div>`+
+        `<div class="pv">${(P[j]*100).toFixed(0)}%</div></div>`;
+    }).join('');
+    document.getElementById('lossbox').innerHTML=
+      `P(match) = e<sup>${f2(row[anchor])}/${f2(tau)}</sup> / Z = <span class="res">${f2(pm)}</span><br>`+
+      `loss = −log P(match) = <span class="res">${loss.toFixed(2)}</span> ${loss<0.3?'✓ low — correct & confident':loss>1?'⚠ high — confused':''}`;
+
+    // metrics over all anchors
+    let lT=0, hits=0, pS=0;
+    for(let i=0;i<n;i++){ const lg=Mx[i].map(c=>c/tau), mm=Math.max(...lg), ee=lg.map(x=>Math.exp(x-mm)), ZZ=ee.reduce((a,b)=>a+b,0), PP=ee.map(x=>x/ZZ);
+      lT+=-Math.log(PP[i]); pS+=PP[i]; if(PP.indexOf(Math.max(...PP))===i) hits++; }
+    document.getElementById('lossT').textContent=(lT/n).toFixed(2);
+    const r1=document.getElementById('r1'); r1.textContent=`${hits}/${n}`; r1.classList.toggle('good',hits===n);
+    document.getElementById('pAvg').textContent=f2(pS/n);
+    document.getElementById('tauv').textContent=f2(tau);
+    document.getElementById('bridge').innerHTML=ex.bridge;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
   }
-  function rowSoftmax(row) {
-    const m = Math.max(...row);
-    const ex = row.map(s => Math.exp(s - m));
-    const Z = ex.reduce((a,b)=>a+b,0);
-    return ex.map(e => e / Z);
-  }
-
-  const matrixEl = document.getElementById('matrix');
-  const trainSlider = document.getElementById('train');
-
-  function render() {
-    const S = matrixS();
-    const probs = S.map(rowSoftmax);
-
-    // matrix heatmap
-    let html = `<div class="mx-grid" style="grid-template-columns: 52px repeat(${N}, 64px);">`;
-    html += `<div class="mx-corner"></div>`;
-    COLS.forEach(c => { html += `<div class="mx-collabel">${c}</div>`; });
-    for (let i = 0; i < N; i++) {
-      html += `<div class="mx-rowlabel">${LABELS[i]}</div>`;
-      for (let j = 0; j < N; j++) {
-        const s = S[i][j];
-        const a = Math.max(0, Math.min(1, s / 5)); // tint by raw similarity
-        const diag = i === j ? ' diag' : '';
-        const col = a > 0.55 ? '#fff' : 'var(--text-muted)';
-        html += `<div class="mx-cell${diag}" style="background: rgba(94,58,163,${(0.05+0.9*a).toFixed(3)}); color:${col};">${s.toFixed(1)}</div>`;
-      }
-    }
-    html += `</div>`;
-    matrixEl.innerHTML = html;
-
-    // metrics
-    let loss = 0, hits = 0, pSum = 0;
-    for (let i = 0; i < N; i++) {
-      const p = probs[i][i];
-      loss += -Math.log(p);
-      pSum += p;
-      if (probs[i].indexOf(Math.max(...probs[i])) === i) hits++;
-    }
-    loss /= N;
-    document.getElementById('lossVal').textContent = loss.toFixed(3);
-    const r1 = document.getElementById('r1Val');
-    r1.textContent = `${hits} / ${N}`;
-    r1.classList.toggle('good', hits === N);
-    document.getElementById('pVal').textContent = (pSum / N).toFixed(2);
-
-    const tv = document.getElementById('trainVal');
-    tv.textContent = train < 1 ? 'early' : train < 3 ? 'training…' : 'converged';
-  }
-
-  trainSlider.addEventListener('input', e => { train = parseFloat(e.target.value); render(); });
+  document.getElementById('tau').addEventListener('input',e=>{tau=parseFloat(e.target.value);render();});
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;anchor=0;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
   render();
 
   if (window.parent && window.parent !== window) {
     document.addEventListener('keydown', (e) => {
       if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
-      const nextKeys = ['ArrowRight','ArrowDown',' ','PageDown'];
-      const prevKeys = ['ArrowLeft','ArrowUp','PageUp'];
-      if (nextKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
-      else if (prevKeys.includes(e.key)) { e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
     });
   }
 </script>

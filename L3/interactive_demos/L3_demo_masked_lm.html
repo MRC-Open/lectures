@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — Masked Language Modeling</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 760px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 14px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .seqrow { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px; }
+  .tok { font-family: var(--font-serif); font-size: 17px; padding: 9px 14px; border: 1.5px solid var(--rule); border-radius: 6px; min-width: 30px; text-align: center; cursor: pointer; color: var(--text); transition: all 0.15s; }
+  .tok:hover { border-color: var(--accent); }
+  .tok.mask { border-style: dashed; border-color: var(--accent); border-width: 2.5px; color: var(--accent); font-weight: 700; background: var(--accent-faint); }
+  .hint { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); font-style: italic; margin-bottom: 16px; }
+
+  .panel-lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; text-align: center; margin: 8px 0 8px; }
+
+  /* bidirectional attention strip */
+  .attn { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin-bottom: 4px; }
+  .acell { width: 64px; text-align: center; }
+  .abar { height: 30px; border-radius: 3px; }
+  .atok { font-family: var(--font-serif); font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .atok.maskt { color: var(--accent); font-weight: 700; }
+  .bidir { text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 14px; }
+
+  /* prediction bars */
+  .preds { max-width: 460px; margin: 0 auto; }
+  .prow { display: grid; grid-template-columns: 96px 1fr 52px; gap: 10px; align-items: center; padding: 4px 0; }
+  .ptok { font-family: var(--font-serif); font-size: 15px; text-align: right; color: var(--text); }
+  .ptok.top { color: var(--accent); font-weight: 700; }
+  .ptrack { height: 22px; background: var(--rail); border-radius: 3px; overflow: hidden; }
+  .pfill { height: 100%; }
+  .pval { font-family: var(--font-serif); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text); text-align: right; }
+
+  .legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px auto 0; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); }
+  .legbar { width: 160px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Masked Language Modeling — Fill the Blank</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · HOW AN ENCODER IS TRAINED</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="sentence">Sentence · LLM</button>
+    <button class="tbtn" data-ex="protein">Antibody CDR-H3 · PLM</button>
+  </div>
+
+  <div class="seqrow" id="seqrow"></div>
+  <div class="hint">Click any token to hide it — the model must recover it from context.</div>
+
+  <div class="panel-lab" id="attnlab"></div>
+  <div class="attn" id="attn"></div>
+  <div class="bidir">◀ reads every token, on both sides ▶</div>
+
+  <div class="panel-lab">the model predicts the blank</div>
+  <div class="preds" id="preds"></div>
+
+  <div class="legend"><span>low</span><div class="legbar"></div><span>high</span><span style="margin-left:6px;font-style:italic;">probability / score</span></div>
+
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  // diverging blue → pale → red (colourblind-safe heatmap for matrix scores)
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+  const EX = {
+    sentence: {
+      who:'sentence',
+      recog:'A model that can <b>fill the blank</b> must understand the language. The sentence hides one of its own words and asks the model to recover it — <b>no human labels</b> (the answer was already there). To guess well, the model reads <b>both sides</b> of the blank.',
+      seq:['The','antibody','binds','the','antigen'],
+      mask:2,
+      preds:{ 0:[['The',0.88],['An',0.07],['This',0.05]],
+              1:[['antibody',0.62],['protein',0.18],['enzyme',0.11],['drug',0.09]],
+              2:[['binds',0.71],['blocks',0.14],['targets',0.09],['recognizes',0.06]],
+              3:[['the',0.90],['its',0.06],['a',0.04]],
+              4:[['antigen',0.50],['virus',0.22],['target',0.18],['receptor',0.10]] },
+      note:'It guesses <b>“binds”</b> from the surrounding words — subject “antibody”, object “antigen”. Do this over billions of sentences and the encoder learns grammar and meaning.'
+    },
+    protein: {
+      who:'CDR-H3',
+      recog:'The <b>same idea</b> on an antibody’s <b>CDR-H3</b> — the loop that decides what it binds. Hide one residue and recover it from the rest. To guess well, the model must learn the <b>CDR grammar</b>: the conserved <b>C-A-R</b> start, the <b>W</b> end, and the variable middle that makes each antibody unique.',
+      seq:['C','A','R','D','Y','W'],
+      mask:2,
+      preds:{ 0:[['C',0.95],['Y',0.02],['F',0.02],['S',0.01]],
+              1:[['A',0.70],['V',0.12],['T',0.10],['G',0.08]],
+              2:[['R',0.78],['K',0.12],['T',0.06],['G',0.04]],
+              3:[['D',0.30],['G',0.22],['E',0.18],['S',0.16],['Y',0.14]],
+              4:[['Y',0.32],['F',0.24],['G',0.18],['D',0.14],['S',0.12]],
+              5:[['W',0.88],['F',0.06],['Y',0.04],['L',0.02]] },
+      note:'Masking the <b>R</b> in <b>C-A-R</b>, the model is confident — it has learned that CDR-H3 begins with the conserved <b>C-A-R</b> motif and ends in <b>W</b>. The variable middle (try clicking it) is where antibodies differ. This is how <b>AntiBERTy</b> is trained.'
+    }
+  };
+  let exKey='sentence', mask=EX.sentence.mask;
+
+  function attnWeights(ex){ // bidirectional: every token, nearer = stronger (illustrative)
+    const w=ex.seq.map((_,j)=> j===mask ? 0 : 1/(1+Math.abs(mask-j)));
+    const Z=w.reduce((a,b)=>a+b,0); return w.map(x=>x/Z);
+  }
+
+  function render(){
+    const ex=EX[exKey], n=ex.seq.length;
+    document.getElementById('recog').innerHTML=ex.recog;
+    document.getElementById('attnlab').textContent=`the blank reads the whole ${ex.who} (both directions)`;
+
+    document.getElementById('seqrow').innerHTML=ex.seq.map((t,i)=>
+      `<div class="tok ${i===mask?'mask':''}" data-i="${i}">${i===mask?'▢':t}</div>`).join('');
+    document.querySelectorAll('.tok').forEach(el=>el.addEventListener('click',()=>{mask=+el.dataset.i;render();}));
+
+    const w=attnWeights(ex), wmax=Math.max(...w);
+    document.getElementById('attn').innerHTML=ex.seq.map((t,j)=>{
+      const isM=j===mask;
+      const bar = isM ? `<div class="abar" style="background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px)"></div>`
+                      : `<div class="abar" style="background:${heat(w[j]/wmax)}"></div>`;
+      return `<div class="acell">${bar}<div class="atok ${isM?'maskt':''}">${isM?'▢':t}</div></div>`;
+    }).join('');
+
+    const preds=ex.preds[mask], pmax=Math.max(...preds.map(p=>p[1]));
+    document.getElementById('preds').innerHTML=preds.map((p,idx)=>
+      `<div class="prow"><div class="ptok ${idx===0?'top':''}">${p[0]}</div>`+
+      `<div class="ptrack"><div class="pfill" style="width:${(p[1]*100).toFixed(0)}%;background:${heat(p[1]/pmax)}"></div></div>`+
+      `<div class="pval">${(p[1]*100).toFixed(0)}%</div></div>`).join('');
+
+    document.getElementById('bridge').innerHTML=
+      `Because the blank reads <strong>both sides</strong>, the recovered vector is <strong>bidirectional and contextual</strong> — perfect for <em>representing</em> a molecule. Masked modeling is exactly how the <strong>encoders</strong> are pretrained: BERT for text, <strong>ESM-2 / AntiBERTy</strong> for proteins. ${ex.note}`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;mask=EX[exKey].mask;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

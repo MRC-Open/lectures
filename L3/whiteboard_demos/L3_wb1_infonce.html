@@ -2,82 +2,214 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MRC L3 Whiteboard — InfoNCE from Boltzmann</title>
+<title>MRC L3 Whiteboard — Deriving InfoNCE</title>
 <script>
   MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 <link rel="stylesheet" href="../../mrc_styles.css">
-<link rel="stylesheet" href="../../mrc_whiteboard.css">
+<style>
+  body { padding-bottom: 116px; }
+  .panels { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 36px; align-items: start; margin-top: 14px; }
+  .claim { border-left: 3px solid var(--accent); background: white; padding: 12px 20px; margin-bottom: 16px; }
+  .claim .lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 500; display:block; margin-bottom: 4px; }
+  .claim .eq { font-size: 17px; }
+  .astep { border: 1px solid var(--rule); border-radius: 4px; padding: 11px 15px; margin-bottom: 9px; opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.35s; }
+  .astep.on { opacity: 1; transform: none; }
+  .astep.cur { border-color: var(--accent); background: var(--accent-faint); }
+  .astep .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 5px; }
+  .astep .eq { font-size: 15px; }
+  .astep .note { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 5px; }
+
+  .visarea { min-height: 330px; }
+  .vlab { font-family: var(--font-sans); font-size: 11px; letter-spacing:0.5px; text-transform:uppercase; color: var(--text-muted); font-weight:600; text-align:center; margin-bottom:8px; }
+  .vis { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .block { text-align:center; }
+  .bt { font-family: var(--font-sans); font-size:10px; color: var(--accent); font-weight:600; margin-bottom:5px; }
+  .mat { display:inline-grid; gap:2px; }
+  .ml { font-family: var(--font-serif); font-size:11px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .mc { width:42px; height:26px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:11px; color: var(--text); font-variant-numeric:tabular-nums; }
+  .mc.hl, .mc.rowhl { outline:2px solid #111; outline-offset:-2px; }
+  .mc.diag { outline:2px solid var(--accent); outline-offset:-2px; }
+  .op { font-family: var(--font-serif); font-size:20px; color: var(--text-muted); }
+
+  .bars { max-width:320px; margin:0 auto; }
+  .br { display:grid; grid-template-columns:64px 1fr 42px; gap:8px; align-items:center; padding:2px 0; font-size:12px; }
+  .br .bt2 { font-family: var(--font-serif); text-align:right; } .br .bt2.m { color:var(--accent); font-weight:700; }
+  .btrack { height:16px; background: var(--rail); border-radius:2px; overflow:hidden; } .bfill { height:100%; transition: width 0.5s ease-out; }
+  .br .bv { font-family: var(--font-serif); font-variant-numeric:tabular-nums; text-align:right; }
+  .viscalc { width:100%; max-width:600px; margin:12px auto 0; font-family: var(--font-serif); font-size:13.5px; min-height:24px; font-variant-numeric:tabular-nums; text-align:left; }
+  .viscalc .res { color: var(--accent); font-weight:700; font-size:16px; } .viscalc .mut { color: var(--text-muted); }
+  .wk { border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; padding:9px 14px; background:#fbfaff; }
+  .wk .wh { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:5px; }
+  .wk .wl { line-height:1.75; } .wk b { color: var(--text); font-weight:700; }
+  .visnote { text-align:center; font-size:12px; color:var(--text-muted); font-style:italic; margin-top:10px; max-width:440px; margin-left:auto; margin-right:auto; }
+  .conv { border:1.5px solid var(--accent); background: var(--accent-faint); border-radius:8px; padding:11px 16px; max-width:500px; margin:12px auto 0; font-family: var(--font-sans); font-size:12.5px; line-height:1.6; text-align:center; color:var(--text); opacity:0; transform:translateY(12px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+  .conv.show { opacity:1; transform:none; }
+  .conv .hd { display:block; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:4px; }
+  .conv b { color: var(--accent); }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.5; } .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+</style>
 </head>
 <body>
 
-<div class="stage">
+<div class="stage wide">
+  <h1>Deriving InfoNCE — From Fingerprints to a Loss</h1>
+  <div class="subtitle">MRC LECTURE 3 · WHITEBOARD + MATRIX · IT IS THE BOLTZMANN SELECTION PROBABILITY</div>
 
-  <h1>Deriving the InfoNCE Loss</h1>
-  <div class="subtitle">MRC LECTURE 3 · WHITEBOARD · FROM THE BOLTZMANN SELECTION PROBABILITY</div>
-
-  <div class="claim">
-    <span class="label">Goal — derive the training objective</span>
-    <div class="eq">$$\mathcal{L}_{\text{InfoNCE}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$</div>
-  </div>
-
-  <div class="setup">
-    An agent (e.g. an antibody) must select its cognate target from a pool of competitors — exactly clonal selection. We do not invent a loss; we write the Boltzmann probability of <em>correct</em> selection and ask the model to maximise it. That single requirement produces InfoNCE.
-  </div>
-
-  <div class="step" data-step="1">
-    <div class="step-label">Step 1 · The Boltzmann selection probability</div>
-    <div class="step-eq">
-      $$P(f\mid\mathbf{q}) = \frac{\exp(s_f)}{\exp(s_f) + \sum_{i=1}^{M}\exp(s_{c_i})}, \qquad s = \text{sim}(\mathbf{q},\mathbf{k})/\tau$$
+  <div class="panels">
+    <div class="algebra">
+      <div class="claim"><span class="lab">Goal — build this</span><div class="eq">$$\mathcal{L}=-\frac1N\sum_i\log\frac{e^{S_{ii}/\tau}}{\sum_j e^{S_{ij}/\tau}}$$</div></div>
+      <div class="astep" data-s="1"><div class="lab">Step 1 · encode + pool → fingerprints</div><div class="eq">$\mathbf{q}_i=\text{pool}(\text{Ab}_i),\;\; \mathbf{k}_j=\text{pool}(\text{Ag}_j)$</div><div class="note">one vector per molecule (slide 27)</div></div>
+      <div class="astep" data-s="2"><div class="lab">Step 2 · all pairwise cosines → the matrix</div><div class="eq">$S_{ij}=\cos(\mathbf{q}_i,\mathbf{k}_j)$</div><div class="note">every Ab vs every Ag at once (slide 29)</div></div>
+      <div class="astep" data-s="3"><div class="lab">Step 3 · scale by temperature τ</div><div class="eq">$S_{ij}/\tau$</div><div class="note">τ is $k_BT$ — small τ sharpens the choice</div></div>
+      <div class="astep" data-s="4"><div class="lab">Step 4 · softmax a row = Boltzmann selection</div><div class="eq">$P(j\mid i)=\dfrac{e^{S_{ij}/\tau}}{\sum_k e^{S_{ik}/\tau}}$</div><div class="note">the antibody “selects” its target — clonal selection</div></div>
+      <div class="astep" data-s="5"><div class="lab">Step 5 · the right answer is the diagonal</div><div class="eq">$\mathcal{L}_i=-\log P(i\mid i)$</div><div class="note">max-likelihood: maximise P(correct) ⟺ minimise −log</div></div>
+      <div class="astep" data-s="6"><div class="lab">Step 6 · average over the batch &nbsp;∎</div><div class="eq">$\mathcal{L}=\frac1N\sum_i\mathcal{L}_i$</div></div>
     </div>
-  </div>
-
-  <div class="step" data-step="2">
-    <div class="step-label">Step 2 · Maximum likelihood → negative log-likelihood loss</div>
-    <div class="step-eq">
-      $$L = \prod_{i=1}^{N} P(f_i\mid\mathbf{q}_i) \;\;\Rightarrow\;\; \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N}\log P(f_i\mid\mathbf{q}_i)$$
-    </div>
-  </div>
-
-  <div class="step" data-step="3">
-    <div class="step-label">Step 3 · In a batch, the competitors are the other targets</div>
-    <div class="step-eq">
-      $$S_{ij} = \text{sim}(\mathbf{q}_i,\mathbf{k}_j)/\tau, \qquad \text{correct pair} = \text{diagonal } S_{ii}$$
-    </div>
-  </div>
-
-  <div class="step qed" data-step="4">
-    <div class="step-label">Step 4 · Substitute &nbsp;∎</div>
-    <div class="step-eq">
-      $$\mathcal{L}_{\text{InfoNCE}} = -\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(S_{ii})}{\sum_{j=1}^{N}\exp(S_{ij})}$$
-    </div>
-  </div>
-
-</div>
-
-<div class="control-bar">
-  <div class="stage-inner">
-    <div class="step-caption" id="caption"></div>
-    <div class="step-counter" id="counter"></div>
-    <div class="step-buttons">
-      <button id="prevBtn">← Previous</button>
-      <button id="nextBtn" class="primary">Next →</button>
-      <button id="resetBtn">Reset</button>
+    <div class="visarea">
+      <div class="vlab" id="vlab"></div>
+      <div class="vis" id="vis"></div>
+      <div class="viscalc" id="viscalc"></div>
+      <div class="visnote" id="visnote"></div>
+      <div class="conv" id="conv"></div>
     </div>
   </div>
 </div>
+
+<div class="control-bar"><div class="inner">
+  <div class="step-caption" id="caption"></div>
+  <div class="step-counter" id="counter"></div>
+  <div class="btns"><button id="prevBtn">← Back</button><button id="nextBtn" class="primary">Next →</button><button id="resetBtn">Reset</button></div>
+</div></div>
 
 <script>
-  window.STEP_CAPTIONS = [
-    "Press <strong>Next</strong> or → to derive InfoNCE.",
-    "<strong>Step 1.</strong> The convergence equation gives the probability that the agent picks the correct target $f$ from a pool: a softmax over compatibility scores. The numerator is the correct pair; the denominator sums the correct pair plus every competitor. <em>This is the only modelling assumption.</em>",
-    "<strong>Step 2.</strong> Across $N$ training pairs, the likelihood of all correct selections is the product of these probabilities. Maximum-likelihood estimation: take the log, negate, average — the standard move that turns a probability into a loss to minimise.",
-    "<strong>Step 3.</strong> The trick that makes it cheap: use the other targets in the same mini-batch as the competitor pool. Collect all scores into a matrix $S_{ij}$. The correct pair for agent $i$ is target $i$ — the diagonal $S_{ii}$.",
-    "<strong>Step 4.</strong> Substitute the batched selection probability into the loss. The result is InfoNCE — not chosen from a menu, but the maximum-likelihood estimator of the Boltzmann selection probability. The training objective <em>is</em> the physics. ∎"
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=n=>n.toFixed(2);
+  const dot=(a,b)=>a.reduce((s,_,i)=>s+a[i]*b[i],0), cos=(a,b)=>dot(a,b)/(Math.sqrt(dot(a,a))*Math.sqrt(dot(b,b)));
+  const TAU=0.25, I=0;
+  const AB=['CARDYW','CARGYW','CARHPW','CARWFW'], AG=['FNCYF','GVTQN','ALDPS','PVRWE'];
+  const Q=[[0.90,0.20,0.10,0.10],[0.5,0.8,0.1,0.2],[0.1,0.1,0.9,0.2],[0.1,0.2,0.2,0.9]];
+  const K=[[0.80,0.30,0.20,0.00],[0.4,0.7,0.0,0.2],[0.2,0.0,0.8,0.3],[0.0,0.3,0.1,0.8]];
+  const S=Q.map(q=>K.map(k=>cos(q,k)));
+  const sm=row=>{const m=Math.max(...row),e=row.map(x=>Math.exp(x-m)),Z=e.reduce((a,b)=>a+b,0);return e.map(x=>x/Z);};
+  const P=S.map(r=>sm(r.map(c=>c/TAU)));
+  const losses=P.map((p,i)=>-Math.log(p[i]));
+
+  function mat(data,rl,cl,opts={}){ const nr=data.length,nc=data[0].length; let h=`<div class="mat" style="grid-template-columns:${rl?'46px ':''}repeat(${nc},42px)">`;
+    if(cl){ if(rl)h+=`<div></div>`; cl.forEach(c=>h+=`<div class="ml">${c}</div>`);}
+    for(let r=0;r<nr;r++){ if(rl)h+=`<div class="ml">${rl[r]}</div>`;
+      for(let c=0;c<nc;c++){ const v=data[r][c],cls=['mc']; if(opts.hl&&opts.hl[0]===r&&opts.hl[1]===c)cls.push('hl'); if(opts.rowhl===r||opts.colhl===c)cls.push('rowhl'); if(opts.diag&&r===c)cls.push('diag');
+        h+=`<div class="${cls.join(' ')}" style="background:${opts.tint?heat(opts.tint(v)):'white'};color:${opts.tint&&opts.tint(v)>0.5?'#fff':'var(--text)'}">${f2(v)}</div>`; } }
+    return h+`</div>`; }
+  const block=(t,m)=>`<div class="block"><div class="bt">${t}</div>${m}</div>`;
+  const work=(title,lines)=>`<div class="wk"><div class="wh">${title}</div>${lines.map(l=>`<div class="wl">${l}</div>`).join('')}</div>`;
+  const sq=a=>a.map(x=>f2(x*x)).join('+');
+  const vis=document.getElementById('vis'),vlab=document.getElementById('vlab'),viscalc=document.getElementById('viscalc'),visnote=document.getElementById('visnote');
+
+  function renderVis(st){
+    if(st==='fp'){ vlab.textContent='a batch: N fingerprint vectors per side';
+      vis.innerHTML=block('Q — antibody fingerprints', mat(Q,AB,['d₁','d₂','d₃','d₄'],{tint:v=>v}))+block('K — antigen fingerprints', mat(K,AG,['d₁','d₂','d₃','d₄'],{tint:v=>v}));
+      viscalc.innerHTML=''; visnote.innerHTML='Each row is one molecule’s pooled fingerprint (slide 27). 4 antibodies, 4 antigens.';
+    } else if(st==='sim'){ vlab.textContent='cosine of every pair → the N×N matrix';
+      vis.innerHTML=block('S = cos(Q, K)', mat(S,AB,AG,{tint:v=>v,diag:true,hl:[I,0]}));
+      { const q=Q[0],k=K[0],dp=dot(q,k),mq=Math.sqrt(dot(q,q)),mk=Math.sqrt(dot(k,k));
+        viscalc.innerHTML=work('plug in the numbers — one cosine, S₁₁', [
+          `S₁₁ = cos(q₁,k₁) = (q₁·k₁) / (|q₁|·|k₁|)`,
+          `q₁·k₁ = ${q.map((x,i)=>`(${f2(x)})(${f2(k[i])})`).join(' + ')} = <b>${f2(dp)}</b>`,
+          `|q₁| = √(${sq(q)}) = ${f2(mq)} &nbsp; |k₁| = √(${sq(k)}) = ${f2(mk)}`,
+          `S₁₁ = ${f2(dp)} / (${f2(mq)} × ${f2(mk)}) = <span class="res">${f2(S[0][0])}</span>`
+        ]); }
+      visnote.innerHTML='Diagonal = true binders. Same matrix as slide 29 — now we turn it into one loss.';
+    } else if(st==='temp'){ vlab.textContent=`divide every score by τ = ${TAU}`;
+      vis.innerHTML=block('S / τ', mat(S.map(r=>r.map(c=>c/TAU)),AB,AG,{tint:v=>v/4,diag:true}));
+      viscalc.innerHTML=work('plug in the numbers — sharpen the anchor row by τ', [
+        `anchor row ${AB[I]} = [${S[I].map(f2).join(',  ')}]`,
+        `÷ τ = ÷ ${TAU}  →  [${S[I].map(c=>f2(c/TAU)).join(',  ')}]`,
+        `e.g. S₁₁/τ = ${f2(S[0][0])} / ${TAU} = <span class="res">${f2(S[0][0]/TAU)}</span> &nbsp;<span class="mut">— smaller τ spreads the scores apart</span>`
+      ]);
+      visnote.innerHTML='τ is the Boltzmann temperature $k_BT$. Small τ makes the softmax decisive.';
+    } else if(st==='softmax'){ vlab.textContent=`softmax the anchor row (${AB[I]})`;
+      const p=P[I],pmax=Math.max(...p);
+      vis.innerHTML=block('P = softmax(S/τ) — each row a distribution', mat(P,AB,AG,{tint:v=>v,rowhl:I,diag:true}))
+        +`<div class="block"><div class="bt">anchor row ${AB[I]} → which antigen?</div><div class="bars">`+AG.map((g,j)=>`<div class="br"><div class="bt2 ${j===I?'m':''}">${g}${j===I?' ★':''}</div><div class="btrack"><div class="bfill" data-w="${(p[j]*100).toFixed(0)}" style="width:0;background:${heat(p[j]/pmax)}"></div></div><div class="bv">${(p[j]*100).toFixed(0)}%</div></div>`).join('')+`</div></div>`;
+      { const r=S[I].map(c=>c/TAU),ex=r.map(Math.exp),Z=ex.reduce((a,b)=>a+b,0);
+        viscalc.innerHTML=work('plug in the numbers — softmax = Boltzmann selection', [
+          `P(${AG[I]}|${AB[I]}) = e^(S₁₁/τ) / Σⱼ e^(S₁ⱼ/τ)`,
+          `e^(row/τ) = [${ex.map(f2).join(',  ')}]`,
+          `Σ = ${ex.map(f2).join(' + ')} = <b>${f2(Z)}</b>`,
+          `P = ${f2(ex[I])} / ${f2(Z)} = <span class="res">${f2(P[I][I])}</span> &nbsp;<span class="mut">— the true target ★ wins</span>`
+        ]); }
+      visnote.innerHTML='The antibody “picks” an antigen — exactly clonal selection. The true target (★) should win.';
+    } else if(st==='loss'){ vlab.textContent='the diagonal — every antibody’s P on its TRUE antigen';
+      const diag=AB.map((_,i)=>P[i][i]), dmax=Math.max(...diag);
+      vis.innerHTML=block('P — read the diagonal (true pairs)', mat(P,AB,AG,{tint:v=>v,diag:true}))
+        +`<div class="block"><div class="bt">diagonal probabilities → losses</div><div class="bars" style="max-width:330px">`+AB.map((ab,i)=>
+        `<div class="br" style="grid-template-columns:108px 1fr 80px"><div class="bt2 m">${ab}→${AG[i]}</div>`+
+        `<div class="btrack"><div class="bfill" data-w="${(diag[i]*100).toFixed(0)}" style="width:0;background:${heat(diag[i]/dmax)}"></div></div>`+
+        `<div class="bv">${(diag[i]*100).toFixed(0)}% <span style="color:var(--text-muted);font-size:10px">ℒ=${losses[i].toFixed(2)}</span></div></div>`).join('')+`</div></div>`;
+      viscalc.innerHTML=work('plug in the numbers — each diagonal probability → a loss', [
+        `ℒᵢ = −log P(i|i)`,
+        AB.map((ab,i)=>`−log(${f2(P[i][i])})=<b>${losses[i].toFixed(2)}</b>`).join(' &nbsp;·&nbsp; '),
+        `losses = [${losses.map(l=>l.toFixed(2)).join(',  ')}] &nbsp;<span class="mut">— confident &amp; right → small loss</span>`
+      ]);
+      visnote.innerHTML='Pull the <b>diagonal</b> out of the softmaxed matrix — the correct-pair probabilities, one per antibody. Tall bar = confident &amp; right = small loss.';
+    } else { vlab.textContent='average the per-anchor losses → InfoNCE';
+      vis.innerHTML=block('per-anchor loss ℒᵢ', mat([losses.map(l=>l)],null,AB,{tint:v=>1-v/2}));
+      viscalc.innerHTML=work('plug in the numbers — average → InfoNCE', [
+        `ℒ = (ℒ₁ + ℒ₂ + ℒ₃ + ℒ₄) / N`,
+        `= (${losses.map(l=>l.toFixed(2)).join(' + ')}) / 4`,
+        `= ${f2(losses.reduce((a,b)=>a+b,0))} / 4 = <span class="res">${(losses.reduce((a,b)=>a+b,0)/4).toFixed(2)}</span>`
+      ]);
+      visnote.innerHTML='InfoNCE = the maximum-likelihood estimator of the Boltzmann selection probability. cos ↔ −ΔG, τ ↔ k_BT. The objective <b>is</b> the physics. ∎';
+    }
+    // grow the bars from 0
+    requestAnimationFrame(()=>{ vis.querySelectorAll('.bfill[data-w]').forEach(f=>{ f.style.width=f.dataset.w+'%'; }); });
+    // convergence-equation callout — re-asserted on the softmax and loss steps, animated in
+    const conv=document.getElementById('conv');
+    const CONV={
+      softmax:`<span class="hd">⚡ the convergence equation — again</span>This softmax <b>is</b> the Boltzmann distribution: $P(j\\mid i)=\\dfrac{e^{S_{ij}/\\tau}}{Z}$ has the exact form of $P(\\text{bind})=\\dfrac{e^{-\\Delta G/k_BT}}{Z}$. The cosine plays $-$energy, τ plays $k_BT$ — an antibody <b>selecting</b> its antigen is a molecule settling into its <b>lowest-energy</b> partner.`,
+      loss:`<span class="hd">⚡ still the convergence equation</span>Minimising $-\\log P(\\text{correct})$ = <b>maximising the Boltzmann probability</b> that the antibody binds its true target. We are not inventing a loss — we are <b>enforcing the physics</b>.`
+    };
+    if(CONV[st]){ conv.innerHTML=CONV[st]; conv.classList.remove('show'); void conv.offsetWidth; conv.classList.add('show'); }
+    else { conv.classList.remove('show'); conv.innerHTML=''; }
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([vlab,viscalc,visnote,conv]);
+  }
+
+  const STEPS=[
+    {reveal:1,stage:'fp',cap:`A batch of antibody–antigen pairs. Each molecule is encoded and pooled into one <strong>fingerprint vector</strong> (slide 27). Press <strong>Next</strong>.`},
+    {reveal:2,stage:'sim',cap:`<strong>Step 2.</strong> Cosine of every antibody with every antigen → the <strong>N×N similarity matrix</strong> (slide 29). The diagonal holds the true binders.`},
+    {reveal:3,stage:'temp',cap:`<strong>Step 3.</strong> Divide every score by the temperature $\\tau$ — the Boltzmann $k_BT$. It controls how sharply the model commits.`},
+    {reveal:4,stage:'softmax',cap:`<strong>Step 4.</strong> Softmax the anchor's row: the <strong>Boltzmann probability</strong> that this antibody selects each antigen. This is clonal selection, written as the convergence equation.`},
+    {reveal:5,stage:'loss',cap:`<strong>Step 5.</strong> The correct target is the diagonal. Maximum likelihood says: maximise P(correct), i.e. <strong>minimise −log P(correct)</strong> — the per-anchor loss.`},
+    {reveal:6,stage:'infonce',cap:`<strong>Step 6.</strong> Average over the batch → <strong>InfoNCE</strong>. Not picked from a menu — the maximum-likelihood estimator of the Boltzmann selection probability. The objective <em>is</em> the physics. ∎`}
   ];
+
+  let step=0; const caption=document.getElementById('caption'),counter=document.getElementById('counter'),prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn');
+  function show(n){ step=Math.max(0,Math.min(STEPS.length-1,n)); const st=STEPS[step];
+    document.querySelectorAll('.astep').forEach(el=>{const s=+el.dataset.s; el.classList.toggle('on',s<=st.reveal); el.classList.toggle('cur',s===st.reveal);});
+    renderVis(st.stage); caption.innerHTML=st.cap; counter.textContent=`STEP ${step+1} / ${STEPS.length}`; prevBtn.disabled=step===0; nextBtn.disabled=step===STEPS.length-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.querySelector('.algebra'),caption]); }
+  function next(){ if(step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if(step>0) show(step-1); else esc('prev'); }
+  function esc(d){ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+  nextBtn.addEventListener('click',next); prevBtn.addEventListener('click',prev); document.getElementById('resetBtn').addEventListener('click',()=>show(0));
+  document.addEventListener('keydown',e=>{ if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName))return;
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){e.preventDefault();next();} else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();prev();} });
+  show(0);
 </script>
-<script src="../../mrc_whiteboard.js"></script>
 
 </body>
 </html>

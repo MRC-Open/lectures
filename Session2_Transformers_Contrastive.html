@@ -99,84 +99,28 @@
 </section>
 
 <!-- 2 recap -->
-<section class="slide" data-slide="2">
-  <div class="slide-inner">
-    <h2>Recap — The Four Tools from Session 1</h2>
-    <div class="slide-subtitle">Everything today is built from these</div>
-    <table class="summary">
-      <thead><tr><th>Operation</th><th>What it computes</th></tr></thead>
-      <tbody>
-        <tr><td>Dot product &nbsp;$\mathbf{a}\cdot\mathbf{b}$</td><td>Compatibility score between two vectors</td></tr>
-        <tr><td>Matrix multiplication &nbsp;$QK^\top$</td><td>All pairwise scores at once</td></tr>
-        <tr><td>Cosine similarity</td><td>Normalized score $\in[-1,+1]$</td></tr>
-        <tr><td>Softmax$(z/\tau)$</td><td>Scores → probability distribution</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+<section class="slide demo" data-slide="2"><iframe src="L2/interactive_demos/L2_recap_l1.html" loading="lazy"></iframe></section>
 
 <!-- 3 goal -->
-<section class="slide" data-slide="3">
-  <div class="slide-inner">
-    <h2>Today's Goal</h2>
-    <div class="slide-subtitle">Derive the transformer attention equation — and the SFM training objective — from first principles</div>
-    <div class="eq-block">$$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$</div>
-    <ul class="bullets">
-      <li>$QK^\top$ → matrix multiplication (all pairwise dot products)</li>
-      <li>$\sqrt{d_k}$ → temperature scaling</li>
-      <li>softmax → score-to-probability conversion</li>
-      <li>$V$ → information aggregation</li>
-      <li>Then: how two encoders <em>learn</em> binding — the <strong>InfoNCE</strong> loss</li>
-    </ul>
-  </div>
-</section>
+<section class="slide demo" data-slide="3"><iframe src="L2/interactive_demos/L2_goal.html" loading="lazy"></iframe></section>
 
-<!-- 4 neural network -->
-<section class="slide" data-slide="4">
-  <div class="slide-inner">
-    <h2>A Neural Network Is a Function</h2>
-    <div class="slide-subtitle">From Session 1: a giant parameterized function trained to fit data</div>
-    <div class="eq-block">$$\mathbf{y} = \sigma(W\mathbf{x} + \mathbf{b})$$</div>
-    <ul class="bullets">
-      <li>Linear transformation $W\mathbf{x}+\mathbf{b}$, then a nonlinearity $\sigma$</li>
-      <li>Stack layers → depth → hierarchical features</li>
-      <li>The nonlinearity is essential — without it, stacked layers collapse to one linear map</li>
-      <li><em>Preview:</em> sigmoid fails the IIA axiom, ReLU fails unrestricted domain — only $\exp$ survives (Session 4)</li>
-    </ul>
-  </div>
-</section>
+<!-- 4 neural network — the neuron -->
+<section class="slide demo" data-slide="4"><iframe src="L2/interactive_demos/L2_demo_neuron.html" loading="lazy"></iframe></section>
 
-<!-- 5 history -->
-<section class="slide" data-slide="5">
-  <div class="slide-inner">
-    <h2>From Neurons to Transformers</h2>
-    <div class="slide-subtitle">A 70-year arc, compressed</div>
-    <ul class="bullets">
-      <li><strong>1943</strong> — McCulloch &amp; Pitts: the formal neuron</li>
-      <li><strong>1958</strong> — Rosenblatt: the perceptron (learnable)</li>
-      <li><strong>1986</strong> — Rumelhart, Hinton &amp; Williams: backpropagation</li>
-      <li><strong>1997</strong> — Hochreiter &amp; Schmidhuber: the LSTM</li>
-      <li><strong>2017</strong> — Vaswani et al.: the transformer — <em>attention replaces recurrence</em></li>
-    </ul>
-  </div>
-</section>
+<!-- 5 history — visual timeline -->
+<section class="slide demo" data-slide="5"><iframe src="L2/interactive_demos/L2_demo_ai_timeline.html" loading="lazy"></iframe></section>
 
-<!-- 6 sequence problem + RNN -->
-<section class="slide" data-slide="6">
-  <div class="slide-inner">
-    <h2>The Sequence Problem</h2>
-    <div class="slide-subtitle">Text, DNA, protein, RNA — ordered sequences where meaning depends on neighbours</div>
-    <ul class="bullets">
-      <li><strong>RNNs</strong> process one token at a time, carrying a hidden state $h_t = \sigma(W_h h_{t-1} + W_x x_t + b)$</li>
-      <li><strong>Problem 1 — vanishing gradients:</strong> can't learn long-range dependencies (LSTMs only partly fix this)</li>
-      <li><strong>Problem 2 — no parallelism:</strong> a 1000-token sequence = 1000 sequential steps</li>
-      <li>We need direct access to <em>every</em> position, computed <em>in parallel</em></li>
-    </ul>
-  </div>
-</section>
+<!-- 6 the sequence problem — vectors demo -->
+<section class="slide demo" data-slide="6"><iframe src="L2/interactive_demos/L2_demo_sequence_vectors.html" loading="lazy"></iframe></section>
+
+<!-- 7 RNN hidden state demo -->
+<section class="slide demo" data-slide="7"><iframe src="L2/interactive_demos/L2_demo_rnn_hidden_state.html" loading="lazy"></iframe></section>
+
+<!-- 8 LSTM highway demo -->
+<section class="slide demo" data-slide="8"><iframe src="L2/interactive_demos/L2_demo_lstm_highway.html" loading="lazy"></iframe></section>
 
 <!-- 7 attention idea -->
-<section class="slide" data-slide="7">
+<section class="slide" data-slide="9">
   <div class="slide-inner">
     <h2>The Attention Idea</h2>
     <div class="slide-subtitle">Bahdanau et al. 2015 → Vaswani et al. 2017</div>
@@ -189,26 +133,17 @@
   </div>
 </section>
 
-<!-- 8 Q K V -->
-<section class="slide" data-slide="8">
-  <div class="slide-inner">
-    <h2>The Three Questions — Q, K, V</h2>
-    <div class="slide-subtitle">Three learned vectors per token</div>
-    <ul class="bullets">
-      <li><strong>Query (Q):</strong> "What am I looking for?"</li>
-      <li><strong>Key (K):</strong> "What do I offer?"</li>
-      <li><strong>Value (V):</strong> "What information do I carry?"</li>
-      <li>Attention score between tokens $i$ and $j$: how well does $\mathbf{q}_i$ match $\mathbf{k}_j$?</li>
-      <li>$Q = XW_Q,\;\; K = XW_K,\;\; V = XW_V$ &nbsp;(learned linear projections)</li>
-    </ul>
-  </div>
-</section>
+<!-- 11 Q/K/V computed demo -->
+<section class="slide demo" data-slide="10"><iframe src="L2/interactive_demos/L2_demo_qkv_computed.html" loading="lazy"></iframe></section>
 
-<!-- 9 DEMO attention -->
-<section class="slide demo" data-slide="9"><iframe src="L2/interactive_demos/L2_demo_attention.html" loading="lazy"></iframe></section>
+<!-- DEMO recognition matrix: RNN vs LSTM vs Attention -->
+<section class="slide demo" data-slide="11"><iframe src="L2/interactive_demos/L2_demo_recognition_matrix.html" loading="lazy"></iframe></section>
+
+<!-- DEMO attention explore -->
+<section class="slide demo" data-slide="12"><iframe src="L2/interactive_demos/L2_demo_attention.html" loading="lazy"></iframe></section>
 
 <!-- 10 attention equation overview -->
-<section class="slide" data-slide="10">
+<section class="slide" data-slide="13">
   <div class="slide-inner">
     <h2>The Attention Equation — Three Stages</h2>
     <div class="slide-subtitle">Each stage is one operation from Session 1</div>
@@ -222,76 +157,28 @@
 </section>
 
 <!-- 11 DERIVATION attention -->
-<section class="slide demo" data-slide="11"><iframe src="L2/whiteboard_demos/L2_wb2_attention.html" loading="lazy"></iframe></section>
+<section class="slide demo" data-slide="14"><iframe src="L2/whiteboard_demos/L2_wb2_attention.html" loading="lazy"></iframe></section>
 
 <!-- 12 DERIVATION variance -->
-<section class="slide demo" data-slide="12"><iframe src="L2/whiteboard_demos/L2_wb3_variance.html" loading="lazy"></iframe></section>
+<section class="slide demo" data-slide="15"><iframe src="L2/whiteboard_demos/L2_wb3_variance.html" loading="lazy"></iframe></section>
 
 <!-- 13 multi-head -->
-<section class="slide" data-slide="13">
-  <div class="slide-inner">
-    <h2>Multi-Head Attention</h2>
-    <div class="slide-subtitle">$\text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1,\ldots,\text{head}_H)\,W_O$</div>
-    <ul class="bullets">
-      <li>$H$ parallel heads, each with independent projections ($d_k = d_{\text{model}}/H$)</li>
-      <li>Different heads attend to different relationships</li>
-      <li><strong>Molecular correspondence:</strong>
-        <ul>
-          <li>6 CDR loops of an antibody → attention heads</li>
-          <li>Each loop contacts a different epitope region → each head attends to different positions</li>
-          <li>Combined paratope = concatenated head outputs</li>
-        </ul>
-      </li>
-    </ul>
-  </div>
-</section>
+<section class="slide demo" data-slide="16"><iframe src="L2/interactive_demos/L2_demo_multihead.html" loading="lazy"></iframe></section>
 
-<!-- 14 self vs cross -->
-<section class="slide" data-slide="14">
-  <div class="slide-inner">
-    <h2>Self-Attention vs. Cross-Attention</h2>
-    <div class="slide-subtitle">Within a sequence vs. between two sequences</div>
-    <ul class="bullets">
-      <li><strong>Self-attention:</strong> Q, K, V from the same sequence — how does residue 5 relate to residue 42 in the same protein? (used in each encoder)</li>
-      <li><strong>Cross-attention:</strong> Q from one sequence; K, V from another — how does the antibody relate to the antigen? (used in the decoder)</li>
-      <li>In SFMs, cross-attention <em>is</em> the convergence equation at the residue-contact level</li>
-    </ul>
-  </div>
-</section>
+<!-- 14a self-attention demo -->
+<section class="slide demo" data-slide="17"><iframe src="L2/interactive_demos/L2_demo_self_attention.html" loading="lazy"></iframe></section>
+
+<!-- 14b cross-attention demo (binding) -->
+<section class="slide demo" data-slide="18"><iframe src="L2/interactive_demos/L2_demo_cross_attention.html" loading="lazy"></iframe></section>
 
 <!-- 15 identity -->
-<section class="slide" data-slide="15">
-  <div class="slide-inner">
-    <h2>Attention Is the Convergence Equation</h2>
-    <div class="slide-subtitle">The identity that motivates the whole course</div>
-    <div class="identity-block">
-      <div class="heading">Transformer attention · Vaswani 2017</div>
-      <div class="eq">$$A_j = \frac{\exp(\mathbf{q}\cdot\mathbf{k}_j/\sqrt{d_k})}{\sum_k \exp(\mathbf{q}\cdot\mathbf{k}_k/\sqrt{d_k})}$$</div>
-    </div>
-    <div class="identity-block">
-      <div class="heading">Boltzmann binding · 1877</div>
-      <div class="eq">$$P(\text{bind }j) = \frac{\exp(-\Delta G_j/k_BT)}{\sum_k \exp(-\Delta G_k/k_BT)}$$</div>
-    </div>
-    <p style="text-align:center; font-size:17px; margin-top:18px;"><strong>$\mathbf{q}\cdot\mathbf{k}_j \leftrightarrow -\Delta G_j$ &nbsp;and&nbsp; $\sqrt{d_k} \leftrightarrow k_BT$.</strong> &nbsp;Vaswani designed this for engineering. The physics requires it. <em>(proof: Session 4)</em></p>
-  </div>
-</section>
+<section class="slide demo" data-slide="19"><iframe src="L2/whiteboard_demos/L2_wb4_identity.html" loading="lazy"></iframe></section>
 
-<!-- 16 encoders for SFMs -->
-<section class="slide" data-slide="16">
-  <div class="slide-inner">
-    <h2>The Encoder — What SFMs Use</h2>
-    <div class="slide-subtitle">Dual encoders for agent and target</div>
-    <ul class="bullets">
-      <li>Each encoder is a transformer producing contextual embeddings via self-attention</li>
-      <li>Antibody encoder → embedding $\mathbf{q}$; &nbsp; antigen encoder → embedding $\mathbf{k}$</li>
-      <li>Compatibility score: $\mathbf{q}\cdot\mathbf{k}$ (dot product of pooled outputs)</li>
-      <li><strong>Next:</strong> where do these encoders come from, and how do we <em>train</em> the binding?</li>
-    </ul>
-  </div>
-</section>
+<!-- 16 encoder demo -->
+<section class="slide demo" data-slide="20"><iframe src="L2/interactive_demos/L2_demo_encoder.html" loading="lazy"></iframe></section>
 
 <!-- 17 divider Part B -->
-<section class="slide divider" data-slide="17">
+<section class="slide divider" data-slide="21">
   <div>
     <div class="divider-eyebrow">Part B · Lecture 3</div>
     <h2 class="divider-title">Language Models &amp; Contrastive Learning</h2>
@@ -299,203 +186,60 @@
 </section>
 
 <!-- 18 language modeling idea -->
-<section class="slide" data-slide="18">
-  <div class="slide-inner">
-    <h2>The Language-Modeling Idea</h2>
-    <div class="slide-subtitle">A model that can fill the blank must understand the language</div>
-    <ul class="bullets">
-      <li>"The antibody [MASK] the antigen" → <strong>binds</strong></li>
-      <li><strong>Self-supervised:</strong> the sequence provides its own labels — no human annotation</li>
-      <li>Billions of sentences (or millions of protein sequences) freely available</li>
-      <li>The same idea, a different alphabet → protein language models</li>
-    </ul>
-  </div>
-</section>
+<section class="slide demo" data-slide="22"><iframe src="L3/interactive_demos/L3_demo_masked_lm.html" loading="lazy"></iframe></section>
 
-<!-- 19 BERT GPT -->
-<section class="slide" data-slide="19">
-  <div class="slide-inner">
-    <h2>Two Ways to Learn from Sequence</h2>
-    <div class="slide-subtitle">Masked vs. autoregressive</div>
-    <ul class="bullets">
-      <li><strong>BERT</strong> (Devlin 2019) — mask 15% of tokens, predict them from <em>both sides</em>. Bidirectional, contextual. → the <em>encoder</em> recipe.</li>
-      <li><strong>GPT</strong> (Radford 2018) — predict the next token from the left only. Generative. → the SFM <em>decoder</em> recipe (Session 4 / Lecture 7).</li>
-      <li>Both: pre-train on a huge corpus, then adapt to a small task</li>
-    </ul>
-  </div>
-</section>
+<!-- 19 autoregressive demo -->
+<section class="slide demo" data-slide="23"><iframe src="L3/interactive_demos/L3_demo_autoregressive.html" loading="lazy"></iframe></section>
 
-<!-- 20 words to amino acids -->
-<section class="slide" data-slide="20">
-  <div class="slide-inner">
-    <h2>From Words to Amino Acids</h2>
-    <div class="slide-subtitle">The same method, a 20-letter alphabet</div>
-    <ul class="bullets">
-      <li>Words in similar contexts → similar meanings</li>
-      <li>Amino acids in similar structural contexts → similar biochemical roles</li>
-      <li>Grammar constrains word order → physics constrains residue arrangement</li>
-      <li>If masked modeling learns language from text, it should learn <strong>biochemistry</strong> from protein sequences</li>
-    </ul>
-  </div>
-</section>
+<!-- 20 encoder vs decoder demo -->
+<section class="slide demo" data-slide="24"><iframe src="L3/interactive_demos/L3_demo_encoder_vs_decoder.html" loading="lazy"></iframe></section>
 
-<!-- 21 ESM AntiBERTy -->
-<section class="slide" data-slide="21">
-  <div class="slide-inner">
-    <h2>Protein Language Models — The SFM Encoders</h2>
-    <div class="slide-subtitle">Learned structure and function, from sequence alone</div>
-    <ul class="bullets">
-      <li><strong>ESM-2</strong> (Lin 2023) — masked modeling on hundreds of millions of proteins; attention heads recover residue–residue contacts; atomic structure from a single sequence. → the <em>antigen / protein</em> encoder</li>
-      <li><strong>AntiBERTy</strong> (Ruffolo 2022) — ~558M antibody sequences; specialized for framework + hypervariable CDR loops. → the <em>antibody</em> encoder</li>
-      <li>These are the pretrained encoders <em>you</em> download to build an SFM</li>
-    </ul>
-  </div>
-</section>
+<!-- 21 pretraining data / landscape -->
+<section class="slide demo" data-slide="25"><iframe src="L3/interactive_demos/L3_demo_pretraining_data.html" loading="lazy"></iframe></section>
 
-<!-- 22 what LMs dont give -->
-<section class="slide" data-slide="22">
-  <div class="slide-inner">
-    <h2>What Language Models Don't Give Us</h2>
-    <div class="slide-subtitle">Powerful encoders — but they don't know about binding</div>
-    <ul class="bullets">
-      <li>They encode sequence → structure → function <em>within one molecule</em></li>
-      <li>They do <strong>not</strong> encode which molecules bind which other molecules</li>
-      <li>To learn binding we need <strong>contrastive learning</strong> between two encoders</li>
-    </ul>
-  </div>
-</section>
+<!-- 22 what embeddings carry / energy landscape -->
+<section class="slide demo" data-slide="26"><iframe src="L3/interactive_demos/L3_demo_embedding_energy.html" loading="lazy"></iframe></section>
 
 <!-- 23 CLIP -->
-<section class="slide" data-slide="23">
-  <div class="slide-inner">
-    <h2>CLIP — Contrastive Learning</h2>
-    <div class="slide-subtitle">Radford et al. 2021 — two encoders, one shared space</div>
-    <ul class="bullets">
-      <li>Image encoder + text encoder → embeddings; similarity = dot product after L2 normalization</li>
-      <li>Trained on 400M image–text pairs</li>
-      <li>Objective: matching pairs → high similarity; non-matching → low</li>
-      <li>The architectural template for SFMs — but designed empirically</li>
-    </ul>
-  </div>
-</section>
+<!-- 23a pooling: matrix -> one vector -->
+<section class="slide demo" data-slide="27"><iframe src="L3/interactive_demos/L3_demo_pooling.html" loading="lazy"></iframe></section>
 
-<!-- 24 NxN matrix -->
-<section class="slide" data-slide="24">
-  <div class="slide-inner">
-    <h2>The N×N Similarity Matrix</h2>
-    <div class="slide-subtitle">The data structure at the heart of contrastive learning</div>
-    <ul class="bullets">
-      <li>A mini-batch of $N$ pairs → encode all → similarity matrix $S_{ij} = \text{sim}(\mathbf{z}_i,\mathbf{z}_j)/\tau$</li>
-      <li><strong>Diagonal</strong> ($i=j$): correct pairs → should be large</li>
-      <li><strong>Off-diagonal</strong> ($i\neq j$): in-batch negatives → should be small</li>
-      <li>Goal: maximize the diagonal, minimize the rest</li>
-    </ul>
-  </div>
-</section>
+<!-- 23b CLIP cosine demo -->
+<section class="slide demo" data-slide="28"><iframe src="L3/interactive_demos/L3_demo_clip_cosine.html" loading="lazy"></iframe></section>
+
+<!-- 24 NxN matrix demo -->
+<section class="slide demo" data-slide="29"><iframe src="L3/interactive_demos/L3_demo_nxn_matrix.html" loading="lazy"></iframe></section>
 
 <!-- 25 DERIVATION InfoNCE -->
-<section class="slide demo" data-slide="25"><iframe src="L3/whiteboard_demos/L3_wb1_infonce.html" loading="lazy"></iframe></section>
+<section class="slide demo" data-slide="30"><iframe src="L3/whiteboard_demos/L3_wb1_infonce.html" loading="lazy"></iframe></section>
 
 <!-- 26 DEMO InfoNCE matrix -->
-<section class="slide demo" data-slide="26"><iframe src="L3/interactive_demos/L3_demo_infonce.html" loading="lazy"></iframe></section>
+<section class="slide demo" data-slide="31"><iframe src="L3/interactive_demos/L3_demo_infonce.html" loading="lazy"></iframe></section>
 
 <!-- 27 DERIVATION symmetric -->
-<section class="slide demo" data-slide="27"><iframe src="L3/whiteboard_demos/L3_wb2_symmetric.html" loading="lazy"></iframe></section>
+<section class="slide demo" data-slide="32"><iframe src="L3/whiteboard_demos/L3_wb2_symmetric.html" loading="lazy"></iframe></section>
 
-<!-- 28 CLIP to CALM -->
-<section class="slide" data-slide="28">
-  <div class="slide-inner">
-    <h2>From CLIP to CALM</h2>
-    <div class="slide-subtitle">Same architecture, different modalities — and 100,000× less data</div>
-    <ul class="bullets">
-      <li><strong>CLIP:</strong> image + text encoders, 400,000,000 pairs</li>
-      <li><strong>CALM:</strong> AntiBERTy + ESM-2, ~4,000 pairs</li>
-      <li>Identical recipe: dual encoders · dot-product similarity · symmetric InfoNCE · learned $\tau$</li>
-      <li>The difference: CLIP was designed empirically; <strong>CALM is prescribed by physics</strong></li>
-      <li>~100,000× data efficiency at comparable performance — the Level 3 signature</li>
-    </ul>
-  </div>
-</section>
+<!-- 28 CLIP to SFM — full architecture walkthrough -->
+<section class="slide demo" data-slide="33"><iframe src="L3/interactive_demos/L3_demo_clip_to_sfm.html" loading="lazy"></iframe></section>
 
-<!-- 29 CALM architecture -->
-<section class="slide" data-slide="29">
-  <div class="slide-inner">
-    <h2>CALM Architecture &amp; Results</h2>
-    <div class="slide-subtitle">Lee et al. 2026 — the first SFM</div>
-    <ul class="bullets">
-      <li>Antibody encoder (AntiBERTy) → $\mathbf{q}$; &nbsp; antigen encoder (ESM-2) → $\mathbf{k}$</li>
-      <li>Score $s = \mathbf{q}\cdot\mathbf{k}/\tau$; trained with symmetric InfoNCE on ~4,000 SAbDab pairs</li>
-      <li><strong>Held-out (80% antigen-identity clustering):</strong> R@1 6.5% / 5.4%, R@10 17% / 16% &nbsp;(random ≈ 0.2%)</li>
-      <li>This is the reference implementation you'll fine-tune for your own data</li>
-    </ul>
-  </div>
-</section>
+<!-- 29 SFM evidence — data-driven CLIP vs SFM across domains -->
+<section class="slide demo" data-slide="34"><iframe src="L3/interactive_demos/L3_demo_sfm_evidence.html" loading="lazy"></iframe></section>
 
-<!-- 30 hard negatives -->
-<section class="slide" data-slide="30">
-  <div class="slide-inner">
-    <h2>Hard Negatives</h2>
-    <div class="slide-subtitle">Not all negatives are equally informative</div>
-    <ul class="bullets">
-      <li><strong>Easy negative:</strong> shares no features → trivially rejected</li>
-      <li><strong>Hard negative:</strong> shares partial features → forces fine-grained discrimination (similar shape, wrong charge)</li>
-      <li><strong>Biological precedent:</strong> thymic negative selection presents self-antigens as hard negatives</li>
-      <li>Designing hard negatives is a key domain-expert decision when you build your SFM</li>
-    </ul>
-  </div>
-</section>
+<!-- 30 future directions — hard negatives as an open problem -->
+<section class="slide demo" data-slide="35"><iframe src="L3/interactive_demos/L3_demo_future_directions.html" loading="lazy"></iframe></section>
 
-<!-- 31 what model learns -->
-<section class="slide" data-slide="31">
-  <div class="slide-inner">
-    <h2>What the Model Learns</h2>
-    <div class="slide-subtitle">The embedding space becomes a binding-energy landscape</div>
-    <ul class="bullets">
-      <li>Before: general-purpose embeddings (sequence, structure, function)</li>
-      <li>After contrastive training: binding partners are <em>close</em>, non-partners <em>far</em></li>
-      <li>$\mathbf{q}\cdot\mathbf{k} \propto -\Delta G$ — the geometry <strong>is</strong> the physics</li>
-      <li>Why ~4,000 pairs suffice: ESM-2 already encodes structure; training just aligns two pre-existing spaces; the architecture guarantees the correct functional form</li>
-    </ul>
-  </div>
-</section>
+<!-- 31 Part A visual recap -->
+<section class="slide demo" data-slide="36"><iframe src="L2/interactive_demos/L2_recap.html" loading="lazy"></iframe></section>
 
-<!-- 32 pipeline -->
-<section class="slide" data-slide="32">
-  <div class="slide-inner">
-    <h2>The Complete AI Pipeline for SFMs</h2>
-    <div class="slide-subtitle">Everything from Sessions 1–2 assembled</div>
-    <table class="summary">
-      <thead><tr><th>Component</th><th>Method</th></tr></thead>
-      <tbody>
-        <tr><td>Encoder architecture</td><td>Transformer self-attention (L2)</td></tr>
-        <tr><td>Pre-training</td><td>Masked language modeling — ESM-2, AntiBERTy (L3)</td></tr>
-        <tr><td>Similarity measure</td><td>Dot product / cosine similarity (L1)</td></tr>
-        <tr><td>Score → probability</td><td>Softmax with temperature (L1)</td></tr>
-        <tr><td>Training objective</td><td>Symmetric InfoNCE (L3)</td></tr>
-        <tr><td>Data</td><td>Binding pairs + in-batch negatives (L3)</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+<!-- 32 Part B visual recap -->
+<section class="slide demo" data-slide="37"><iframe src="L3/interactive_demos/L3_recap.html" loading="lazy"></iframe></section>
 
-<!-- 33 summary / next -->
-<section class="slide" data-slide="33">
-  <div class="slide-inner">
-    <h2>Summary &amp; Next</h2>
-    <div class="slide-subtitle">The AI side is complete</div>
-    <ul class="bullets">
-      <li><strong>Attention</strong> $= \text{softmax}(QK^\top/\sqrt{d_k})V$ — three operations from Session 1</li>
-      <li><strong>$\sqrt{d_k}$</strong> is the temperature that keeps softmax learning</li>
-      <li><strong>InfoNCE</strong> is the maximum-likelihood estimator of the Boltzmann selection probability — derived, not chosen</li>
-      <li><strong>Symmetric loss</strong> follows from $\Delta G_{AB}=\Delta G_{BA}$</li>
-      <li><strong>Next — Session 3 (Lectures 4 + 5):</strong> the physics — Boltzmann from maximum entropy, $K_d$ and free energy, and bilinearity (why TF–DNA is exact and antibody–antigen must be learned)</li>
-    </ul>
-  </div>
-</section>
+<!-- 33 summary — the convergence equation -->
+<section class="slide demo" data-slide="38"><iframe src="L3/interactive_demos/L3_summary.html" loading="lazy"></iframe></section>
 
 </div>
 
-<div class="deck-counter" id="counter">SLIDE 1 / 33</div>
+<div class="deck-counter" id="counter">SLIDE 1 / 36</div>
 <div class="deck-hint" id="hint">← →  navigate · F  fullscreen</div>
 <button class="deck-present" id="presentBtn">▶ Present</button>
 

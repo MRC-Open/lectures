@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — Autoregressive Generation</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 760px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 14px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .seqrow { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 4px 0 14px; min-height: 44px; }
+  .tok { font-family: var(--font-serif); font-size: 17px; padding: 9px 14px; border: 1.5px solid var(--rule); border-radius: 6px; min-width: 30px; text-align: center; color: var(--text); }
+  .tok.fresh { border-color: var(--accent); background: var(--accent-faint); color: var(--accent); font-weight: 700; }
+  .tok.q { border-style: dashed; border-color: var(--accent); color: var(--accent); font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: auto 1fr; gap: 30px; align-items: start; max-width: 820px; margin: 0 auto; }
+  .panel-lab { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .mat { display: inline-grid; gap: 2px; }
+  .ml { font-family: var(--font-serif); font-size: 12px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .mc { width: 30px; height: 26px; border-radius: 2px; }
+  .mc.future { background: repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 3px,#ececec 3px,#ececec 6px); }
+  .matnote { font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); font-style: italic; text-align: center; margin-top: 8px; max-width: 230px; }
+
+  .preds { max-width: 380px; }
+  .prow { display: grid; grid-template-columns: 64px 1fr 50px; gap: 10px; align-items: center; padding: 4px 0; }
+  .ptok { font-family: var(--font-serif); font-size: 15px; text-align: right; color: var(--text); }
+  .ptok.top { color: var(--accent); font-weight: 700; }
+  .ptrack { height: 20px; background: var(--rail); border-radius: 3px; overflow: hidden; }
+  .pfill { height: 100%; }
+  .pval { font-family: var(--font-serif); font-variant-numeric: tabular-nums; font-size: 13px; text-align: right; }
+  .done { font-family: var(--font-sans); font-size: 14px; color: var(--accent); font-weight: 600; text-align:center; padding: 30px 0; }
+
+  .ctrls { display: flex; gap: 8px; justify-content: center; align-items: center; margin: 18px 0 4px; }
+  .ctrls button { font-family: var(--font-sans); font-size: 13px; padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; }
+  .ctrls button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .ctrls button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .ctrls .primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .cap { text-align: center; font-family: var(--font-sans); font-size: 13px; color: var(--text); margin: 10px auto 0; max-width: 680px; min-height: 18px; }
+
+  .legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px auto 0; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); }
+  .legbar { width: 150px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Autoregressive Generation — Predict the Next One</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · HOW A DECODER GENERATES</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="sentence">Sentence · LLM</button>
+    <button class="tbtn" data-ex="protein">Antibody CDR-H3 · PLM</button>
+  </div>
+
+  <div class="seqrow" id="seqrow"></div>
+
+  <div class="cols">
+    <div>
+      <div class="panel-lab">causal attention</div>
+      <div class="mat" id="mat"></div>
+      <div class="matnote">each token attends only to the <b>past</b> — the upper triangle (the future) is masked off</div>
+    </div>
+    <div>
+      <div class="panel-lab" id="predlab">next token</div>
+      <div class="preds" id="preds"></div>
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <button id="prevBtn">◀ back</button>
+    <button id="nextBtn" class="primary">generate next ▶</button>
+    <button id="playBtn">play</button>
+    <button id="resetBtn">reset</button>
+  </div>
+  <div class="cap" id="cap"></div>
+  <div class="legend"><span>low</span><div class="legbar"></div><span>high</span></div>
+
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+  const EX = {
+    sentence: {
+      who:'sentence',
+      recog:'An autoregressive model predicts the <b>next</b> token from the <b>left only</b> — it cannot peek ahead. So it writes one token at a time, left to right. That one-directional rule makes it a <b>generator</b>: a decoder (GPT).',
+      seq:['The','antibody','binds','the','antigen'],
+      preds:{ 1:[['antibody',0.55],['protein',0.16],['cell',0.15],['enzyme',0.14]],
+              2:[['binds',0.62],['recognizes',0.16],['blocks',0.13],['targets',0.09]],
+              3:[['the',0.70],['to',0.18],['its',0.12]],
+              4:[['antigen',0.50],['virus',0.22],['target',0.18],['receptor',0.10]] },
+      done:'A complete sentence, written left to right.'
+    },
+    protein: {
+      who:'CDR-H3',
+      recog:'The same, generating an antibody <b>CDR-H3</b> one residue at a time — exactly what an antibody-<b>design</b> model does. It starts from the conserved <b>C</b>, and each new residue is predicted from those already written.',
+      seq:['C','A','R','D','Y','W'],
+      preds:{ 1:[['A',0.60],['S',0.15],['T',0.13],['G',0.12]],
+              2:[['R',0.75],['K',0.12],['T',0.08],['Q',0.05]],
+              3:[['D',0.28],['G',0.24],['E',0.20],['S',0.16],['Y',0.12]],
+              4:[['Y',0.30],['G',0.24],['F',0.20],['S',0.16],['D',0.10]],
+              5:[['W',0.50],['G',0.20],['D',0.18],['F',0.12]] },
+      done:'A complete, valid CDR-H3 — conserved C-A-R start, variable middle, conserved W end.'
+    }
+  };
+  let exKey='sentence', gen=1, playing=null, justAdded=-1;
+
+  function render(){
+    const ex=EX[exKey], n=ex.seq.length;
+    document.getElementById('recog').innerHTML=ex.recog;
+
+    // sequence so far + the "?" slot
+    let chips=ex.seq.slice(0,gen).map((t,i)=>`<div class="tok ${i===justAdded?'fresh':''}">${t}</div>`).join('');
+    if(gen<n) chips+=`<div class="tok q">?</div>`;
+    document.getElementById('seqrow').innerHTML=chips;
+
+    // causal attention matrix over the gen tokens (lower-triangular; recency-weighted, reaches back)
+    const m=document.getElementById('mat');
+    m.style.gridTemplateColumns=`28px repeat(${gen},30px)`;
+    let h=`<div class="ml"></div>`+ex.seq.slice(0,gen).map(t=>`<div class="ml">${t}</div>`).join('');
+    for(let i=0;i<gen;i++){
+      h+=`<div class="ml">${ex.seq[i]}</div>`;
+      // row weights over j<=i
+      const ws=[]; let Z=0; for(let j=0;j<=i;j++){const w=Math.pow(0.85,i-j); ws[j]=w; Z+=w;}
+      const wmax=Math.max(...ws);
+      for(let j=0;j<gen;j++){
+        if(j>i){ h+=`<div class="mc future"></div>`; continue; }
+        h+=`<div class="mc" style="background:${heat(ws[j]/wmax)}"></div>`;
+      }
+    }
+    m.innerHTML=h;
+
+    // next-token prediction
+    const predsEl=document.getElementById('preds');
+    if(gen<n){
+      document.getElementById('predlab').textContent='next token — predicted from the left';
+      const preds=ex.preds[gen], pmax=Math.max(...preds.map(p=>p[1]));
+      predsEl.innerHTML=preds.map((p,idx)=>
+        `<div class="prow"><div class="ptok ${idx===0?'top':''}">${p[0]}</div>`+
+        `<div class="ptrack"><div class="pfill" style="width:${(p[1]*100).toFixed(0)}%;background:${heat(p[1]/pmax)}"></div></div>`+
+        `<div class="pval">${(p[1]*100).toFixed(0)}%</div></div>`).join('');
+    } else {
+      document.getElementById('predlab').textContent='complete';
+      predsEl.innerHTML=`<div class="done">✓ ${ex.done}</div>`;
+    }
+
+    document.getElementById('cap').innerHTML = gen<n
+      ? `Written so far: <b>${ex.seq.slice(0,gen).join(exKey==='protein'?'':' ')}</b> &nbsp;·&nbsp; the model reads only these and predicts position ${gen+1}.`
+      : `Written: <b>${ex.seq.join(exKey==='protein'?'':' ')}</b> — generated one token at a time, each from the left context only.`;
+
+    document.getElementById('bridge').innerHTML=
+      `Notice the matrix is <strong>lower-triangular</strong>: each token sees only the past (the future is masked). Compare the last slide — masked modeling read <strong>both sides</strong> (a full matrix). Same transformer, different mask: <strong>full → encoder</strong> (represent), <strong>triangular → decoder</strong> (generate). GPT writes text; the SFM decoder designs antibodies and drugs.`;
+    document.getElementById('prevBtn').disabled=gen<=1;
+    document.getElementById('nextBtn').disabled=gen>=n;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  function step(d){ const n=EX[exKey].seq.length; const ng=Math.max(1,Math.min(n,gen+d)); justAdded=(d>0&&ng>gen)?ng-1:-1; gen=ng; render(); }
+  function play(){ if(playing){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';return;}
+    document.getElementById('playBtn').textContent='pause';
+    playing=setInterval(()=>{const n=EX[exKey].seq.length; if(gen>=n){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';} else step(1);},1100); }
+  document.getElementById('nextBtn').addEventListener('click',()=>step(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>step(-1));
+  document.getElementById('playBtn').addEventListener('click',play);
+  document.getElementById('resetBtn').addEventListener('click',()=>{if(playing){clearInterval(playing);playing=null;document.getElementById('playBtn').textContent='play';}gen=1;justAdded=-1;render();});
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;gen=1;justAdded=-1;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

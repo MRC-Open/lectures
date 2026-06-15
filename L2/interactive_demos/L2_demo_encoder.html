@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — The Encoder</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  body { padding-bottom: 112px; }
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 760px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .stack { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .seqcol { display: flex; flex-direction: column; gap: 2px; }
+  .seqtok { font-family: var(--font-serif); font-size: 14px; height: 26px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: var(--text-muted); }
+  .seqtok.cur { color: var(--accent); font-weight: 700; }
+  .arrowbox { text-align: center; }
+  .encbox { border: 2px solid var(--accent); border-radius: 8px; padding: 10px 16px; background: var(--accent-faint); font-family: var(--font-sans); font-size: 12px; color: var(--accent); font-weight: 600; text-align: center; line-height: 1.4; min-width: 120px; }
+  .encbox .sub { font-size: 10px; color: var(--text-muted); font-weight: 400; display:block; margin-top:3px; }
+  .opx { font-family: var(--font-serif); font-size: 22px; color: var(--text-muted); }
+
+  .mat { display: inline-grid; gap: 2px; }
+  .mrow-lab { font-family: var(--font-serif); font-size: 13px; color: var(--text-muted); display:flex; align-items:center; justify-content:flex-end; padding-right:7px; }
+  .mrow-lab.pair { color: var(--accent); font-weight: 700; }
+  .mcol-lab { font-family: var(--font-sans); font-size: 9px; color: var(--text-muted); display:flex; align-items:flex-end; justify-content:center; height: 22px; }
+  .mcell { width: 40px; height: 26px; border-radius: 2px; }
+
+  .poolvec { display:inline-grid; gap:2px; }
+  .matcap { text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-top: 8px; font-style: italic; }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.55; }
+  .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Encoder — From Sequence to Meaning</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · A LANGUAGE MODEL TURNS A SEQUENCE INTO A MATRIX</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="stack" id="stack"></div>
+  <div class="matcap" id="matcap"></div>
+</div>
+
+<div class="control-bar">
+  <div class="inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="btns">
+      <button id="prevBtn">← Back</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const D=6, TAU=0.6, LAYERS=3;
+  const dot=(a,b)=>a.reduce((s,_,l)=>s+a[l]*b[l],0);
+  const softmax=(a,t)=>{const m=Math.max(...a);const e=a.map(v=>Math.exp((v-m)/t));const Z=e.reduce((x,y)=>x+y,0);return e.map(v=>v/Z);};
+
+  const EX = {
+    protein: {
+      realDim:1280, realLayers:33, who:'protein',
+      recog:'A <b>protein language model</b> (like ESM-2) is an <b>encoder</b>: it reads a sequence and outputs a <b>matrix</b> — one vector per residue. Stacked <b>self-attention</b> layers let residues exchange information, so each vector ends up encoding not just <i>what</i> the residue is, but <i>where</i> it sits and <i>what it is near</i>.',
+      seq:['C','V','L','K','L','C'],
+      vecs:{ C:[0.6,0.0,0.3,0.2,0.0,0.1], V:[0.8,0.0,0.5,0.0,0.0,0.0], L:[0.9,0.0,0.6,0.0,0.0,0.0], K:[0.0,0.9,0.6,0.3,0.0,0.4] },
+      // contextual output (illustrative): each repeat picks up its neighbours — L₃ (next to K⁺) gains charge, L₅ (next to C) does not
+      outM:[ [0.70,0.00,0.45,0.22,0.00,0.10], [0.78,0.05,0.52,0.10,0.00,0.06], [0.74,0.35,0.58,0.24,0.00,0.16], [0.30,0.74,0.62,0.26,0.00,0.32], [0.80,0.12,0.55,0.10,0.00,0.06], [0.66,0.04,0.44,0.18,0.00,0.16] ],
+      dims:['hydroφ','charge','size','polar','arom.','flex'],
+      pairIdx:[0,2,4,5],
+      rawnote:'identical residues → identical rows: the two <b>L</b>’s (3, 5) and the two <b>C</b>’s (1, 6) start the same',
+      outnote:'now the repeats <b>differ</b>: each <b>L</b> and each <b>C</b> has taken on a different vector, shaped by its own neighbours — the <i>same</i> residue means different things in different contexts',
+      partner:'antigen'
+    },
+    sentence: {
+      realDim:768, realLayers:12, who:'sentence',
+      recog:'A <b>language model</b> (like BERT) is an <b>encoder</b>: it reads a sentence and outputs a <b>matrix</b> — one vector per word. Stacked <b>self-attention</b> layers mix the words, so each vector ends up encoding the word <i>in its context</i>, not in isolation.',
+      seq:['the','antibody','binds','the','antigen'],
+      vecs:{ 'the':[0.1,0.0,0.0,0.6,0.0,0.2], 'antibody':[0.8,0.5,0.0,0.0,0.3,0.0], 'binds':[0.5,0.0,0.7,0.0,0.0,0.3], 'antigen':[0.7,0.4,0.0,0.0,0.4,0.0] },
+      // contextual output (illustrative): each "the" is stained by its noun — the₁ by antibody, the₄ by antigen
+      outM:[ [0.34,0.20,0.05,0.50,0.10,0.16], [0.74,0.46,0.05,0.10,0.28,0.04], [0.46,0.06,0.60,0.06,0.06,0.28], [0.32,0.16,0.04,0.50,0.18,0.15], [0.66,0.40,0.05,0.06,0.36,0.04] ],
+      dims:['d₁','d₂','d₃','d₄','d₅','d₆'],
+      pairIdx:[0,3],
+      rawnote:'the two “<b>the</b>”’s (1, 4) start identical — same word, same row',
+      outnote:'the two “<b>the</b>”’s now <b>differ</b> — each coloured by the noun it sits beside',
+      partner:'target'
+    }
+  };
+  let exKey='protein', step=0;
+
+  function rawX(ex){ return ex.seq.map(t=>ex.vecs[t].slice()); }  // pure identity → identical residues identical
+  // illustrative: interpolate from the context-free input to a hand-set contextual output (real attention
+  // dynamics need trained weights; this cleanly shows the qualitative result — identical rows → distinct rows)
+  function depthsOf(ex){ const a=rawX(ex), b=ex.outM; return [0,1,2,3].map(d=>a.map((row,i)=>row.map((v,k)=>v+(b[i][k]-v)*(d/LAYERS)))); }
+  function pool(X){ const n=X.length, p=Array(D).fill(0); X.forEach(r=>r.forEach((v,k)=>p[k]+=v/n)); return p; }
+
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const tint=v=>heat(Math.max(0,Math.min(1, v/0.85)));
+
+  function matHTML(ex, X, opts={}){
+    const n=X.length;
+    let h=`<div class="mat" style="grid-template-columns:64px repeat(${D},40px);">`;
+    h+=`<div></div>`+ex.dims.map(d=>`<div class="mcol-lab">${d}</div>`).join('');
+    for(let i=0;i<n;i++){
+      const pair = (opts.pair && ex.pairIdx.includes(i));
+      h+=`<div class="mrow-lab ${pair?'pair':''}">${ex.seq[i]}<sub>${i+1}</sub></div>`;
+      for(let k=0;k<D;k++) h+=`<div class="mcell" style="background:${tint(X[i][k])}"></div>`;
+    }
+    return h+`</div>`;
+  }
+
+  const stack=document.getElementById('stack'), matcap=document.getElementById('matcap');
+  const caption=document.getElementById('caption'), counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+
+  function seqcol(ex){ return `<div class="seqcol">`+ex.seq.map((t,i)=>`<div class="seqtok">${t}<sub>${i+1}</sub></div>`).join('')+`</div>`; }
+
+  const STEPS = [
+    { d:0, cap:`<strong>What goes in.</strong> A context-free embedding per residue. Identical residues get <em>identical</em> rows — the model has not yet seen position or neighbours.` },
+    { d:1, cap:`<strong>Layer 1.</strong> Self-attention (slide 17) lets every residue read every other. Each row moves toward what it attends to — context starts to enter.` },
+    { d:2, cap:`<strong>Layer 2.</strong> Stack another. Information has propagated further — each residue's vector now blends in its neighbourhood, so the two identical L's start to pull apart.` },
+    { d:3, out:true, cap:`<strong>Output: the encoder's matrix.</strong> Every row is now a <em>contextual</em> embedding. ESM-2 stacks 33 such layers and uses 1280 numbers per row — we draw 6.` },
+    { pool:true, cap:`<strong>Pool.</strong> Average the rows (mean-pool) → one vector for the whole molecule. That single vector is the encoder's representation of the sequence.` },
+    { dual:true, cap:`<strong>What an SFM does.</strong> Run two encoders — one per partner — and compare their pooled vectors with $\\mathbf{q}\\cdot\\mathbf{k}$: the convergence score from the last slide. <strong>Next: how we train them so q·k means binding.</strong>` }
+  ];
+
+  function render(){
+    const ex=EX[exKey], st=STEPS[step], depths=depthsOf(ex);
+    document.getElementById('recog').innerHTML=ex.recog;
+
+    if(st.dual){
+      const q=pool(depths[LAYERS]);
+      const enc=(lab)=>`<div class="encbox">${lab} encoder<span class="sub">${ex.realLayers} layers · self-attention</span></div>`;
+      stack.innerHTML =
+        `<div style="display:flex;flex-direction:column;gap:18px;align-items:center;">`+
+          `<div class="stack" style="gap:12px;">${enc(ex.who==='protein'?'antibody':'sentence A')} <span class="opx">→</span> <div class="encbox" style="background:white;border-color:var(--rule);color:var(--text)">pool → <b style="color:var(--accent)">q</b></div></div>`+
+          `<div class="stack" style="gap:12px;">${enc(ex.partner)} <span class="opx">→</span> <div class="encbox" style="background:white;border-color:var(--rule);color:var(--text)">pool → <b style="color:var(--accent)">k</b></div></div>`+
+          `<div style="font-family:var(--font-serif);font-size:22px;">compatibility = <b style="color:var(--accent)">q · k</b></div>`+
+        `</div>`;
+      matcap.innerHTML='Two encoders, two pooled vectors, one dot product — the binding score. (slide 19: q·k ↔ −ΔG)';
+    } else if(st.pool){
+      const X=depths[LAYERS], p=pool(X);
+      let pv=`<div class="poolvec" style="grid-template-columns:repeat(${D},40px);">`+p.map(v=>`<div class="mcell" style="background:${tint(v)}"></div>`).join('')+`</div>`;
+      stack.innerHTML = matHTML(ex,X,{pair:true}) + `<div class="arrowbox"><div class="opx">→</div><div style="font-family:var(--font-sans);font-size:11px;color:var(--accent);font-weight:600;">mean-pool</div></div>`+
+        `<div style="text-align:center;"><div class="mcol-lab" style="height:auto;margin-bottom:4px;color:var(--accent);font-weight:600;">protein vector</div>${pv}</div>`;
+      matcap.innerHTML='One row of 6 numbers now stands for the whole sequence.';
+    } else {
+      const X=depths[st.d];
+      stack.innerHTML = seqcol(ex) + `<span class="opx">→</span>` +
+        `<div class="encbox">encoder<span class="sub">${st.d===0?'input':'after layer '+st.d}</span></div>` +
+        `<span class="opx">→</span>` + matHTML(ex,X,{pair:true});
+      matcap.innerHTML = st.d===0 ? ex.rawnote : (st.out ? ex.outnote : 'each row is being updated by the residues it attends to…');
+    }
+
+    caption.innerHTML=st.cap;
+    counter.textContent=`STEP ${step} / ${STEPS.length-1}`;
+    prevBtn.disabled=step===0; nextBtn.disabled=step===STEPS.length-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),caption,matcap]);
+  }
+
+  function next(){ if(step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if(step>0) show(step-1); else esc('prev'); }
+  function show(n){ step=Math.max(0,Math.min(STEPS.length-1,n)); render(); }
+  function esc(d){ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+
+  nextBtn.addEventListener('click',next);
+  prevBtn.addEventListener('click',prev);
+  document.getElementById('resetBtn').addEventListener('click',()=>show(0));
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;step=0;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){ e.preventDefault(); prev(); }
+  });
+
+  render();
+</script>
+
+</body>
+</html>

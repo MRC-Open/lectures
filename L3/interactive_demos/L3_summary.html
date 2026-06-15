@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC — Session 2 Summary</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.55; margin:4px auto 14px; max-width:860px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:9px 16px; }
+  .intro b { color: var(--accent); }
+  .identity { text-align:center; margin:6px auto 4px; }
+  .identity .eq { font-size:21px; }
+  .ilab { font-family: var(--font-sans); font-size:11px; letter-spacing:1px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-top:2px; }
+
+  .halves { display:flex; align-items:stretch; justify-content:center; gap:14px; max-width:980px; margin:16px auto 0; }
+  .half { flex:1; border:1px solid var(--rule); border-radius:8px; padding:11px 16px; background:white; }
+  .half .hh { font-family: var(--font-sans); font-size:11px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700; color: var(--accent); margin-bottom:6px; }
+  .half ul { margin:0; padding-left:16px; font-family: var(--font-serif); font-size:12.5px; line-height:1.6; color: var(--text); }
+  .half li::marker { color: var(--accent); }
+  .merge { display:flex; flex-direction:column; align-items:center; justify-content:center; font-family: var(--font-sans); }
+  .merge .sfm { font-size:15px; font-weight:700; color:#fff; background: var(--accent); border-radius:8px; padding:8px 12px; text-align:center; line-height:1.2; }
+  .merge .ar { color: var(--text-muted); font-size:18px; }
+
+  .results { display:flex; gap:10px; justify-content:center; max-width:980px; margin:16px auto 0; }
+  .rchip { flex:1; text-align:center; border:1px solid var(--rule); border-radius:7px; padding:8px 6px; background:#fbfaff; }
+  .rchip .rv { font-family: var(--font-serif); font-size:18px; font-weight:700; color: var(--accent); }
+  .rchip .rl { font-family: var(--font-sans); font-size:10px; color: var(--text-muted); line-height:1.3; margin-top:1px; }
+
+  .next { border-top:1px solid var(--rule); margin-top:18px; padding-top:13px; text-align:center; font-family: var(--font-serif); font-size:14px; line-height:1.6; color: var(--text); max-width:920px; margin-left:auto; margin-right:auto; }
+  .next b { color: var(--accent); } .next .nlab { font-family: var(--font-sans); font-size:10px; letter-spacing:0.8px; text-transform:uppercase; color: var(--accent); font-weight:700; display:block; margin-bottom:3px; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Summary — The Convergence Equation</h1>
+  <div class="subtitle">SESSION 2 · THE AI SIDE IS COMPLETE</div>
+
+  <div class="intro">Everything in Sessions 1–2 collapses to <b>one identity</b>: the softmax that runs attention <b>is</b> the Boltzmann distribution that governs molecular binding.</div>
+
+  <div class="identity">
+    <div class="eq">$\underbrace{\dfrac{e^{\,\mathbf{q}\cdot\mathbf{k}/\tau}}{\sum_j e^{\,\mathbf{q}\cdot\mathbf{k}_j/\tau}}}_{\text{softmax — attention}} \;=\; \underbrace{\dfrac{e^{-\Delta G/k_BT}}{Z}}_{\text{Boltzmann — binding}}$</div>
+    <div class="ilab">the convergence equation</div>
+  </div>
+
+  <div class="halves">
+    <div class="half">
+      <div class="hh">Part A · the engine</div>
+      <ul>
+        <li>Attention $=\text{softmax}(QK^\top/\sqrt{d_k})V$ — three Lecture-1 operations</li>
+        <li>$\sqrt{d_k}$ is the temperature that keeps softmax learning</li>
+        <li>Cross-attention $\mathbf{q}\cdot\mathbf{k}$ <em>is</em> binding compatibility</li>
+      </ul>
+    </div>
+    <div class="merge"><span class="ar">→</span><div class="sfm">the<br>SFM</div><span class="ar">←</span></div>
+    <div class="half">
+      <div class="hh">Part B · the training</div>
+      <ul>
+        <li>Two encoders → one <b>shared space</b>, scored by cosine</li>
+        <li>Symmetric InfoNCE = the ML estimator of Boltzmann selection — <b>derived, not chosen</b></li>
+        <li>Physics <b>prescribes</b> the model → tiny data suffices</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="rchip"><div class="rv">7</div><div class="rl">molecular domains, one architecture</div></div>
+    <div class="rchip"><div class="rv">~4K–700K</div><div class="rl">training pairs (not 400M)</div></div>
+    <div class="rchip"><div class="rv">up to 98%</div><div class="rl">top-1 retrieval</div></div>
+    <div class="rchip"><div class="rv">~100,000×</div><div class="rl">less data than CLIP</div></div>
+  </div>
+
+  <div class="next">
+    <span class="nlab">next — Session 3 (Lectures 4 + 5)</span>
+    the <b>physics</b>: Boltzmann from maximum entropy, $K_d$ and free energy, and <b>bilinearity</b> — why TF–DNA recognition is exact while antibody–antigen must be learned.
+  </div>
+</div>
+
+<script>
+  if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

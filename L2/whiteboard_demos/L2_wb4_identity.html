@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Attention Is the Convergence Equation</title>
+<script>
+  MathJax = { loader: { load: ['[tex]/color'] }, tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']], packages: {'[+]': ['color']} }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  body { padding-bottom: 116px; }
+  .stage { max-width: 900px; }
+  .eqblock { border: 1px solid var(--rule); border-radius: 6px; padding: 14px 26px; margin: 14px 0; transition: border-color 0.25s, background 0.25s; }
+  .eqblock.lit { border-color: var(--accent); }
+  .eqblock .heading { font-family: var(--font-sans); font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+  .eqblock .eq { font-size: 23px; }
+  .vs { text-align: center; font-family: var(--font-sans); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin: 2px 0; }
+
+  .maps { display: flex; gap: 16px; justify-content: center; margin: 20px 0 4px; flex-wrap: wrap; }
+  .mapchip { border: 1px solid var(--rule); border-radius: 22px; padding: 8px 20px; font-family: var(--font-serif); font-size: 17px; color: var(--text-muted); opacity: 0.35; transition: all 0.25s; }
+  .mapchip.on { opacity: 1; }
+  .mapchip.score.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); }
+  .mapchip.temp.on { border-color: #b07d2a; color: #b07d2a; background: #f7f0e2; }
+  .mapchip .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; display:block; opacity: 0.8; }
+
+  .control-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--rule); padding: 16px 32px; z-index: 100; }
+  .control-bar .inner { max-width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 24px; }
+  .step-caption { flex: 1; font-size: 14px; color: var(--text); line-height: 1.55; }
+  .step-caption strong { color: var(--accent); }
+  .step-counter { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; color: var(--text-muted); white-space: nowrap; }
+  .btns { display: flex; gap: 8px; }
+  .btns button { font-family: var(--font-sans); padding: 8px 16px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btns button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btns button:disabled { color: var(--rule); border-color: var(--rule); cursor: not-allowed; }
+  .btns .primary { background: var(--accent); color: white; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <h1>Attention Is the Convergence Equation</h1>
+  <div class="subtitle">MRC LECTURE 2 · THE IDENTITY THAT MOTIVATES THE WHOLE COURSE</div>
+
+  <div class="eqblock" id="eqA"><div class="heading">Transformer attention · Vaswani 2017</div><div class="eq" id="eqAm"></div></div>
+  <div class="vs">— the same distribution —</div>
+  <div class="eqblock" id="eqB"><div class="heading">Boltzmann binding · 1877</div><div class="eq" id="eqBm"></div></div>
+
+  <div class="maps">
+    <div class="mapchip score" id="m1"><span class="lab">the score</span>$\mathbf{q}\cdot\mathbf{k}_j \;\leftrightarrow\; -\Delta G_j$</div>
+    <div class="mapchip temp" id="m2"><span class="lab">the temperature</span>$\sqrt{d_k} \;\leftrightarrow\; k_BT$</div>
+  </div>
+</div>
+
+<div class="control-bar">
+  <div class="inner">
+    <div class="step-caption" id="caption"></div>
+    <div class="step-counter" id="counter"></div>
+    <div class="btns">
+      <button id="prevBtn">← Back</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // colors as RGB triples (no '#', which is a reserved macro-parameter char in MathJax math mode)
+  const NEU='42,42,42', DIM='207,207,207', ACC='94,58,163', AMB='176,125,42';
+  const defs=(cS,cT,cR)=>`\\definecolor{cS}{RGB}{${cS}}\\definecolor{cT}{RGB}{${cT}}\\definecolor{cR}{RGB}{${cR}}`;
+  const col=(c,x)=>`\\color{${c}}{${x}}`;
+  function eqA(){
+    const num=`${col('cR','\\exp\\big(')}${col('cS','\\mathbf{q}\\!\\cdot\\!\\mathbf{k}_j')}${col('cR','\\,/\\,')}${col('cT','\\sqrt{d_k}')}${col('cR','\\big)')}`;
+    const den=col('cR','\\textstyle\\sum_k \\exp\\big(\\mathbf{q}\\!\\cdot\\!\\mathbf{k}_k\\,/\\,\\sqrt{d_k}\\big)');
+    return `A_j = \\dfrac{${num}}{${den}}`;
+  }
+  function eqB(){
+    const num=`${col('cR','\\exp\\big(')}${col('cS','-\\Delta G_j')}${col('cR','\\,/\\,')}${col('cT','k_BT')}${col('cR','\\big)')}`;
+    const den=col('cR','\\textstyle\\sum_k \\exp\\big(-\\Delta G_k\\,/\\,k_BT\\big)');
+    return `P_j = \\dfrac{${num}}{${den}}`;
+  }
+
+  const STEPS=[
+    { cS:NEU, cT:NEU, cR:NEU, m1:false, m2:false, litA:false, litB:false,
+      caption:`Two equations, 140 years apart. Look at the <strong>shape</strong>: both are $e^{(\\text{score}/\\text{temperature})}$ divided by the sum over all options — a softmax, a Boltzmann distribution. Identical form. Press <strong>Next</strong> to map the pieces.` },
+    { cS:ACC, cT:DIM, cR:DIM, m1:true, m2:false, litA:true, litB:true,
+      caption:`<strong>The score.</strong> Attention's compatibility $\\mathbf{q}\\cdot\\mathbf{k}_j$ sits exactly where physics puts $-\\Delta G_j$. A better query–key match = a more favorable (more negative) binding energy = more weight.` },
+    { cS:DIM, cT:AMB, cR:DIM, m1:false, m2:true, litA:true, litB:true,
+      caption:`<strong>The temperature.</strong> The scale factor $\\sqrt{d_k}$ sits exactly where physics puts $k_BT$ — it sets how sharply the distribution peaks (slide 15 showed $\\sqrt{d_k}$ keeps it graded; here it is literally the thermal energy).` },
+    { cS:ACC, cT:AMB, cR:NEU, m1:true, m2:true, litA:true, litB:true,
+      caption:`<strong>The same equation.</strong> Vaswani designed attention as an engineering trick in 2017; Boltzmann derived the same form from physics in 1877. Not an analogy — with $\\mathbf{q}\\cdot\\mathbf{k}\\leftrightarrow-\\Delta G$ and $\\sqrt{d_k}\\leftrightarrow k_BT$ they are one distribution. The physics <em>requires</em> it. ∎ <span style="color:var(--text-muted)">(full proof: Session 4)</span>` },
+  ];
+
+  let step=0;
+  const caption=document.getElementById('caption'), counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+
+  function show(n){
+    step=Math.max(0,Math.min(STEPS.length-1,n));
+    const st=STEPS[step];
+    const d=defs(st.cS,st.cT,st.cR);
+    document.getElementById('eqAm').innerHTML='$$'+d+eqA()+'$$';
+    document.getElementById('eqBm').innerHTML='$$'+d+eqB()+'$$';
+    document.getElementById('eqA').classList.toggle('lit', st.litA);
+    document.getElementById('eqB').classList.toggle('lit', st.litB);
+    document.getElementById('m1').classList.toggle('on', st.m1);
+    document.getElementById('m2').classList.toggle('on', st.m2);
+    caption.innerHTML=st.caption;
+    counter.textContent=`STEP ${step} / ${STEPS.length-1}`;
+    prevBtn.disabled=step===0; nextBtn.disabled=step===STEPS.length-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('eqAm'),document.getElementById('eqBm'),caption]);
+  }
+  function next(){ if(step<STEPS.length-1) show(step+1); else esc('next'); }
+  function prev(){ if(step>0) show(step-1); else esc('prev'); }
+  function esc(d){ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'mrc-deck-advance',direction:d},'*'); }
+
+  nextBtn.addEventListener('click',next);
+  prevBtn.addEventListener('click',prev);
+  document.getElementById('resetBtn').addEventListener('click',()=>show(0));
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+    if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){ e.preventDefault(); prev(); }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

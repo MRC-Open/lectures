@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — The Three Questions, Computed</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .formula { text-align: center; font-size: 18px; margin: 2px 0 10px 0; }
+
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 10px; max-width: 720px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog .seek { color: var(--accent); font-weight: 700; }
+  .recog .part { font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+
+  .qkv { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 720px; margin: 0 auto 12px; }
+  .qkvcard { border: 1px solid var(--rule); border-radius: 6px; padding: 7px 14px; text-align: center; max-width: 220px; }
+  .qkvcard .ql { font-family: var(--font-serif); font-size: 15px; font-weight: 700; color: var(--accent); }
+  .qkvcard .qd { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
+
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 8px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .pick { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px 0; }
+  .chip { font-family: var(--font-serif); font-size: 16px; padding: 8px 12px; border: 1.5px solid var(--rule); border-radius: 6px; min-width: 30px; text-align: center; color: var(--text); cursor: pointer; position: relative; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.query { border-color: var(--accent); border-width: 2.5px; color: var(--accent); font-weight: 700; background: var(--accent-faint); }
+  .chip.partner { border-style: dashed; border-color: var(--accent); }
+  .chip .tag { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-family: var(--font-sans); font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+
+  .qproj { text-align: center; font-family: var(--font-serif); font-size: 15px; margin: 6px auto 12px; font-variant-numeric: tabular-nums; }
+  .qproj .res { color: var(--accent); font-weight: 700; }
+  .qproj .lab { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+  table.scores { border-collapse: collapse; margin: 0 auto; font-variant-numeric: tabular-nums; }
+  table.scores th { font-family: var(--font-sans); font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); font-weight: 600; padding: 4px 10px; text-align: left; }
+  table.scores td { font-family: var(--font-serif); font-size: 14px; padding: 5px 10px; border-top: 1px solid var(--rail); }
+  table.scores tr.partner td { background: var(--accent-faint); }
+  table.scores tr.selfrow td { font-style: italic; }
+  .tkc { font-weight: 700; }
+  .dp { color: var(--text); }
+  .dp .q { color: var(--accent); }
+  .sc { font-weight: 700; color: var(--text); }
+  .wbar-wrap { display: flex; align-items: center; gap: 8px; }
+  .wbar { width: 120px; height: 14px; background: var(--rail); border-radius: 2px; overflow: hidden; }
+  .wfill { height: 100%; background: var(--accent); }
+  .wpct { font-family: var(--font-sans); font-size: 12px; color: var(--accent); font-weight: 700; min-width: 34px; }
+  .badge { font-family: var(--font-sans); font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--accent); margin-left: 6px; }
+
+  .callout { text-align: center; font-family: var(--font-sans); font-size: 13px; color: var(--accent); font-weight: 600; margin: 14px auto 0; max-width: 720px; }
+  .outline { text-align: center; font-family: var(--font-serif); font-size: 14px; color: var(--text-muted); margin: 8px auto 0; font-variant-numeric: tabular-nums; }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>The Three Questions, Computed</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · NOW THE SEEKER COMPARES DIRECTLY — NO SUMMARY, NO FADE</div>
+
+  <div class="formula">$$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{Q K^\top}{\sqrt{d_k}}\right) V$$</div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="qkv">
+    <div class="qkvcard"><div class="ql">Query &nbsp;q = W<sub>Q</sub>x</div><div class="qd">"what am I looking for?"</div></div>
+    <div class="qkvcard"><div class="ql">Key &nbsp;k = W<sub>K</sub>x</div><div class="qd">"what do I offer?"</div></div>
+    <div class="qkvcard"><div class="ql">Value &nbsp;v = W<sub>V</sub>x</div><div class="qd">"what do I carry?"</div></div>
+  </div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="pick">Click any token to make it the <b>query</b> (default = the seeker). Its query is compared, by dot product, against <b>every</b> key at once.</div>
+  <div class="chips" id="chips"></div>
+
+  <div class="qproj" id="qproj"></div>
+
+  <table class="scores" id="scores"></table>
+
+  <div class="callout" id="callout"></div>
+  <div class="outline" id="outline"></div>
+
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  // learned projections (fixed, illustrative)
+  const WQ=[[0.8,0.3],[-0.2,0.9]], WK=[[0.9,-0.1],[0.2,0.8]], WV=[[0.4,0.6],[0.7,0.5]];
+  const SQRT_DK = Math.SQRT2; // d_k = 2
+
+  const EX = {
+    protein: {
+      tokens:['C','V','Q','L','V','E','S','G','G','C'],
+      emb:{ C:[0.9,0.4],V:[0.3,-0.8],Q:[-0.7,0.2],L:[0.4,-0.7],E:[-0.6,-0.5],S:[-0.2,0.6],G:[0.1,0.9] },
+      partner:0, seeker:9,
+      partnerLabel:'Cys @ pos 1', seekerLabel:'Cys @ pos 10', gap:9,
+      task:'The two <span class="part">cysteines</span> must pair into a disulfide bond — so position 10 must <span class="seek">recognize</span> position 1.'
+    },
+    sentence: {
+      tokens:['The','antibody','that','the','lab','made','binds'],
+      emb:{ 'The':[-0.3,0.8],'antibody':[0.9,0.3],'that':[-0.6,0.1],'the':[-0.3,0.8],'lab':[0.5,0.4],'made':[-0.2,-0.6],'binds':[0.85,0.35] },
+      partner:1, seeker:6,
+      partnerLabel:'"antibody" (subject)', seekerLabel:'"binds" (verb)', gap:5,
+      task:'The verb <span class="seek">"binds"</span> must agree with its subject <span class="part">"antibody"</span> — so it must <span class="seek">recognize</span> a word five positions back.'
+    }
+  };
+  let exKey='protein', query=EX.protein.seeker;
+
+  const f = n => (n<0?'−':'')+Math.abs(n).toFixed(2);
+  const mv = (M,x) => [M[0][0]*x[0]+M[0][1]*x[1], M[1][0]*x[0]+M[1][1]*x[1]];
+  const dot = (a,b) => a[0]*b[0]+a[1]*b[1];
+  function embOf(ex,i){ return ex.emb[ex.tokens[i]]; }
+
+  function softmax(arr){ const m=Math.max(...arr); const e=arr.map(s=>Math.exp((s-m)/SQRT_DK)); const Z=e.reduce((a,c)=>a+c,0); return e.map(x=>x/Z); }
+
+  function render(){
+    const ex=EX[exKey], n=ex.tokens.length;
+    document.getElementById('recog').innerHTML = `<b>Recognition task.</b> ${ex.task}`;
+
+    // chips
+    document.getElementById('chips').innerHTML = ex.tokens.map((tk,i)=>{
+      const tag = i===ex.partner?'<span class="tag">partner</span>':(i===ex.seeker?'<span class="tag">seeker</span>':'');
+      return `<div class="chip ${i===query?'query':''} ${i===ex.partner?'partner':''}" data-i="${i}">${tag}${tk}</div>`;
+    }).join('');
+    document.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>{query=+el.dataset.i;render();}));
+
+    const xq = embOf(ex,query);
+    const q = mv(WQ,xq);
+    document.getElementById('qproj').innerHTML =
+      `<span class="lab">query token "${ex.tokens[query]}", x = [${f(xq[0])}, ${f(xq[1])}]</span><br>` +
+      `q = W<sub>Q</sub>x = [ (0.80)(${f(xq[0])})+(0.30)(${f(xq[1])}), &nbsp;(−0.20)(${f(xq[0])})+(0.90)(${f(xq[1])}) ] = <span class="res">[ ${f(q[0])}, ${f(q[1])} ]</span>`;
+
+    // scores
+    const ks = ex.tokens.map((_,j)=>mv(WK,embOf(ex,j)));
+    const scores = ks.map(k=>dot(q,k));
+    const w = softmax(scores);
+
+    let rows = `<tr><th>position</th><th>key k<sub>j</sub> = W<sub>K</sub>x</th><th>score &nbsp;s<sub>j</sub> = q · k<sub>j</sub></th><th>weight (softmax)</th></tr>`;
+    for(let j=0;j<n;j++){
+      const k=ks[j], cls = j===ex.partner?'partner':(j===query?'selfrow':'');
+      const badge = j===ex.partner?'<span class="badge">partner</span>':(j===query?'<span class="badge">self</span>':'');
+      rows += `<tr class="${cls}">
+        <td><span class="tkc">${j+1}. ${ex.tokens[j]}</span>${badge}</td>
+        <td>[${f(k[0])}, ${f(k[1])}]</td>
+        <td class="dp"><span class="q">(${f(q[0])})</span>(${f(k[0])}) + <span class="q">(${f(q[1])})</span>(${f(k[1])}) = <span class="sc">${f(scores[j])}</span></td>
+        <td><div class="wbar-wrap"><div class="wbar"><div class="wfill" style="width:${(w[j]*100).toFixed(1)}%"></div></div><span class="wpct">${(w[j]*100).toFixed(0)}%</span></div></td>
+      </tr>`;
+    }
+    document.getElementById('scores').innerHTML = rows;
+
+    // callout: distance-blind
+    if (query===ex.seeker){
+      document.getElementById('callout').innerHTML =
+        `The seeker's query scored highest on <b>${ex.partnerLabel}</b> (${f(scores[ex.partner])}) — tied with itself — even though the partner sits <b>${ex.gap} positions away</b>. The dot product never saw the distance. Compare to the RNN, where the partner had faded to ≈0.7%.`;
+    } else {
+      document.getElementById('callout').innerHTML =
+        `"${ex.tokens[query]}" is now the query — its attention lands wherever its key-matches are, computed directly against all ${n} tokens at once.`;
+    }
+
+    // output line (×V)
+    const vs = ex.tokens.map((_,j)=>mv(WV,embOf(ex,j)));
+    const out = [0,0]; for(let j=0;j<n;j++){ out[0]+=w[j]*vs[j][0]; out[1]+=w[j]*vs[j][1]; }
+    document.getElementById('outline').innerHTML =
+      `then × V: &nbsp;output = Σ<sub>j</sub> weight<sub>j</sub> · v<sub>j</sub> = <b>[ ${f(out[0])}, ${f(out[1])} ]</b> &nbsp;— the query token's new vector, built mostly from the tokens it matched.`;
+
+    document.getElementById('bridge').innerHTML =
+      `This is the whole equation: <strong>Q K<sup>⊤</sup></strong> is every query dotted against every key (the scores), <strong>softmax</strong> turns scores into weights, <strong>× V</strong> blends the matched tokens' information. The reference frame is finally right — <strong>token compared directly against token</strong>, every pair at once, distance irrelevant. And that softmax-over-scores is the <strong>same one from Lecture 1 — the Boltzmann distribution of Lecture 4.</strong>`;
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('bridge')]);
+  }
+
+  document.querySelectorAll('[data-ex]').forEach(btn=>btn.addEventListener('click',()=>{
+    exKey=btn.dataset.ex; query=EX[exKey].seeker;
+    document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));
+    render();
+  }));
+
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

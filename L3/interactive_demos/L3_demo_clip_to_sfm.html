@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — The Whole Machine: CLIP & the SFM</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align:center; font-family: var(--font-sans); font-size:12.5px; line-height:1.55; margin:2px auto 8px; max-width:880px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:8px 16px; }
+  .recog b { color: var(--accent); }
+  .toggles { display:flex; gap:8px; justify-content:center; margin:2px 0 8px; }
+  .tbtn { font-family: var(--font-sans); font-size:13px; padding:6px 16px; border:1px solid var(--rule); background:white; color: var(--text-muted); border-radius:4px; cursor:pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight:600; }
+
+  /* pipeline rail */
+  .rail { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; margin:4px auto 12px; }
+  .stg { font-family: var(--font-sans); font-size:10.5px; padding:4px 9px; border:1px solid var(--rule); border-radius:20px; color: var(--text-muted); background:white; white-space:nowrap; cursor:pointer; }
+  .stg:hover { border-color: var(--accent); color: var(--accent); }
+  .stg .n { font-weight:700; margin-right:3px; }
+  .stg.done { color: var(--accent); border-color: var(--accent-faint); background: var(--accent-faint); }
+  .stg.on { color:#fff; border-color: var(--accent); background: var(--accent); font-weight:600; }
+  .railarr { color: var(--rule); font-size:11px; }
+
+  .visw { min-height: 420px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; }
+  .vlab { font-family: var(--font-sans); font-size:12px; color: var(--accent); font-weight:700; text-align:center; margin-bottom:10px; letter-spacing:0.3px; }
+
+  /* batch pairs */
+  .batch { display:flex; flex-direction:column; gap:9px; }
+  .pairrow { display:flex; align-items:center; gap:12px; justify-content:center; }
+  .mol { font-family: var(--font-serif); font-size:15px; border:1.5px solid var(--rule); border-radius:7px; padding:6px 13px; text-align:center; min-width:96px; }
+  .mol .sub { display:block; font-family: var(--font-sans); font-size:9px; color: var(--text-muted); margin-top:1px; }
+  .mol.ab { border-color:#b07d2a; } .mol.ag { border-color: var(--accent); }
+  .mol .em { font-size:22px; }
+  .bind { font-family: var(--font-sans); font-size:10px; color:#3a6b3a; text-align:center; white-space:nowrap; }
+  .bind:before, .bind:after { content:"—"; color: var(--rule); }
+
+  /* encoder flow */
+  .flow { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .seqbox { font-family: var(--font-serif); font-size:16px; letter-spacing:2px; text-align:center; }
+  .seqbox .sl { display:block; font-family: var(--font-sans); font-size:9px; letter-spacing:0; color: var(--text-muted); margin-bottom:2px; }
+  .enc { font-family: var(--font-sans); font-size:10px; color: var(--accent); border:1.5px solid var(--accent); border-radius:5px; padding:6px 9px; text-align:center; background: var(--accent-faint); line-height:1.3; }
+  .enc.ab { color:#b07d2a; border-color:#b07d2a; background:#fbf7ee; }
+  .arr { color: var(--text-muted); font-size:15px; }
+
+  /* matrices */
+  .mblock { text-align:center; }
+  .mbt { font-family: var(--font-sans); font-size:10px; color: var(--text-muted); margin-bottom:4px; }
+  .mbt b { color: var(--accent); }
+  .mat { display:inline-grid; gap:2px; }
+  .ml { font-family: var(--font-serif); font-size:10px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .ml.unit { font-size:12px; color: var(--text); font-weight:600; }
+  .mc { width:34px; height:22px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-family: var(--font-serif); font-size:10px; color: var(--text); font-variant-numeric:tabular-nums; }
+  .mc.big { width:46px; height:30px; font-size:12px; }
+  .mc.diag { outline:2px solid var(--accent); outline-offset:-2px; }
+  .mc.rowhl { outline:2px solid #111; outline-offset:-2px; }
+  .fp .mc { border:1.5px solid var(--accent); }
+
+  .wk { border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; padding:9px 14px; background:#fbfaff; max-width:620px; margin:12px auto 0; font-family: var(--font-serif); font-size:13px; font-variant-numeric:tabular-nums; text-align:left; }
+  .wk .wh { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:5px; }
+  .wk .wl { line-height:1.75; } .wk b { font-weight:700; } .wk .mut { color: var(--text-muted); } .wk .res { color: var(--accent); font-weight:700; font-size:15px; }
+
+  .note { max-width:760px; margin:12px auto 0; font-family: var(--font-sans); font-size:12px; line-height:1.55; color: var(--text); text-align:center; border:1px solid var(--rule); border-radius:7px; padding:9px 16px; background:#fafafa; }
+  .note b { color: var(--accent); }
+  .note .hd { display:block; font-size:10px; letter-spacing:0.6px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:3px; }
+
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:130px; height:9px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+
+  /* step 6 synthesis: comparison table + data gap */
+  .cmp { display:grid; grid-template-columns:118px 1fr 1fr; gap:0; max-width:800px; margin:2px auto 0; border:1px solid var(--rule); border-radius:8px; overflow:hidden; font-family: var(--font-sans); font-size:12.5px; }
+  .cmp > div { padding:7px 13px; border-bottom:1px solid var(--rule); }
+  .cmp .rh { color: var(--text-muted); font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px; display:flex; align-items:center; }
+  .cmp .ch { font-weight:700; font-size:14px; }
+  .cmp .ch.clip { color:#b07d2a; } .cmp .ch.sfm { color: var(--accent); }
+  .cmp .clipcell { background:#fbf7ee; } .cmp .sfmcell { background: var(--accent-faint); }
+  .cmp .same { color:#3a6b3a; font-weight:600; }
+  .cmp > div:nth-last-child(-n+3) { border-bottom:none; }
+  .datawrap { max-width:800px; margin:12px auto 0; }
+  .drow { display:grid; grid-template-columns:78px 1fr 128px; gap:12px; align-items:center; margin:6px 0; }
+  .dl { font-family: var(--font-sans); font-size:13px; font-weight:700; text-align:right; } .dl.clip { color:#b07d2a; } .dl.sfm { color: var(--accent); }
+  .dtrack { height:24px; background: var(--rail); border-radius:4px; overflow:hidden; }
+  .dfill { height:100%; border-radius:4px; transform-origin:left; animation: growx 1s ease-out 0.1s both; } .dfill.clip { background:#b07d2a; } .dfill.sfm { background: var(--accent); }
+  @keyframes growx { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .dv { font-family: var(--font-serif); font-size:13px; font-variant-numeric:tabular-nums; }
+  .gap { text-align:center; font-family: var(--font-serif); font-size:14px; color: var(--text); margin-top:6px; } .gap b { color: var(--accent); font-size:18px; }
+
+  .cap { font-family: var(--font-serif); font-size:14px; line-height:1.55; color: var(--text); text-align:center; max-width:820px; margin:14px auto 0; min-height:40px; }
+  .cap b { color: var(--accent); }
+  .ctrls { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:8px; }
+  .counter { font-family: var(--font-sans); font-size:11px; color: var(--text-muted); letter-spacing:0.5px; }
+  .btns button { font-family: var(--font-sans); font-size:13px; padding:6px 15px; border:1px solid var(--rule); background:white; color: var(--text); border-radius:5px; cursor:pointer; margin:0 3px; }
+  .btns button.primary { border-color: var(--accent); background: var(--accent); color:#fff; }
+  .btns button:disabled { opacity:0.4; cursor:default; }
+  /* step 7 — shared-space capstone */
+  .capstone { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .paths { display:flex; flex-direction:column; gap:16px; }
+  .ppath { display:flex; align-items:center; gap:5px; font-family: var(--font-sans); font-size:10px; }
+  .ppath .pb { border:1px solid var(--rule); border-radius:5px; padding:4px 7px; text-align:center; background:white; color:var(--text); }
+  .ppath .pb.ab { border-color:#b07d2a; color:#b07d2a; } .ppath .pb.ag { border-color:var(--accent); color:var(--accent); }
+  .ppath .pb .ps { display:block; font-family:var(--font-serif); font-size:11px; color:var(--text); letter-spacing:1px; }
+  .ppath .pa { color: var(--text-muted); }
+  .ppath .zb { font-family:var(--font-serif); font-size:13px; font-weight:700; padding:4px 8px; border-radius:5px; }
+  .ppath .zb.ab { color:#b07d2a; background:#fbf7ee; } .ppath .zb.ag { color:var(--accent); background:var(--accent-faint); }
+  .pa.big { font-size:22px; color: var(--text-muted); }
+  .spacebox { text-align:center; }
+  .sblab { font-family: var(--font-sans); font-size:10px; color: var(--accent); font-weight:700; margin-bottom:2px; text-transform:uppercase; letter-spacing:0.5px; }
+  .splbl { font-family: var(--font-sans); font-size:9.5px; font-weight:700; fill: var(--text); }
+  .spcos { font-family: var(--font-serif); font-size:9px; fill: var(--text-muted); }
+  .splegend { display:flex; gap:16px; justify-content:center; margin:4px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .splegend .sw { display:inline-block; width:16px; height:3px; border-radius:2px; vertical-align:middle; margin-right:4px; }
+  .endbox { font-family: var(--font-sans); font-size:13px; font-weight:700; color: var(--text); text-align:center; }
+  .endbox .mut { color: var(--text-muted); font-weight:400; font-size:11px; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Whole Machine — A Batch of Pairs to One Loss</h1>
+  <div class="subtitle">MRC LECTURE 3 · END-TO-END · EVERY MATRIX, FROM SEQUENCES TO INFONCE</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="sfm">SFM · antibody ↔ antigen</button>
+    <button class="tbtn" data-ex="clip">CLIP · image ↔ text</button>
+  </div>
+
+  <div class="rail" id="rail"></div>
+  <div class="visw" id="visw"></div>
+
+  <div class="cap" id="cap"></div>
+  <div class="ctrls">
+    <div class="btns"><button id="prevBtn">← Back</button><button id="nextBtn" class="primary">Next →</button><button id="resetBtn">Reset</button></div>
+    <div class="counter" id="counter"></div>
+  </div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=n=>n.toFixed(2);
+  const dot=(a,b)=>a.reduce((s,_,i)=>s+a[i]*b[i],0), cos=(a,b)=>dot(a,b)/(Math.sqrt(dot(a,a))*Math.sqrt(dot(b,b)));
+  const TAU=0.25;
+  const sm=row=>{const m=Math.max(...row),e=row.map(x=>Math.exp(x-m)),Z=e.reduce((a,b)=>a+b,0);return e.map(x=>x/Z);};
+
+  // ---- data: SFM (default) and CLIP, identical pipeline, different encoders ----
+  const EX = {
+    sfm: {
+      sideA:'antibody', sideB:'antigen', aName:'CDR-H3', bName:'epitope',
+      aEnc:'AntiBERTy', bEnc:'ESM-2', aTag:'Ab', bTag:'Ag',
+      pairs:[
+        {a:'CARDYW', aSub:'Ab1', b:'FNCYF', bSub:'RBD',  za:[0.9,0.2,0.1,0.1], zb:[0.8,0.3,0.2,0.0]},
+        {a:'CARGYW', aSub:'Ab2', b:'GVTQN', bSub:'HA',   za:[0.5,0.8,0.1,0.2], zb:[0.4,0.7,0.0,0.2]},
+        {a:'CARHPW', aSub:'Ab3', b:'ALDPS', bSub:'PD-1', za:[0.1,0.1,0.9,0.2], zb:[0.2,0.0,0.8,0.3]}
+      ],
+      aUnits:['C','A','R','D','Y','W'], bUnits:['F','N','C','Y','F'],
+      aMat:[[0.95,0.85,0.92,0.88,0.91,0.89],[0.10,0.30,0.15,0.25,0.20,0.20],[0.20,0.00,0.15,0.05,0.10,0.10],[0.00,0.20,0.10,0.10,0.05,0.15]],
+      bMat:[[0.85,0.78,0.82,0.79,0.76],[0.30,0.35,0.25,0.30,0.30],[0.20,0.15,0.25,0.20,0.20],[0.00,0.00,0.00,0.00,0.00]],
+      unitWord:'residue', emoji:false,
+      data:'~4,000', origin:'prescribed by physics'
+    },
+    clip: {
+      sideA:'image', sideB:'caption', aName:'image', bName:'caption',
+      aEnc:'ViT', bEnc:'Transformer', aTag:'img', bTag:'txt',
+      pairs:[
+        {a:'🐕', aSub:'img1', b:'“a dog”', bSub:'cap1', za:[0.9,0.2,0.1,0.1], zb:[0.8,0.3,0.2,0.0]},
+        {a:'🐈', aSub:'img2', b:'“a cat”', bSub:'cap2', za:[0.5,0.8,0.1,0.2], zb:[0.4,0.7,0.0,0.2]},
+        {a:'🚗', aSub:'img3', b:'“a car”', bSub:'cap3', za:[0.1,0.1,0.9,0.2], zb:[0.2,0.0,0.8,0.3]}
+      ],
+      aUnits:['p₁','p₂','p₃','p₄'], bUnits:['a','dog','·'],
+      aMat:[[0.95,0.85,0.92,0.88],[0.10,0.30,0.15,0.25],[0.20,0.00,0.15,0.05],[0.00,0.20,0.10,0.10]],
+      bMat:[[0.82,0.78,0.80],[0.30,0.35,0.25],[0.20,0.25,0.15],[0.00,0.00,0.00]],
+      unitWord:'patch / token', emoji:true,
+      data:'400,000,000', origin:'found empirically'
+    }
+  };
+  const N=3, DIMS=['d₁','d₂','d₃','d₄'];
+
+  // matrix renderer: data[row][col]
+  function mat(data,rowL,colL,opts={}){ const nr=data.length,nc=data[0].length; const rlw=opts.rlw||30;
+    let h=`<div class="mat" style="grid-template-columns:${rowL?rlw+'px ':''}repeat(${nc},${opts.big?46:34}px)">`;
+    if(colL){ if(rowL)h+=`<div></div>`; colL.forEach(c=>h+=`<div class="ml unit">${c}</div>`); }
+    for(let r=0;r<nr;r++){ if(rowL)h+=`<div class="ml${opts.seqrow?' unit':''}">${rowL[r]}</div>`;
+      for(let c=0;c<nc;c++){ const v=data[r][c],cls=['mc']; if(opts.big)cls.push('big');
+        if(opts.diag&&r===c)cls.push('diag'); if(opts.rowhl===r||opts.colhl===c)cls.push('rowhl');
+        h+=`<div class="${cls.join(' ')}" style="background:${heat(v)};color:${v>0.55?'#fff':'var(--text)'}">${f2(v)}</div>`; } }
+    return h+`</div>`; }
+  const fp=(v,lab)=>`<div class="mblock"><div class="mbt">${lab}</div><div class="fp">${mat(v.map(x=>[x]),DIMS,null,{})}</div></div>`;
+  const block=(t,m)=>`<div class="mblock"><div class="mbt">${t}</div>${m}</div>`;
+  const work=(title,lines)=>`<div class="wk"><div class="wh">${title}</div>${lines.map(l=>`<div class="wl">${l}</div>`).join('')}</div>`;
+  const molChip=(label,sub,cls,emoji)=>`<div class="mol ${cls}"><span class="${emoji?'em':''}">${label}</span><span class="sub">${sub}</span></div>`;
+
+  const STAGES=['batch','encode','pool','cosine','N×N','InfoNCE','shared space'];
+  let exKey='sfm', step=0; const NS=7;
+
+  // 2-D shared embedding space: both encoders' fingerprints as unit vectors; binding pairs align
+  function sharedSVG(ex){
+    const P=ex.pairs, cx=160, cy=130, r=98, S=P.map(p=>P.map(q=>cos(p.za,q.zb)));
+    const ang=[[96,86],[206,196],[334,344]]; // [ab°, ag°] per pair — within-pair small, across-pair wide
+    const pol=(d,rad)=>[cx+rad*Math.cos(d*Math.PI/180), cy-rad*Math.sin(d*Math.PI/180)];
+    const AB='#b07d2a', AG='var(--accent)';
+    let s=`<svg viewBox="0 0 320 250" xmlns="http://www.w3.org/2000/svg" style="width:320px;height:auto">`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--rule)" stroke-dasharray="3 3"/>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="2.6" fill="var(--text-muted)"/>`;
+    P.forEach((p,i)=>{ const [ax,ay]=pol(ang[i][0],r), [bx,by]=pol(ang[i][1],r);
+      s+=`<line x1="${cx}" y1="${cy}" x2="${ax}" y2="${ay}" stroke="${AB}" stroke-width="2.2"/><circle cx="${ax}" cy="${ay}" r="4.5" fill="${AB}"/>`;
+      s+=`<line x1="${cx}" y1="${cy}" x2="${bx}" y2="${by}" stroke="${AG}" stroke-width="2.2"/><circle cx="${bx}" cy="${by}" r="4.5" fill="${AG}"/>`;
+      const mid=(ang[i][0]+ang[i][1])/2, [lx,ly]=pol(mid,r+16), anc=lx<cx-12?'end':(lx>cx+12?'start':'middle');
+      s+=`<text x="${lx}" y="${ly}" text-anchor="${anc}" class="splbl">${p.aSub}↔${p.bSub}</text>`;
+      s+=`<text x="${lx}" y="${ly+11}" text-anchor="${anc}" class="spcos">cos ${f2(S[i][i])}</text>`; });
+    return s+`</svg>`;
+  }
+
+  function renderRail(){
+    const r=document.getElementById('rail'); let h='';
+    STAGES.forEach((s,i)=>{ const cls = i===step?'on':(i<step?'done':'');
+      h+=`<div class="stg ${cls}" data-i="${i}" title="jump to ${s}"><span class="n">${i+1}</span>${s}</div>`+(i<STAGES.length-1?`<span class="railarr">→</span>`:''); });
+    r.innerHTML=h;
+  }
+
+  function renderStep(){
+    const ex=EX[exKey], vw=document.getElementById('visw'), cap=document.getElementById('cap');
+    const P=ex.pairs, Smat=P.map(p=>P.map(q=>cos(p.za,q.zb)));
+    let h='', c='';
+
+    if(step===0){ // BATCH
+      h=`<div class="vlab">a training batch — ${N} ${ex.sideA}–${ex.sideB} pairs that DO bind (positives)</div>`+
+        `<div class="batch">`+P.map((p,i)=>
+          `<div class="pairrow">${molChip(p.a,`${ex.aName} · ${p.aSub}`,'ab',ex.emoji)}<div class="bind">binds</div>${molChip(p.b,`${ex.bName} · ${p.bSub}`,'ag',false)}</div>`).join('')+`</div>`+
+        `<div class="note"><span class="hd">positives & free negatives</span>These ${N} diagonal pairs are <b>positives</b> — they bind. Pair any ${ex.sideA} with a <b>different</b> ${ex.sideB} in the batch and you get a free <b>in-batch negative</b>. So ${N} labels give <b>${N} positives + ${N*N-N} negatives</b> — no extra annotation needed. That is the trick contrastive learning runs on.</div>`;
+      c=`We start with a handful of <b>known binding pairs</b>. The whole rest of the machine turns these into a single number to minimise — and manufactures its own negatives for free.`;
+    }
+    else if(step===1){ // ENCODE
+      h=`<div class="vlab">encode — each sequence → its own encoder → an embedding matrix (one column per ${ex.unitWord})</div>`+
+        `<div class="flow">`+
+          `<div class="seqbox"><span class="sl">${ex.sideA} · ${P[0].aSub}</span>${P[0].a}</div><span class="arr">→</span>`+
+          `<div class="enc ab">${ex.aEnc}</div><span class="arr">→</span>`+
+          block(`<b>${ex.sideA}</b> embedding matrix`, mat(ex.aMat,DIMS,ex.aUnits,{}))+
+        `</div>`+
+        `<div class="flow" style="margin-top:14px">`+
+          `<div class="seqbox"><span class="sl">${ex.sideB} · ${P[0].bSub}</span>${P[0].b}</div><span class="arr">→</span>`+
+          `<div class="enc">${ex.bEnc}</div><span class="arr">→</span>`+
+          block(`<b>${ex.sideB}</b> embedding matrix`, mat(ex.bMat,DIMS,ex.bUnits,{}))+
+        `</div>`+
+        `<div class="note">Two <b>different</b> encoders — one per side (${ex.aEnc} for the ${ex.sideA}, ${ex.bEnc} for the ${ex.sideB}). <b>This is the only part that changes between CLIP and an SFM</b> — swap the encoders, and everything downstream is identical.</div>`;
+      c=`Each input becomes a <b>matrix</b>: one column per ${ex.unitWord}, each column a vector of d numbers (4 shown; 1,280 in ESM-2). We show ${P[0].aSub}/${P[0].bSub}; the other ${N-1} pairs encode the same way.`;
+    }
+    else if(step===2){ // POOL
+      const za=P[0].za, zb=P[0].zb;
+      h=`<div class="vlab">pool — collapse each matrix to one fingerprint vector (the [CLS] / attention-pool, slide 27)</div>`+
+        `<div class="flow">`+
+          block(`${ex.sideA} matrix`, mat(ex.aMat,DIMS,ex.aUnits,{}))+`<span class="arr">→ pool →</span>`+fp(za,`z<sub>${P[0].aSub}</sub>`)+
+          `<span class="arr" style="margin:0 14px">&nbsp;</span>`+
+          block(`${ex.sideB} matrix`, mat(ex.bMat,DIMS,ex.bUnits,{}))+`<span class="arr">→ pool →</span>`+fp(zb,`z<sub>${P[0].bSub}</sub>`)+
+        `</div>`+
+        `<div class="flow" style="margin-top:16px;gap:24px">`+
+          block(`Q — all ${N} ${ex.sideA} fingerprints`, mat(P.map(p=>p.za),P.map(p=>p.a),DIMS,{rlw:66,seqrow:true}))+
+          block(`K — all ${N} ${ex.sideB} fingerprints`, mat(P.map(p=>p.zb),P.map(p=>p.b),DIMS,{rlw:66,seqrow:true}))+
+        `</div>`;
+      c=`Pooling averages each matrix's columns into <b>one vector per molecule</b>. Do it for every pair → two stacks of fingerprints, <b>Q</b> (${ex.sideA}s) and <b>K</b> (${ex.sideB}s). Now everything is one vector each.`;
+    }
+    else if(step===3){ // COSINE
+      const a=P[0].za,b0=P[0].zb,b1=P[1].zb;
+      const d=dot(a,b0),ma=Math.sqrt(dot(a,a)),mb=Math.sqrt(dot(b0,b0));
+      h=`<div class="vlab">cosine — score every ${ex.sideA} fingerprint against every ${ex.sideB} fingerprint (slide 28)</div>`+
+        `<div class="flow" style="gap:18px">`+fp(a,`z<sub>${P[0].aSub}</sub>`)+`<span class="arr">vs</span>`+fp(b0,`z<sub>${P[0].bSub}</sub>`)+`<span class="arr">→ cos →</span><div style="font-family:var(--font-serif);font-size:26px;color:#c83636;font-weight:700">${f2(cos(a,b0))}</div></div>`+
+        work(`plug in the numbers — the true pair: ${P[0].aSub} × ${P[0].bSub}`, [
+          `cos = (z·z′) / (|z|·|z′|)`,
+          `z·z′ = ${a.map((x,i)=>`(${f2(x)})(${f2(b0[i])})`).join(' + ')} = <b>${f2(d)}</b>`,
+          `|z| = ${f2(ma)},  |z′| = ${f2(mb)}  →  cos = ${f2(d)} / (${f2(ma)}×${f2(mb)}) = <span class="res">${f2(cos(a,b0))}</span>`,
+          `<span class="mut">a wrong pair, ${P[0].aSub} vs ${P[1].bSub}: cos = ${f2(cos(a,b1))} — low, as a negative should be</span>`
+        ]);
+      c=`Cosine is the L1 similarity from Lecture 1 — <b>high (→1)</b> for a real binder, <b>low (→0)</b> for a mismatch. One number per (${ex.sideA}, ${ex.sideB}) pair.`;
+    }
+    else if(step===4){ // N×N MATRIX
+      h=`<div class="vlab">the N×N matrix — every pairwise cosine at once (slide 29)</div>`+
+        block('S = cos(Q, K)', mat(Smat,P.map(p=>p.aSub),P.map(p=>p.bSub),{diag:true,big:true}))+
+        `<div class="legend"><span>0 · in-batch negative</span><div class="legbar"></div><span>1 · true binder</span></div>`+
+        `<div class="note">The <b>diagonal</b> (outlined) is the ${N} true pairs — push <b>↑</b>. Every off-diagonal cell is an <b>in-batch negative</b> (${ex.sideA} × wrong ${ex.sideB}) — push <b>↓</b>. ${N} labels, a whole ${N}×${N} grid of training signal.</div>`;
+      c=`The batch becomes one <b>${N}×${N} similarity matrix</b>. Training has a single, simple shape: make the <b>diagonal red</b> and <b>everything else blue</b>.`;
+    }
+    else if(step===5){ // INFONCE
+      const Prow=Smat.map(r=>sm(r.map(x=>x/TAU)));
+      const losses=Prow.map((p,i)=>-Math.log(p[i]));
+      const L=(losses.reduce((a,b)=>a+b,0)/N);
+      h=`<div class="vlab">InfoNCE — softmax each row ÷ τ, −log the diagonal, average (slides 30–32)</div>`+
+        `<div class="flow" style="gap:20px;align-items:flex-start">`+
+          block('S / τ → softmax each row = P', mat(Prow,P.map(p=>p.aSub),P.map(p=>p.bSub),{diag:true,big:true}))+
+        `</div>`+
+        work('plug in the numbers — the loss', [
+          `each row → a distribution; take −log of the diagonal:`,
+          `ℒᵢ = [${losses.map(l=>l.toFixed(2)).join(', ')}]`,
+          `ℒ = mean = ${f2(L)} &nbsp;<span class="mut">— averaged both ways (rows & columns) = the symmetric InfoNCE</span>`
+        ])+
+        `<div class="note"><b>softmax = Boltzmann.</b> Minimising −log P(true pair) = maximising the Boltzmann probability each ${ex.sideA} binds its real ${ex.sideB}. One number, and it <b>is</b> the physics.</div>`;
+      c=`The entire ${N}×${N} matrix collapses to <b>one loss</b>. Gradient descent on it drags every diagonal cosine up and every off-diagonal down at once. <b>Next:</b> zoom out — the whole machine, and the space it builds.`;
+    }
+    else { // SHARED SPACE — the whole machine + the geometry it learns
+      h=`<div class="vlab">putting it together — two encoders, one shared embedding space</div>`+
+        `<div class="capstone">`+
+          `<div class="paths">`+
+            `<div class="ppath"><span class="pb ab">${ex.aName}<span class="ps">${P[0].a}</span></span><span class="pa">→</span><span class="pb ab">${ex.aEnc}</span><span class="pa">→</span><span class="pb">pool</span><span class="pa">→</span><span class="zb ab">z<sub>${ex.aTag}</sub></span></div>`+
+            `<div class="ppath"><span class="pb ag">${ex.bName}<span class="ps">${P[0].b}</span></span><span class="pa">→</span><span class="pb ag">${ex.bEnc}</span><span class="pa">→</span><span class="pb">pool</span><span class="pa">→</span><span class="zb ag">z<sub>${ex.bTag}</sub></span></div>`+
+          `</div>`+
+          `<div class="pa big">→</div>`+
+          `<div class="spacebox"><div class="sblab">one shared embedding space</div>${sharedSVG(ex)}`+
+            `<div class="splegend"><span><span class="sw" style="background:#b07d2a"></span>${ex.sideA} fingerprints</span><span><span class="sw" style="background:var(--accent)"></span>${ex.sideB} fingerprints</span></div></div>`+
+          `<div class="pa big">→</div>`+
+          `<div class="endbox">cos<br><span class="mut">→ InfoNCE</span></div>`+
+        `</div>`+
+        `<div class="note" style="max-width:860px"><b>The whole point in one picture.</b> Both encoders write into <b>one shared space</b>. Contrastive training rotates every vector until each ${ex.sideA} points the <b>same way</b> as its true ${ex.sideB} (cos → 1) and away from all others (cos → 0). That geometry <b>is</b> the learned binding model — to find a partner for any molecule, look for the <b>nearest direction</b>.</div>`;
+      c=`Two sequences in, one number out — and in between, a space where <b>direction means binding</b>. That is an SFM. <b>Next:</b> the published results across domains.`;
+    }
+
+    vw.innerHTML=h; cap.innerHTML=c;
+    renderRail();
+    document.getElementById('counter').textContent=`STEP ${step+1} / ${NS}`;
+    document.getElementById('prevBtn').disabled=step===0;
+    document.getElementById('nextBtn').disabled=step===NS-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([vw,cap]);
+  }
+
+  function go(d){ const ns=step+d; if(ns>=0&&ns<NS){ step=ns; renderStep(); } }
+  document.getElementById('nextBtn').addEventListener('click',()=>go(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>go(-1));
+  document.getElementById('resetBtn').addEventListener('click',()=>{step=0;renderStep();});
+  document.getElementById('rail').addEventListener('click',(e)=>{ const chip=e.target.closest('.stg'); if(chip){ step=+chip.dataset.i; renderStep(); } });
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));renderStep();}));
+  document.getElementById('recog').innerHTML='Everything from slides 27–32 is <b>one pipeline</b>. Here we run a whole <b>batch</b> of pairs through it end to end — sequences → encoders → fingerprints → cosine matrix → one loss. <b>CLIP is the identical machine</b> on images & text. Step through to see every matrix; toggle to compare.';
+  renderStep();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); if(step<NS-1){go(1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); if(step>0){go(-1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

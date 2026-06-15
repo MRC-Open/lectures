@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — CLIP: Two Encoders, One Space</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 800px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 14px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .arch { display:grid; grid-template-columns: 1fr 1.2fr; gap: 26px; max-width: 880px; margin: 0 auto; align-items: center; }
+  .lane { }
+  .lane .lh { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 700; color: var(--accent); text-align:center; margin-bottom: 8px; }
+  .pairrow { display:flex; align-items:center; gap: 10px; margin: 6px 0; justify-content: center; }
+  .inp { display:flex; align-items:center; gap: 8px; border: 1px solid var(--rule); border-radius: 7px; padding: 6px 12px; min-width: 170px; }
+  .inp .ic { font-size: 22px; line-height: 1; }
+  .inp .tx { font-family: var(--font-serif); font-size: 14px; color: var(--text); }
+  .enc { font-family: var(--font-sans); font-size: 10px; color: var(--accent); border:1.5px solid var(--accent); border-radius: 5px; padding: 4px 7px; text-align:center; background: var(--accent-faint); white-space:nowrap; }
+  .arrow { color: var(--text-muted); font-size: 16px; }
+
+  .space { }
+  .space .lh { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 700; color: var(--accent); text-align:center; margin-bottom: 4px; }
+  svg.sp { display:block; width:100%; height:auto; border: 1px solid var(--rule); border-radius: 8px; background: white; }
+  .spnote { text-align:center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 6px; }
+
+  .facts { display:flex; gap: 22px; justify-content:center; flex-wrap:wrap; max-width: 860px; margin: 16px auto 0; font-family: var(--font-sans); font-size: 12.5px; }
+  .fact { text-align:center; }
+  .fact .n { font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: var(--accent); }
+  .fact .l { color: var(--text-muted); font-size: 11px; }
+
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>CLIP — Two Encoders, One Shared Space</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · LEARNING TO CONNECT TWO WORLDS</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="clip">CLIP · image ↔ text</button>
+    <button class="tbtn" data-ex="calm">SFM · antibody ↔ antigen</button>
+  </div>
+
+  <div class="arch">
+    <div class="lane" id="lane"></div>
+    <div class="space">
+      <div class="lh">the shared embedding space</div>
+      <svg class="sp" id="sp" viewBox="0 0 360 280"></svg>
+      <div class="spnote" id="spnote"></div>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"></div>
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  const EX = {
+    clip: {
+      recog:'<b>CLIP</b> (OpenAI, 2021) learned to connect <b>images and language</b> — not by hand-labelling pictures, but by reading <b>400 million (image, caption) pairs</b> straight off the web. Two encoders map a picture and its caption into <b>one shared space</b>, trained so a photo lands next to the words that describe it.',
+      aLab:'image encoder', aSub:'ViT-L/14', bLab:'text encoder', bSub:'Transformer',
+      pairs:[ {ic:'🐕', tx:'“a photo of a dog”'}, {ic:'🐈', tx:'“a photo of a cat”'}, {ic:'🚗', tx:'“a red car”'}, {ic:'🍕', tx:'“a slice of pizza”'} ],
+      spnote:'each photo (●) lands next to its caption (○) — and far from the others',
+      facts:[ ['400 M','image–text pairs (web)'], ['32,768','batch — pairs per step'], ['76.2%','zero-shot ImageNet'] ],
+      bridge:'How do you <em>train</em> two encoders to agree like this, with no labels? You play a <strong>matching game</strong> over a whole batch at once — the contrastive objective. That is next.'
+    },
+    calm: {
+      recog:'An <b>SFM</b> is CLIP for molecules. Swap the photo for an <b>antibody</b> and the caption for its <b>antigen</b>: <b>AntiBERTy</b> encodes the antibody, <b>ESM-2</b> the antigen, into <b>one shared space</b> — trained so a binder lands next to its target. The <b>identical recipe</b>, prescribed by physics.',
+      aLab:'antibody encoder', aSub:'AntiBERTy', bLab:'antigen encoder', bSub:'ESM-2',
+      pairs:[ {ic:'🧬', tx:'CDR-H3 → RBD'}, {ic:'🧬', tx:'CDR-H3 → HA stem'}, {ic:'🧬', tx:'CDR-H3 → PD-1'}, {ic:'🧬', tx:'CDR-H3 → TNFα'} ],
+      spnote:'each antibody (●) lands next to the antigen it binds (○)',
+      facts:[ ['~10³','antibody–antigen pairs'], ['2','frozen encoders + a head'], ['= physics','softmax = Boltzmann'] ],
+      bridge:'Same machine as CLIP — but where CLIP needed 400 million pairs, an SFM needs a few thousand, because the objective is <strong>prescribed by physics</strong>. First, how the training works: the <strong>matching game</strong> (next).'
+    }
+  };
+  let exKey='clip';
+
+  // 4 clusters; each pair = a filled dot (a) + a ring (b) close together
+  const centers=[[0.24,0.30],[0.74,0.26],[0.30,0.74],[0.76,0.72]];
+
+  function render(){
+    const ex=EX[exKey];
+    document.getElementById('recog').innerHTML=ex.recog;
+
+    // input lane: pairs → encoders
+    let h=`<div class="lh">${ex.aLab} &nbsp;+&nbsp; ${ex.bLab}</div>`;
+    ex.pairs.slice(0,3).forEach(p=>{
+      h+=`<div class="pairrow"><div class="inp"><span class="ic">${p.ic}</span><span class="tx">${p.tx}</span></div></div>`;
+    });
+    h+=`<div class="pairrow" style="gap:14px;margin-top:10px;"><div class="enc">${ex.aLab}<br>${ex.aSub}</div><span class="arrow">→ ● &nbsp; ○ ←</span><div class="enc">${ex.bLab}<br>${ex.bSub}</div></div>`;
+    document.getElementById('lane').innerHTML=h;
+
+    // shared space scatter
+    const W=360,H=280, sx=x=>20+x*(W-40), sy=y=>16+y*(H-40);
+    let s='';
+    ex.pairs.forEach((p,i)=>{
+      const c=centers[i];
+      const ax=sx(c[0]-0.05), ay=sy(c[1]-0.04), bx=sx(c[0]+0.06), by=sy(c[1]+0.05);
+      s+=`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="var(--accent)" stroke-width="1.4" opacity="0.5"/>`;
+      s+=`<circle cx="${ax}" cy="${ay}" r="6" fill="var(--accent)"/>`;
+      s+=`<text x="${ax}" y="${ay-9}" text-anchor="middle" font-size="15">${p.ic}</text>`;
+      s+=`<circle cx="${bx}" cy="${by}" r="6" fill="white" stroke="var(--accent)" stroke-width="2"/>`;
+      const lab = exKey==='clip' ? p.tx.replace(/[“”]/g,'').split(' ').slice(-1)[0] : p.tx.split('→')[1].trim();
+      s+=`<text x="${bx}" y="${by+16}" text-anchor="middle" font-family="var(--font-sans)" font-size="9" fill="var(--text-muted)">${lab}</text>`;
+    });
+    s+=`<text x="${W/2}" y="${H-4}" text-anchor="middle" font-family="var(--font-sans)" font-size="9" fill="var(--text-muted)">● = ${exKey==='clip'?'image':'antibody'} &nbsp; ○ = ${exKey==='clip'?'caption':'antigen'} &nbsp; close = high cosine</text>`;
+    document.getElementById('sp').innerHTML=s;
+    document.getElementById('spnote').innerHTML=ex.spnote;
+
+    document.getElementById('facts').innerHTML=ex.facts.map(f=>`<div class="fact"><div class="n">${f[0]}</div><div class="l">${f[1]}</div></div>`).join('');
+    document.getElementById('bridge').innerHTML=ex.bridge + (exKey==='clip'?' &nbsp;<span style="color:var(--text-muted)">— Radford et al. 2021</span>':'');
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

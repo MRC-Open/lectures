@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L2 — Cross-Attention</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 760px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .mwrap { display: flex; justify-content: center; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+  .axisL { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-sans); font-size: 11px; font-weight: 600; color: var(--accent); align-self: center; }
+  .axisT { font-family: var(--font-sans); font-size: 11px; font-weight: 600; color: var(--accent); text-align: center; margin-bottom: 4px; }
+  .grid { display: inline-grid; gap: 2px; }
+  .lbl { font-family: var(--font-serif); color: var(--text-muted); display:flex; align-items:center; justify-content:center; }
+  .lbl.col { font-size: 11px; }
+  .lbl.row { justify-content:flex-end; padding-right:6px; cursor:pointer; font-size: 14px; }
+  .lbl.row.sel { color: var(--accent); font-weight: 700; }
+  .lbl .seek { font-family: var(--font-sans); font-size: 9px; margin-left:5px; color: var(--text-muted); }
+  .cell { height: 34px; border-radius: 2px; display:flex; align-items:center; justify-content:center; font-family: var(--font-sans); font-size: 10px; font-variant-numeric: tabular-nums; cursor:pointer; }
+  .rowhi { outline: 2px solid var(--accent); outline-offset:-2px; }
+
+  .shadenote { text-align:center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); font-style: italic; margin: 10px auto 0; max-width: 620px; line-height: 1.5; }
+  .legend { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; font-family: var(--font-sans); font-size:10px; color: var(--text-muted); }
+  .legbar { width:120px; height:9px; border-radius:5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .wk { border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; padding:9px 14px; background:#fbfaff; max-width:660px; margin:12px auto 0; font-family: var(--font-serif); font-size:13px; font-variant-numeric:tabular-nums; text-align:left; }
+  .wk .wh { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:5px; }
+  .wk .wl { line-height:1.7; } .wk b { color: var(--text); font-weight:700; } .wk .res { color: var(--accent); font-weight:700; } .wk .mut { color: var(--text-muted); }
+  .readout { text-align:center; font-family: var(--font-sans); font-size: 13px; color: var(--text); margin: 12px auto 0; max-width: 720px; min-height: 18px; }
+  .readout b { color: var(--accent); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+
+  <h1>Cross-Attention — Two Molecules Read Each Other</h1>
+  <div class="subtitle">MRC LECTURE 2 · INTUITION · QUERY FROM ONE SEQUENCE, KEYS FROM ANOTHER — THIS IS BINDING</div>
+
+  <div class="recog" id="recog"></div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Antibody → Antigen · PLM</button>
+    <button class="tbtn" data-ex="sentence">Translation · LLM</button>
+  </div>
+
+  <div class="mwrap">
+    <div class="axisL" id="axisL"></div>
+    <div>
+      <div class="axisT" id="axisT"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <div class="legend"><span>0 · no contact</span><div class="legbar"></div><span>1 · strong contact</span><span style="margin-left:4px;font-style:italic;">attention weight</span></div>
+  <div class="wk" id="wk"></div>
+  <div class="readout" id="readout"></div>
+  <div class="bridge" id="bridge"></div>
+
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const f2=x=>(x<0?'−':'')+Math.abs(x).toFixed(2);
+  const SQ=0.5;  // sharper than √dₖ so the complementary contact clearly dominates (illustrative)
+  const oh=(n,i)=>Array.from({length:n},(_,j)=>j===i?1:0);
+  // PLM: query residues encoded as "what I seek in a partner", keys as "what I offer" → q·k high when COMPLEMENTARY.
+  const EX = {
+    protein: {
+      qlab:'antibody paratope (query)', klab:'antigen epitope (key / value)', cw:54, clab:14,
+      recog:'<b>Cross-attention:</b> the query comes from the <b>antibody</b>, the keys and values from the <b>antigen</b>. Each paratope residue searches the epitope for a <b>complementary</b> contact — a + charge (<b>R</b>) seeks a − (<b>E</b>), a hydrophobe (<b>L</b>) seeks a pocket (<b>I</b>). <b>This rectangular matrix is the binding interface itself.</b>',
+      qtok:['R','Y','L','D'], qseek:['seeks −','seeks aromatic','seeks hydrophobic','seeks +'],
+      ktok:['E','F','I','K','G','S'],
+      // shared dims: [−charge partner, aromatic, hydrophobic, +charge partner]
+      qvecs:[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],
+      kvecs:[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1],[0,0,0,0],[0,0,0.4,0]],
+      noun:'residue', src:'antigen', contact:'salt bridge / contact',
+      note:'Each antibody residue locks onto its chemically complementary partner: <b>R→E</b> (salt bridge), <b>Y→F</b> (π-stack), <b>L→I</b> (hydrophobic), <b>D→K</b> (salt bridge). The bright cells <b>are</b> the contact map.'
+    },
+    sentence: {
+      qlab:'French output (query)', klab:'English source (key / value)', cw:84, clab:11,
+      recog:'<b>Cross-attention</b> also drives <b>translation</b>: each French word queries the <b>English source</b> for the word it should align to — <b>by meaning, not position</b>. Watch the adjective and noun swap order.',
+      ktok:['antibody','blocks','viral','entry'],
+      qtok:['anticorps','bloque','entrée','virale'],
+      align:[0,1,3,2],
+      noun:'word', src:'source', contact:'alignment',
+      note:'The first two align straight across, but the last two <b>cross over</b>: French puts the adjective after the noun, so <b>entrée→entry</b> and <b>virale→viral</b> swap places. Cross-attention finds the right word by <b>meaning, not position</b> — exactly what a fixed, diagonal alignment could not do.'
+    }
+  };
+  (function(){ const s=EX.sentence, n=s.ktok.length; s.kvecs=s.ktok.map((_,i)=>oh(n,i)); s.qvecs=s.align.map(a=>oh(n,a)); })();
+  let exKey='protein', sel=0;
+
+  const dot=(a,b)=>a.reduce((s,_,l)=>s+a[l]*b[l],0);
+  function roww(ex,i){ const qi=ex.qvecs[i]; const s=ex.kvecs.map(kv=>dot(qi,kv)); const m=Math.max(...s); const e=s.map(v=>Math.exp((v-m)/SQ)); const Z=e.reduce((a,b)=>a+b,0); return {s, w:e.map(v=>v/Z)}; }
+
+  function render(){
+    const ex=EX[exKey], nq=ex.qtok.length, nk=ex.ktok.length;
+    document.getElementById('recog').innerHTML=ex.recog;
+    document.getElementById('axisL').textContent=ex.qlab+' ↓';
+    document.getElementById('axisT').textContent=ex.klab+' →';
+    const grid=document.getElementById('grid');
+    grid.style.gridTemplateColumns=`130px repeat(${nk}, ${ex.cw}px)`;
+    let h=`<div class="lbl"></div>`+ex.ktok.map(t=>`<div class="lbl col" style="font-size:${ex.clab}px">${t}</div>`).join('');
+    for(let i=0;i<nq;i++){
+      const {w}=roww(ex,i), rmax=Math.max(...w);
+      const seek = ex.qseek ? `<span class="seek">${ex.qseek[i]}</span>` : '';
+      h+=`<div class="lbl row ${i===sel?'sel':''}" data-row="${i}">${ex.qtok[i]}${seek}</div>`;
+      for(let j=0;j<nk;j++){ const v=w[j], t=v/rmax; h+=`<div class="cell ${i===sel?'rowhi':''}" data-row="${i}" style="width:${ex.cw}px;background:${heat(t)};color:${t>0.55?'#fff':'var(--text)'}">${v>=0.12?(v*100).toFixed(0):''}</div>`; }
+    }
+    grid.innerHTML=h;
+    grid.querySelectorAll('[data-row]').forEach(el=>el.addEventListener('click',()=>{sel=+el.dataset.row;render();}));
+
+    const {s,w}=roww(ex,sel), top=w.indexOf(Math.max(...w));
+    const seektxt = ex.qseek ? ` (${ex.qseek[sel]})` : '';
+    const isProt = exKey==='protein', qv=ex.qvecs[sel], kv=ex.kvecs[top];
+    const prov = isProt
+      ? `<b>①</b> each paratope residue is a query q = <b>what it seeks</b>, each epitope residue a key k = <b>what it offers</b> — both over [−charge, aromatic, hydrophobic, +charge]. &nbsp;${ex.qtok[sel]} (${ex.qseek[sel]}) → q = [${qv.map(f2).join(', ')}]; &nbsp;${ex.ktok[top]} → k = [${kv.map(f2).join(', ')}]`
+      : `<b>①</b> each French word is a query q = <b>its meaning</b>, each English word a key k = <b>its meaning</b> — q·k is high when they mean the same thing`;
+    const score2 = isProt
+      ? `<b>②</b> raw score sⱼ = q·kⱼ — to ${ex.ktok[top]}: ${qv.map((x,l)=>`(${f2(x)})(${f2(kv[l])})`).join(' + ')} = <b>${f2(s[top])}</b> <span class="mut">— all [${s.map(f2).join(', ')}]; high only when complementary</span>`
+      : `<b>②</b> raw score sⱼ = q·kⱼ = [${s.map(f2).join(', ')}] <span class="mut">— highest where the meanings align</span>`;
+    document.getElementById('wk').innerHTML=
+      `<div class="wh">where this matrix row comes from — ${ex.qtok[sel]}${seektxt} ${isProt?'searches the antigen':'aligns to the source'}</div>`+
+      `<div class="wl">${prov}</div>`+
+      `<div class="wl">${score2}</div>`+
+      `<div class="wl"><b>③</b> softmax(s ÷ τ), τ=${SQ} → <b>the percentages in the matrix</b> [${w.map(v=>(v*100).toFixed(0)+'%').join(', ')}] → strongest ${ex.contact} with <span class="res">${ex.ktok[top]}</span> (${(w[top]*100).toFixed(0)}%)</div>`;
+    document.getElementById('readout').innerHTML=`<b>${ex.qtok[sel]}</b>${seektxt} → strongest ${ex.contact} with <b>${ex.ktok[top]}</b> (${(w[top]*100).toFixed(0)}%). ${ex.note}`;
+    document.getElementById('bridge').innerHTML=`The matrix is now <strong>rectangular</strong> — antibody on one axis, antigen on the other. Cross-attention scores chemical <strong>complementarity</strong>, and the bright cells trace the binding interface. <strong>This is molecular recognition as one equation</strong>: q·k is the binding compatibility, the same score that becomes −ΔG in the convergence equation next.`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('readout')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;sel=0;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

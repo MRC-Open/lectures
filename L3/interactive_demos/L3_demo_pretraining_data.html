@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — Where the Representations Come From</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align: center; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; margin: 2px auto 12px; max-width: 780px; color: var(--text); background: var(--accent-faint); border-radius: 6px; padding: 8px 14px; }
+  .recog b { color: var(--accent); }
+  .toggles { display: flex; gap: 8px; justify-content: center; margin: 2px 0 14px 0; }
+  .tbtn { font-family: var(--font-sans); font-size: 13px; padding: 7px 16px; border: 1px solid var(--rule); background: white; color: var(--text-muted); border-radius: 4px; cursor: pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight: 600; }
+
+  .plot-wrap { background: white; }
+  svg.land { display: block; width: 100%; height: auto; }
+  .axislab { font-family: var(--font-sans); font-size: 11px; fill: var(--text-muted); }
+  .curve { fill: none; stroke: var(--text-muted); stroke-width: 2; opacity: 0.55; }
+  .anno { font-family: var(--font-sans); font-size: 11px; font-weight: 600; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; max-width: 820px; margin: 14px auto 0; }
+  .facts { border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; }
+  .facts .fh { font-family: var(--font-sans); font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .facts .row { display:flex; gap:8px; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; padding: 2px 0; }
+  .facts .k { color: var(--text-muted); min-width: 70px; }
+  .facts .v { color: var(--text); }
+  .facts .v b { color: var(--accent); }
+
+  .frozen { border: 1.5px solid var(--accent); background: var(--accent-faint); border-radius: 8px; padding: 12px 16px; max-width: 800px; margin: 16px auto 0; font-family: var(--font-sans); font-size: 13px; line-height: 1.6; text-align: center; color: var(--text); }
+  .frozen b { color: var(--accent); }
+  .frozen .hd { display:block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+
+  .legend { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px auto 0; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); }
+  .legbar { width: 150px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(43,108,176), rgb(238,238,238), rgb(200,54,54)); }
+  .bridge { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 16px; font-size: 15px; line-height: 1.7; color: var(--text); text-align: center; }
+  .bridge strong { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Where the Representations Come From</h1>
+  <div class="subtitle">MRC LECTURE 3 · INTUITION · PRETRAINED ON EVOLUTION / THE WEB — AND WHY YOU CAN FREEZE THEM</div>
+
+  <div class="recog" id="recog"></div>
+  <div class="toggles">
+    <button class="tbtn on" data-ex="protein">Protein · PLM</button>
+    <button class="tbtn" data-ex="sentence">Sentence · LLM</button>
+  </div>
+
+  <div class="plot-wrap"><svg class="land" id="land" viewBox="0 0 720 250"></svg></div>
+  <div class="legend"><span id="legLo">low energy</span><div class="legbar"></div><span id="legHi">high energy</span></div>
+
+  <div class="cols">
+    <div class="facts" id="facts"></div>
+    <div class="facts" id="facts2"></div>
+  </div>
+
+  <div class="frozen" id="frozen"></div>
+  <div class="bridge" id="bridge"></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+  const EX = {
+    protein: {
+      recog:'A protein language model never saw a textbook of biophysics. It only saw <b>natural protein sequences</b> — and natural proteins are <b>not random</b>: they are the rare ones evolution kept because they <b>fold and function</b> (low energy). Learning to predict them forces the model to learn the rules.',
+      yLo:'low energy — folds & functions', yHi:'high energy — misfolds',
+      xlab:'sequence space (all possible amino-acid strings)',
+      valleyLab:'real proteins — evolution’s survivors (the training data)',
+      randLab:'random sequences — high energy, don’t fold, never in the data',
+      f1:{ h:'the data', rows:[['source','<b>UniRef</b> — ~250 M natural protein sequences'],['antibodies','<b>OAS</b> — ~558 M antibody sequences → AntiBERTy'],['age','4 billion years of evolution, sampled']] },
+      f2:{ h:'what it learns', rows:[['task','predict masked residues'],['to do that','must learn <b>biochemistry</b>: what folds, what packs, what pairs'],['result','embeddings carry structure, stability, function']] },
+      frozen:'Trained on <b>hundreds of millions</b> of proteins, ESM-2’s representation is general and rich. You <b>freeze</b> it — keep its weights fixed — and just read out its embeddings, adding a small task head on top. Retraining it on your few hundred sequences would <b>overfit and erase</b> what evolution taught it.'
+    },
+    sentence: {
+      recog:'A language model never saw a grammar book. It only saw <b>real text</b> — and real sentences are <b>not random</b>: they are the ones people actually wrote because they are grammatical and meaningful (low “energy”). Predicting them forces the model to learn language.',
+      yLo:'plausible — grammatical & meaningful', yHi:'implausible — gibberish',
+      xlab:'string space (all possible word sequences)',
+      valleyLab:'real text — what people wrote (the training data)',
+      randLab:'random word strings — gibberish, never in the data',
+      f1:{ h:'the data', rows:[['source','the web, books, Wikipedia'],['scale','<b>trillions</b> of words'],['cost','freely available, no labels']] },
+      f2:{ h:'what it learns', rows:[['task','predict masked / next words'],['to do that','must learn <b>grammar, meaning, facts</b>'],['result','embeddings carry semantics and syntax']] },
+      frozen:'Trained on <b>trillions</b> of words, the model’s representation is general. You <b>freeze</b> it and read out the embeddings, adding a small task head. The big, expensive learning is already done — you reuse it.'
+    }
+  };
+  let exKey='protein';
+
+  // global energy landscape: valleys = natural sequences (low energy), peaks/scatter = random (high energy)
+  const L=56, T=18, W=620, H=176; // plot box
+  const centers=[0.16,0.38,0.60,0.83];
+  function eNorm(x){ let g=0; centers.forEach(c=>g=Math.max(g,Math.exp(-Math.pow((x-c)/0.075,2)))); return 0.9-0.62*g; } // 0 low .. 1 high
+  const sx=x=>L+x*W;
+
+  function render(){
+    const ex=EX[exKey];
+    document.getElementById('recog').innerHTML=ex.recog;
+    document.getElementById('legLo').textContent=exKey==='protein'?'low energy':'plausible';
+    document.getElementById('legHi').textContent=exKey==='protein'?'high energy':'gibberish';
+
+    // build curve (low energy at bottom): screenY = T + (1 - (1-e))... define yOf(e)= T + e*H where e=energy(0 low..1 high); low energy small y=top — we want bottom, so invert energy for display
+    const yOf=e=> T + (1-e)*H + 0; // e high → small y (top); e low → large y (bottom). good: peaks(top), valleys(bottom)
+    let pts=''; for(let i=0;i<=80;i++){ const x=i/80; pts+=`${sx(x).toFixed(1)},${yOf(eNorm(x)).toFixed(1)} `; }
+
+    let h='';
+    // axes
+    h+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+H}" stroke="var(--rule)"/>`;
+    h+=`<line x1="${L}" y1="${T+H}" x2="${L+W}" y2="${T+H}" stroke="var(--rule)"/>`;
+    h+=`<text class="axislab" x="${L+W/2}" y="${T+H+30}" text-anchor="middle">${ex.xlab}</text>`;
+    h+=`<text class="axislab" x="${L-44}" y="${T+10}" >${ex.yHi}</text>`;
+    h+=`<text class="axislab" x="${L-44}" y="${T+H}" >${ex.yLo}</text>`;
+    // curve
+    h+=`<polyline class="curve" points="${pts}"/>`;
+    // training dots in valleys (low energy = blue)
+    centers.forEach((c,k)=>{ const e=eNorm(c); const y=yOf(e); for(let d=-1;d<=1;d++){ const xx=c+d*0.035; const ee=eNorm(xx); h+=`<circle cx="${sx(xx).toFixed(1)}" cy="${(yOf(ee)-6).toFixed(1)}" r="5" fill="${heat(ee)}" stroke="white" stroke-width="1"/>`; } });
+    // random sequences high (high energy = red), faded
+    [0.27,0.50,0.72].forEach(c=>{ h+=`<circle cx="${sx(c).toFixed(1)}" cy="${yOf(0.93).toFixed(1)}" r="5" fill="${heat(0.93)}" opacity="0.5" stroke="white" stroke-width="1"/>`; });
+    // annotations
+    h+=`<text class="anno" x="${sx(0.5)}" y="${yOf(0.93)-12}" text-anchor="middle" fill="#b4453a">${ex.randLab}</text>`;
+    h+=`<text class="anno" x="${sx(0.38)}" y="${yOf(eNorm(0.38))+30}" text-anchor="middle" fill="var(--accent)">${ex.valleyLab}</text>`;
+    document.getElementById('land').innerHTML=h;
+
+    const fhtml=f=>`<div class="fh">${f.h}</div>`+f.rows.map(r=>`<div class="row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('');
+    document.getElementById('facts').innerHTML=fhtml(ex.f1);
+    document.getElementById('facts2').innerHTML=fhtml(ex.f2);
+    document.getElementById('frozen').innerHTML=`<span class="hd">why you can freeze it</span>${ex.frozen}`;
+    document.getElementById('bridge').innerHTML=
+      `The training data <em>is</em> the low-energy landscape, sampled by ${exKey==='protein'?'evolution':'people'}. By predicting it, the model learns the shape of that landscape — and stores it in every embedding. <strong>So what, exactly, does an embedding carry?</strong>`;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('recog'),document.getElementById('bridge')]);
+  }
+  document.querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>{exKey=b.dataset.ex;document.querySelectorAll('[data-ex]').forEach(x=>x.classList.toggle('on',x.dataset.ex===exKey));render();}));
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown'], pv=['ArrowLeft','PageUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

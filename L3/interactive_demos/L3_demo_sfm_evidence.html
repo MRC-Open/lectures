@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L3 — One Architecture, Every Domain</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .recog { text-align:center; font-family: var(--font-sans); font-size:12.5px; line-height:1.5; margin:2px auto 8px; max-width:920px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:7px 16px; }
+  .recog b { color: var(--accent); }
+
+  .dirtog { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin:6px auto 10px; font-family: var(--font-sans); }
+  .dirtog .dl { font-size:10.5px; letter-spacing:0.4px; text-transform:uppercase; color: var(--text-muted); font-weight:700; }
+  .db { font-size:13px; padding:6px 15px; border:1px solid var(--rule); background:white; color: var(--text-muted); border-radius:4px; cursor:pointer; }
+  .db.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight:600; }
+  .dnote { font-size:11.5px; color: var(--text); font-style:italic; margin-left:6px; }
+  .dnote b { color: var(--accent); font-style:normal; }
+
+  .main { display:flex; gap:26px; justify-content:center; align-items:flex-start; max-width:1120px; margin:0 auto; }
+  .chart { flex:0 0 600px; }
+  svg { width:600px; height:auto; display:block; }
+  .gl { stroke: var(--rail); stroke-width:1; }
+  .axln { stroke: var(--rule); stroke-width:1.2; }
+  .atick { font-family: var(--font-sans); font-size:9px; fill: var(--text-muted); }
+  .axtitle { font-family: var(--font-sans); font-size:10px; fill: var(--text-muted); font-weight:700; letter-spacing:0.4px; text-transform:uppercase; }
+  .pt { transition: cy 0.55s cubic-bezier(.4,0,.2,1); }
+  .ptlbl { font-family: var(--font-sans); font-size:10px; font-weight:600; transition: y 0.55s cubic-bezier(.4,0,.2,1); }
+  .ann { font-family: var(--font-sans); font-size:10px; fill: var(--text-muted); font-style:italic; }
+
+  .tbl { flex:0 0 430px; font-family: var(--font-sans); font-size:11px; }
+  .trow { display:grid; grid-template-columns: 168px 84px 1fr 1fr; align-items:center; border-bottom:1px solid var(--rule); }
+  .trow.head { font-size:9px; letter-spacing:0.3px; text-transform:uppercase; color: var(--text-muted); font-weight:700; border-bottom:1.5px solid var(--rule); }
+  .trow > div { padding:5px 7px; }
+  .trow.clip { background:#fbf7ee; }
+  .trow.sfm:hover { background: var(--accent-faint); }
+  .dom { font-weight:700; color: var(--text); } .dom .en { display:block; font-weight:400; font-size:9px; color: var(--text-muted); margin-top:1px; }
+  .dom .sn { color: var(--accent); font-weight:400; font-size:9.5px; }
+  .trow.clip .dom .sn { color:#b07d2a; }
+  .pairs { font-family: var(--font-serif); font-variant-numeric:tabular-nums; }
+  .r1 { font-family: var(--font-serif); font-variant-numeric:tabular-nums; text-align:right; color: var(--text-muted); }
+  .r1 .nt { display:block; font-family: var(--font-sans); font-size:8px; }
+  .col-on { color: var(--accent); font-weight:700; background:rgba(94,58,163,0.06); }
+  .col-on.clipx { color:#b07d2a; background:rgba(176,125,42,0.07); }
+
+  .cards { display:flex; gap:12px; max-width:1120px; margin:12px auto 0; }
+  .card { flex:1; border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:7px; padding:8px 14px; background:#fbfaff; font-family: var(--font-sans); font-size:11px; line-height:1.45; }
+  .card .ch { font-size:9.5px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-bottom:3px; }
+  .card b { color: var(--accent); }
+  .card.dt { border-left-color:#b07d2a; } .card.dt .ch { color:#b07d2a; } .card.dt b { color:#b07d2a; }
+  .src { text-align:center; font-family: var(--font-sans); font-size:9px; color: var(--text-muted); margin-top:9px; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>One Architecture, Every Domain — The Evidence</h1>
+  <div class="subtitle">MRC LECTURE 3 · PUBLISHED RESULTS · WHEN PHYSICS PRESCRIBES THE ARCHITECTURE</div>
+
+  <div class="recog">The <b>same machine</b> — dual encoders → pool → cosine → symmetric InfoNCE (learned k<sub>B</sub>T) — across molecular recognition. <b>No architecture search</b>; each is the <b>first SFM</b> for its domain. Plot the <b>training data</b> against <b>top-1 retrieval</b>: the SFMs sit <b>top-left</b> (high performance, tiny data) while CLIP needed <b>400 million</b> pairs.</div>
+
+  <div class="dirtog">
+    <span class="dl">retrieval direction</span>
+    <button class="db on" data-d="fwd">agent → target</button>
+    <button class="db" data-d="rev">target → agent</button>
+    <span class="dnote" id="dnote"></span>
+  </div>
+
+  <div class="main">
+    <div class="chart"><svg id="svg" viewBox="0 0 600 348" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="tbl" id="tbl"></div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="ch">why so little data is enough</div>Transformer <b>softmax = the Boltzmann distribution</b> of binding (Luce 1959). The identity <b>prescribes</b> the architecture, so training is <b>parameter estimation in a known equation</b>, not function approximation. CALM hits its result on <b>~100,000× less data</b> than CLIP; every SFM is <b>~5–7M params, &lt;1 h on one GPU</b>.</div>
+    <div class="card dt"><div class="ch">direction matters — and it's asymmetric</div>Each SFM retrieves <b>both ways</b>. The easier direction follows the molecular asymmetry: <b>MHC→peptide (93%)</b> beats peptide→MHC (65%); <b>miRNA→mRNA (98%)</b> beats mRNA→miRNA (25%). The <b>target→agent</b> direction is the <b>discovery</b> direction — given a disease target, retrieve the binder.</div>
+  </div>
+
+  <div class="src" id="src"></div>
+</div>
+
+<script>
+  // domain | encoders | pairs | fwd (agent→target) | rev (target→agent) | dir labels
+  const D=[
+    {sfm:'CLIP', dom:'vision–language', en:'ViT + Transformer', pairs:400000000, fwd:76.2, rev:76.2, clip:true, fl:'image→text', rl:'(0-shot baseline)'},
+    {sfm:'CALM', dom:'antibody–antigen', en:'AntiBERTy + ESM-2', pairs:4138, fwd:17.8, rev:17.8, fl:'antibody→antigen', rl:'antigen→antibody'},
+    {sfm:'tSFM', dom:'transcription factor', en:'ESM-2 + DNABERT-2', pairs:20540, fwd:83.1, rev:25.8, fl:'TF→DNA', rl:'DNA→TF'},
+    {sfm:'crisprSFM', dom:'CRISPR off-target', en:'DNABERT-2 ×2', pairs:30342, fwd:95.4, rev:74.8, fl:'guide→site', rl:'site→guide'},
+    {sfm:'mhcSFM', dom:'peptide–MHC I', en:'ESM-2 + ESM-2', pairs:168710, fwd:65.1, rev:93.3, fl:'peptide→MHC', rl:'MHC→peptide'},
+    {sfm:'eSFM', dom:'enzyme–substrate', en:'ESM-2 + MoLFormer', pairs:177442, fwd:86.3, rev:61.8, fl:'enzyme→substrate', rl:'substrate→enzyme'},
+    {sfm:'mir-SFM', dom:'microRNA', en:'DNABERT-2 ×2', pairs:206692, fwd:98.0, rev:25.4, fl:'miRNA→mRNA', rl:'mRNA→miRNA'},
+    {sfm:'dtSFM', dom:'drug–target', en:'MoLFormer + ESM-2', pairs:714747, fwd:56.0, rev:54.0, fl:'drug→protein', rl:'protein→drug'}
+  ];
+  let dir='fwd';
+
+  // ---- scatter geometry ----
+  const PL=46, PR=512, PT=16, PB=300; // plot box (px), x:46→512, y:16(=100%)→300(=0%)
+  const xpx=n=>PL+(Math.log10(n)-3)/6*(PR-PL);
+  const ypx=r=>PB-(r/100)*(PB-PT);
+  const AMBER='#b07d2a', PURP='var(--accent)';
+
+  function buildSvg(){
+    let s='';
+    // y gridlines + ticks (0,25,50,75,100)
+    for(let r=0;r<=100;r+=25){ const y=ypx(r);
+      s+=`<line class="gl" x1="${PL}" y1="${y}" x2="${PR}" y2="${y}"/>`;
+      s+=`<text class="atick" x="${PL-6}" y="${y+3}" text-anchor="end">${r}%</text>`; }
+    // x gridlines + ticks (10^3..10^9)
+    for(let e=3;e<=9;e++){ const x=xpx(Math.pow(10,e));
+      s+=`<line class="gl" x1="${x}" y1="${PT}" x2="${x}" y2="${PB}"/>`;
+      s+=`<text class="atick" x="${x}" y="${PB+14}" text-anchor="middle">10${sup(e)}</text>`; }
+    // axes
+    s+=`<line class="axln" x1="${PL}" y1="${PT}" x2="${PL}" y2="${PB}"/>`;
+    s+=`<line class="axln" x1="${PL}" y1="${PB}" x2="${PR}" y2="${PB}"/>`;
+    s+=`<text class="axtitle" x="${(PL+PR)/2}" y="${PB+30}" text-anchor="middle">training pairs (log scale)</text>`;
+    s+=`<text class="axtitle" transform="translate(13,${(PT+PB)/2}) rotate(-90)" text-anchor="middle">top-1 retrieval R@1</text>`;
+    // annotation: data divider + CLIP zone
+    s+=`<line class="gl" x1="${xpx(2e6)}" y1="${PT}" x2="${xpx(2e6)}" y2="${PB}" stroke-dasharray="3 3"/>`;
+    s+=`<text class="ann" x="${xpx(1.6e5)}" y="${PB-8}" text-anchor="middle">every SFM ↙ &nbsp;|&nbsp; CLIP ↘</text>`;
+    s+=`<text class="ann" x="${xpx(2.4e7)}" y="${ypx(90)}" text-anchor="middle">CLIP: power-law<tspan x="${xpx(2.4e7)}" dy="12">data needed →</tspan></text>`;
+    // points + labels
+    D.forEach(d=>{ const x=xpx(d.pairs), y=ypx(d[dir]), col=d.clip?AMBER:PURP;
+      s+=`<circle id="c-${d.sfm}" class="pt" cx="${x}" cy="${y}" r="${d.clip?7:6}" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
+      const lx=x+(d.clip?0:10), ly=y+(d.clip?-12:3), anc=d.clip?'middle':'start';
+      s+=`<text id="l-${d.sfm}" class="ptlbl" x="${lx}" y="${ly}" text-anchor="${anc}" fill="${col}">${d.sfm}</text>`; });
+    document.getElementById('svg').innerHTML=s;
+  }
+  function sup(e){ return ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'][e]; }
+
+  function setDir(){
+    D.forEach(d=>{ if(d.clip) return; const y=ypx(d[dir]);
+      const c=document.getElementById('c-'+d.sfm); if(c) c.setAttribute('cy',y);
+      const l=document.getElementById('l-'+d.sfm); if(l) l.setAttribute('y',y+3); });
+    // table column highlight
+    document.querySelectorAll('.r1.fwd').forEach(e=>e.classList.toggle('col-on',dir==='fwd'));
+    document.querySelectorAll('.r1.rev').forEach(e=>e.classList.toggle('col-on',dir==='rev'));
+    document.getElementById('dnote').innerHTML = dir==='fwd'
+      ? 'given the <b>agent</b> (antibody, drug, enzyme, miRNA…), retrieve its partner'
+      : 'given the <b>target</b> (antigen, protein, substrate…), retrieve the binder — the <b>discovery</b> direction';
+    document.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',b.dataset.d===dir));
+  }
+
+  function buildTable(){
+    let h=`<div class="trow head"><div>domain &nbsp;·&nbsp; encoders</div><div>pairs</div><div style="text-align:right">agent→target</div><div style="text-align:right">target→agent</div></div>`;
+    D.forEach(d=>{
+      h+=`<div class="trow ${d.clip?'clip':'sfm'}">`+
+        `<div class="dom">${d.dom} <span class="sn">${d.sfm}</span><span class="en">${d.en}</span></div>`+
+        `<div class="pairs">${d.pairs.toLocaleString('en-US')}</div>`+
+        `<div class="r1 fwd ${d.clip?'clipx':''}">${d.fwd.toFixed(1)}%<span class="nt">${d.fl}</span></div>`+
+        `<div class="r1 rev ${d.clip?'clipx':''}">${d.clip?'—':d.rev.toFixed(1)+'%'}<span class="nt">${d.rl}</span></div>`+
+      `</div>`;
+    });
+    document.getElementById('tbl').innerHTML=h;
+  }
+
+  document.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{ dir=b.dataset.d; setDir(); }));
+  buildSvg(); buildTable(); setDir();
+  document.getElementById('src').innerHTML='CLIP: Radford et al. 2021 (76.2% = ImageNet zero-shot, a different task) · CALM: Lee et al. 2026 · tSFM/crisprSFM/mhcSFM/eSFM/mir-SFM: Reddy, “Vibe Coding SFMs” 2026 (pool-512 R@1, random ≈ 0.2%) · dtSFM v3: Reddy 2026';
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>
