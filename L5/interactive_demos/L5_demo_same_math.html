@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Same Math, Different Path</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+
+  .shared { text-align: center; margin: 12px auto 0; }
+  .shared .eq { font-family: var(--font-serif); font-size: 22px; display: inline-block; background: var(--accent-faint); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 22px; }
+  .shared .eq .sc { color: #2b6cb0; font-weight: 700; } .shared .eq .tp { color: #c83636; font-weight: 700; } .shared .eq sub { font-size: 0.62em; }
+  .shared .lbl { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .cmp { display: grid; grid-template-columns: 1fr 150px 1fr; gap: 0 10px; max-width: 960px; margin: 14px auto 0; align-items: stretch; }
+  .colh { font-family: var(--font-sans); font-weight: 700; font-size: 14px; text-align: center; padding: 6px; border-radius: 7px 7px 0 0; }
+  .colh.given { background: #eef3f8; color: #2b6cb0; } .colh.emer { background: #f3effb; color: var(--accent); }
+  .rlab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; }
+  .cell { font-family: var(--font-sans); font-size: 13px; padding: 8px 14px; border-bottom: 1px solid var(--rail); display: flex; align-items: center; }
+  .cell.given { background: #f7fafc; justify-content: flex-end; text-align: right; color: #2b6cb0; }
+  .cell.emer { background: #faf7fe; justify-content: flex-start; color: var(--accent); }
+  .cell b { color: var(--text); }
+  .grow { display: contents; }
+
+  .foot { max-width: 900px; margin: 14px auto 0; text-align: center; font-family: var(--font-serif); font-size: 16px; color: var(--text); }
+  .foot b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Same Math, Different Path</h1>
+  <div class="subtitle">Given vs. emergent — and the architecture is identical</div>
+
+  <div class="shared">
+    <div class="eq">P(j) = <span class="sc">softmax</span>(<span class="sc">q·k<sub>j</sub></span> / <span class="tp">τ</span>)</div>
+    <div class="lbl">the one equation that runs both columns</div>
+  </div>
+
+  <div class="cmp">
+    <div class="colh given">① GIVEN bilinearity</div><div></div><div class="colh emer">② EMERGENT bilinearity</div>
+
+    <div class="cell given"><span>energy decomposes in <b>raw sequence</b></span></div>
+    <div class="rlab">where ΔG<br>decomposes</div>
+    <div class="cell emer"><span>energy decomposes in a <b>learned space</b></span></div>
+
+    <div class="cell given"><span><b>physical</b> features — nucleotide × position</span></div>
+    <div class="rlab">features</div>
+    <div class="cell emer"><span><b>learned</b> features — abstract dimensions</span></div>
+
+    <div class="cell given"><span><b>tabulated / measured</b> (Berg–von Hippel, SantaLucia)</span></div>
+    <div class="rlab">parameters</div>
+    <div class="cell emer"><span><b>learned</b> from data (pretrained encoders)</span></div>
+
+    <div class="cell given"><span>small D<sub>c</sub> → <b>fast</b>, little data</span></div>
+    <div class="rlab">data need</div>
+    <div class="cell emer"><span>large D<sub>c</sub> → <b>slower</b>, more data</span></div>
+
+    <div class="cell given" style="border-bottom:none"><span>TF–DNA · miRNA–mRNA · CRISPR guide</span></div>
+    <div class="rlab">domains</div>
+    <div class="cell emer" style="border-bottom:none"><span>antibody–antigen · TCR–pMHC · enzyme · drug–target · peptide–MHC</span></div>
+  </div>
+
+  <div class="foot">Only the <b>encoder, the data, and the hard-negatives</b> differ — <b>never the architecture.</b></div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

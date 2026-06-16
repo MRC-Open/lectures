@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — The Encoding Problem</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 10px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 0 auto; }
+
+  .pipe { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px auto 0; max-width: 980px; }
+  .zone { border: 1px solid var(--rule); border-radius: 9px; padding: 7px 16px; width: 296px; text-align: center; }
+  .zone.raw { border-top: 4px solid #c83636; background: #fcf6f6; }
+  .zone.emb { border-top: 4px solid #2b6cb0; background: #f5f9fc; }
+  .zone .zt { font-family: var(--font-sans); font-size: 12px; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 6px; }
+  .zone.raw .zt { color: #c83636; } .zone.emb .zt { color: #2b6cb0; }
+  #rawfig { width: 250px; } #vecfig { width: 220px; }
+  .verdict { font-family: var(--font-serif); font-size: 20px; font-weight: 700; margin: 4px 0 2px; }
+  .verdict.bad { color: #c83636; } .verdict.good { color: #2b6cb0; }
+  .zn { font-family: var(--font-sans); font-size: 11px; line-height: 1.45; color: var(--text-muted); }
+
+  .arrow { font-family: var(--font-sans); font-size: 24px; color: var(--accent); }
+  .enc { text-align: center; }
+  .encbox { font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 9px; padding: 14px 12px; line-height: 1.2; width: 96px; }
+  .encbox .es { display: block; font-size: 9.5px; font-weight: 500; opacity: 0.85; margin-top: 4px; }
+  .enc .cob { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-top: 6px; }
+
+  .eq { text-align: center; font-family: var(--font-serif); font-size: 21px; margin: 9px auto 1px; }
+  .eq sub { font-size: 0.6em; }
+  .eq .enc1 { color: var(--accent); font-weight: 700; }
+  .ab { color: #5a6b7a; font-weight: 700; } .ag { color: #a05e23; font-weight: 700; } .qk { color: #2b6cb0; font-weight: 700; }
+  .eqsub { text-align: center; font-family: var(--font-serif); font-size: 15px; color: var(--text); margin-bottom: 2px; }
+
+  .defbox { max-width: 880px; margin: 8px auto 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .deftbl { width: 100%; border-collapse: collapse; }
+  .deftbl td { padding: 3px 14px; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.4; vertical-align: baseline; border-bottom: 1px solid var(--rail); color: var(--text-muted); }
+  .deftbl tr:last-child td { border-bottom: none; }
+  .deftbl .sym { font-family: var(--font-serif); font-weight: 700; color: var(--text); white-space: nowrap; width: 158px; }
+  .deftbl b { color: var(--text); font-weight: 600; }
+
+  .take { text-align: center; font-family: var(--font-serif); font-size: 14.5px; margin: 9px auto 0; color: var(--text); max-width: 900px; line-height: 1.5; }
+  .take b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Encoding Problem</h1>
+  <div class="subtitle">The bilinearity still exists — the encoder has to find it</div>
+
+  <div class="pipe">
+    <!-- raw sequence space -->
+    <div class="zone raw">
+      <div class="zt">raw sequence space</div>
+      <svg id="rawfig" viewBox="0 0 268 92" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="verdict bad">−&Delta;G &ne; q · k</div>
+      <div class="zn"><b>two</b> molecules, and binding couples residue <b>pairs across</b> them (scattered, last slide) — no per-position table (PWM) fits</div>
+    </div>
+
+    <div class="arrow">→</div>
+
+    <!-- encoder -->
+    <div class="enc">
+      <div class="encbox">learned<br>encoder<span class="es">ESM-2 · AntiBERTy</span></div>
+      <div class="cob">change<br>of basis</div>
+    </div>
+
+    <div class="arrow">→</div>
+
+    <!-- embedding space -->
+    <div class="zone emb">
+      <div class="zt">learned embedding space</div>
+      <svg id="vecfig" viewBox="0 0 240 116" width="220" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="verdict good">−&Delta;G &asymp; q · k</div>
+      <div class="zn">the encoder absorbed the fold + context — a dot product is what's left</div>
+    </div>
+  </div>
+
+  <div class="eq">&Delta;G(<span class="ab">Ab</span>, <span class="ag">Ag</span>) &asymp; −<span class="enc1">Encoder(<span class="ab">Ab</span>)</span> · <span class="enc1">Encoder(<span class="ag">Ag</span>)</span> + C</div>
+  <div class="eqsub">writing <span class="enc1">Encoder(<span class="ab">Ab</span>)</span> = <span class="qk">q</span> and <span class="enc1">Encoder(<span class="ag">Ag</span>)</span> = <span class="qk">k</span> &nbsp;gives&nbsp; &Delta;G &asymp; −<span class="qk">q·k</span> + C &nbsp;<span style="font-family:var(--font-sans);font-size:12px;color:var(--text-muted)">(the attention score, again)</span></div>
+
+  <div class="defbox">
+    <table class="deftbl">
+      <tr><td class="sym">&Delta;G(<span class="ab">Ab</span>, <span class="ag">Ag</span>)</td><td>binding free energy of the pair — <b>how tightly the antibody holds the antigen</b></td></tr>
+      <tr><td class="sym"><span class="enc1">Encoder(<span class="ab">Ab</span>)</span> = <span class="qk">q</span></td><td>the antibody, turned by the encoder into a learned vector — its <b>query</b></td></tr>
+      <tr><td class="sym"><span class="enc1">Encoder(<span class="ag">Ag</span>)</span> = <span class="qk">k</span></td><td>the antigen, turned into a learned vector — its <b>key</b></td></tr>
+      <tr><td class="sym"><span class="qk">q · k</span></td><td>their <b>dot product</b> — the compatibility score; larger score = lower ΔG = tighter fit</td></tr>
+      <tr><td class="sym">C</td><td>a constant reference offset — it <b>cancels out</b> inside the softmax</td></tr>
+      <tr><td class="sym">&asymp;</td><td><b>approximate</b>, not exact: exact for DNA (one-hot), learned &amp; approximate for proteins</td></tr>
+    </table>
+  </div>
+
+  <div class="take">A <b>change of basis, not a change of equation</b> — the encoder finds coordinates where ΔG is a dot product, then it is the <b>same softmax(q·k/τ)</b> as DNA.</div>
+</div>
+
+<script>
+  function buildVec(){
+    const ox=34, oy=96;
+    let s='';
+    // axes (faint)
+    s+=`<line x1="${ox}" y1="${oy}" x2="210" y2="${oy}" stroke="#e0e0ea" stroke-width="1"/>`;
+    s+=`<line x1="${ox}" y1="${oy}" x2="${ox}" y2="10" stroke="#e0e0ea" stroke-width="1"/>`;
+    // q and k vectors from origin, small angle between (high dot product)
+    const q=[150,32], k=[168,72];
+    s+=`<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#2b6cb0"/></marker></defs>`;
+    s+=`<line x1="${ox}" y1="${oy}" x2="${q[0]}" y2="${q[1]}" stroke="#2b6cb0" stroke-width="2.4" marker-end="url(#ah)"/>`;
+    s+=`<line x1="${ox}" y1="${oy}" x2="${k[0]}" y2="${k[1]}" stroke="#2b6cb0" stroke-width="2.4" marker-end="url(#ah)"/>`;
+    s+=`<text x="${q[0]+7}" y="${q[1]+3}" font-family="serif" font-size="14" font-weight="700" fill="#2b6cb0">q = Ab</text>`;
+    s+=`<text x="${k[0]+7}" y="${k[1]+4}" font-family="serif" font-size="14" font-weight="700" fill="#2b6cb0">k = Ag</text>`;
+    // angle arc
+    s+=`<path d="M ${ox+34} ${oy-8} A 36 36 0 0 0 ${ox+30} ${oy-20}" fill="none" stroke="#9aa3ad" stroke-width="1"/>`;
+    s+=`<text x="${ox+40}" y="${oy-20}" font-family="serif" font-size="11" fill="#6b7280">θ</text>`;
+    s+=`<text x="${ox+2}" y="${oy+14}" font-family="sans-serif" font-size="9.5" fill="#9aa3ad">q·k = |q||k|cos θ</text>`;
+    document.getElementById('vecfig').innerHTML=s;
+  }
+  buildVec();
+
+  // raw sequence space: two different molecules, contacts couple residue PAIRS across them (crossing)
+  function buildRaw(){
+    const ab="CARDYWGQ", ag="NSASFSTF", n=8;
+    const X0=24, X1=256, gw=(X1-X0)/n, yT=24, yB=70;
+    let s='';
+    s+=`<text x="8" y="${yT+4}" font-family="sans-serif" font-size="9" font-weight="700" fill="#5a6b7a">Ab</text>`;
+    s+=`<text x="8" y="${yB+4}" font-family="sans-serif" font-size="9" font-weight="700" fill="#a05e23">Ag</text>`;
+    for(let i=0;i<n;i++){ const cx=X0+(i+0.5)*gw;
+      s+=`<text x="${cx}" y="${yT+4}" font-family="monospace" font-size="13" fill="#444" text-anchor="middle">${ab[i]}</text>`;
+      s+=`<text x="${cx}" y="${yB+4}" font-family="monospace" font-size="13" fill="#444" text-anchor="middle">${ag[i]}</text>`;
+    }
+    // crossing contact pairs (Ab i ↔ Ag j), non-aligned positions
+    const pairs=[[1,4],[4,1],[6,3],[2,6]];
+    for(const [i,j] of pairs){ const x1=X0+(i+0.5)*gw, x2=X0+(j+0.5)*gw;
+      s+=`<line x1="${x1}" y1="${yT+9}" x2="${x2}" y2="${yB-9}" stroke="#c83636" stroke-width="1.3" stroke-dasharray="3 2"/>`;
+      s+=`<circle cx="${x1}" cy="${yT+9}" r="2.4" fill="#c83636"/>`;
+      s+=`<circle cx="${x2}" cy="${yB-9}" r="2.4" fill="#c83636"/>`;
+    }
+    s+=`<text x="${(X0+X1)/2}" y="90" font-family="sans-serif" font-size="9" fill="#c83636" text-anchor="middle">contacts cross — not aligned, not per-position</text>`;
+    document.getElementById('rawfig').innerHTML=s;
+  }
+  buildRaw();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

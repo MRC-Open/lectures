@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — The Boltzmann Distribution</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.55; margin:2px auto 8px; max-width:880px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:8px 16px; }
+  .intro b { color: var(--accent); }
+  .eqrow { text-align:center; margin:8px auto 2px; font-size:19px; }
+  .zline { text-align:center; font-family: var(--font-serif); font-size:13px; color: var(--text-muted); font-variant-numeric:tabular-nums; margin-bottom:2px; }
+  .zline b { color: var(--accent); }
+  .chartwrap { max-width:680px; margin:0 auto; }
+  svg { width:100%; height:auto; display:block; }
+  .ppct { font-family: var(--font-serif); font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .aglab { font-family: var(--font-sans); font-size:11px; font-weight:700; fill: var(--text); }
+  .agE { font-family: var(--font-serif); font-size:10px; fill: var(--text-muted); }
+  .midlab { font-family: var(--font-sans); font-size:9px; fill: var(--text-muted); }
+
+  .ctrl { display:flex; align-items:center; gap:14px; max-width:600px; margin:8px auto 0; padding:9px 16px; border:1px solid var(--rule); border-radius:8px; }
+  .ctrl label { font-family: var(--font-serif); font-style:italic; font-size:15px; white-space:nowrap; }
+  .ctrl input { flex:1; accent-color: var(--accent); }
+  .ctrl .tv { font-family: var(--font-serif); font-weight:700; color: var(--accent); min-width:118px; text-align:right; font-variant-numeric:tabular-nums; font-size:13px; }
+  .regime { text-align:center; font-family: var(--font-sans); font-size:13px; font-weight:700; margin:8px auto 0; }
+  .regime.cold { color:#2b6cb0; } .regime.body { color: var(--accent); } .regime.hot { color:#c83636; }
+  .callout { max-width:820px; margin:10px auto 0; border-left:3px solid var(--accent); background:#fbfaff; border-radius:6px; padding:9px 16px; font-family: var(--font-sans); font-size:12.5px; line-height:1.5; color: var(--text); }
+  .callout b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Boltzmann Distribution</h1>
+  <div class="subtitle">MRC LECTURE 4 · THERMODYNAMICS FILLS THE WELLS — AND IT IS SOFTMAX</div>
+
+  <div class="intro">Five candidate antigens, each a <b>well</b> of depth $E_j$ (its binding energy). At thermal equilibrium, the antibody's chance of sitting in well $j$ follows the <b>Boltzmann distribution</b> — deeper well → higher probability. <b>Drag the temperature</b> and watch the wells fill.</div>
+
+  <div class="eqrow">$P(j) = \dfrac{\exp(-E_j / k_BT)}{Z}$</div>
+  <div class="zline" id="zline"></div>
+  <div style="text-align:center;font-family:var(--font-sans);font-size:11px;color:var(--text-muted);margin:6px 0 2px;"><span style="color:#c83636;font-weight:700">▲</span> Boltzmann probability &nbsp;·&nbsp; <span style="color:#9b8ec9;font-weight:700">▼</span> well depth (binding energy)</div>
+
+  <div class="chartwrap"><svg id="bz" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+  <div class="ctrl">
+    <label>temperature&nbsp; $k_BT$</label>
+    <input type="range" id="t" min="0.25" max="1.40" step="0.01" value="0.616">
+    <div class="tv" id="tv"></div>
+  </div>
+  <div class="regime" id="regime"></div>
+
+  <div class="callout"><b>This is softmax.</b> With score $s_j = -E_j / k_BT$, &nbsp;$P(j) = \exp(s_j)/\sum_k \exp(s_k)$. The denominator <b>$Z$ is the partition function</b> — exactly the softmax denominator. Cold → the deepest well wins (argmax); hot → every well equally likely (uniform). <b>$k_BT$ is the temperature $\tau$.</b></div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const E=[0,0.6,1.2,1.8,2.4], maxE=2.4, N=E.length;
+  const R=0.001987; // kcal/mol/K
+  const MID=176, UPH=148, DNH=78, X0=70, X1=600, bw=58;
+  const xc=i=>X0+(i+0.5)*(X1-X0)/N;
+
+  function draw(kBT){
+    const s=E.map(e=>-e/kBT), m=Math.max(...s), ex=s.map(v=>Math.exp(v-m)), Z=ex.reduce((a,b)=>a+b,0), P=ex.map(v=>v/Z);
+    const pmax=Math.max(...P);
+    let g='';
+    // midline (the surface)
+    g+=`<line x1="${X0-6}" y1="${MID}" x2="${X1+6}" y2="${MID}" stroke="var(--text-muted)" stroke-dasharray="4 3"/>`;
+    for(let i=0;i<N;i++){ const x=xc(i);
+      // probability up-bar
+      const uh=P[i]*UPH; g+=`<rect x="${x-bw/2}" y="${MID-uh}" width="${bw}" height="${Math.max(1,uh)}" rx="2" fill="${heat(P[i]/pmax)}"/>`;
+      g+=`<text class="ppct" x="${x}" y="${MID-uh-5}" text-anchor="middle" fill="${heat(P[i]/pmax)}">${(P[i]*100).toFixed(0)}%</text>`;
+      // well depth down-bar (fixed)
+      const dh=((maxE-E[i])/maxE)*DNH+7; g+=`<rect x="${x-bw/2}" y="${MID}" width="${bw}" height="${dh}" rx="2" fill="#d9d3e8"/>`;
+      g+=`<rect x="${x-bw/2}" y="${MID+dh-3}" width="${bw}" height="3" rx="2" fill="#b9add6"/>`;
+      // labels
+      g+=`<text class="aglab" x="${x}" y="${MID+DNH+22}" text-anchor="middle">Ag ${i+1}</text>`;
+      g+=`<text class="agE" x="${x}" y="${MID+DNH+35}" text-anchor="middle">E = ${E[i].toFixed(1)}</text>`;
+    }
+    document.getElementById('bz').innerHTML=g;
+    document.getElementById('zline').innerHTML=`Z = Σ exp(−E_k/k<sub>B</sub>T) = <b>${Z.toFixed(2)}</b> &nbsp;<span style="font-style:italic">(the partition function)</span>`;
+    const T=Math.round(kBT/R);
+    document.getElementById('tv').textContent=`${kBT.toFixed(2)} kcal/mol · ${T} K`;
+    const rg=document.getElementById('regime');
+    if(kBT<0.40){ rg.textContent=`cold (${T} K) — nearly deterministic: the antibody locks into the deepest well (→ argmax)`; rg.className='regime cold'; }
+    else if(kBT<0.85){ rg.textContent=`body temperature (${T} K) — selective, but probabilistic`; rg.className='regime body'; }
+    else { rg.textContent=`hot (${T} K) — energy differences wash out: every well nearly equally likely (→ uniform)`; rg.className='regime hot'; }
+  }
+  const slider=document.getElementById('t');
+  slider.addEventListener('input',()=>draw(parseFloat(slider.value)));
+  draw(parseFloat(slider.value));
+  if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

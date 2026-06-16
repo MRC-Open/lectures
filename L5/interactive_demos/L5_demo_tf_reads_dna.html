@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — How a Transcription Factor Reads DNA</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 18px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 8px auto 0; max-width: 560px; height: auto; }
+  .pts { max-width: 860px; margin: 10px auto 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .pt { border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 7px; padding: 10px 14px; background: #fbfaff; }
+  .pt .h { font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+  .pt .d { font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--text); }
+  .foot { text-align: center; font-family: var(--font-serif); font-size: 15px; margin-top: 14px; color: var(--text); }
+  .foot b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>How a Transcription Factor Reads DNA</h1>
+  <div class="subtitle">Recognition is position-specific and base-specific</div>
+
+  <svg id="fig" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <div class="pts">
+    <div class="pt"><div class="h">It reads bases, not shape alone</div><div class="d">In the major groove, TF side chains make <b>base-specific contacts</b> — H-bonds that distinguish A from G from C from T.</div></div>
+    <div class="pt"><div class="h">Each position has a preference</div><div class="d">At every position the TF prefers certain bases. Together these preferences define its <b>motif</b>.</div></div>
+    <div class="pt"><div class="h">Preference = energy</div><div class="d">A preferred base binds more tightly (lower ΔG); a disfavored base, more weakly. <b>Each position contributes its own energy.</b></div></div>
+  </div>
+
+  <div class="foot">So a TF's recognition can be summarized position by position — the idea behind the <b>position weight matrix</b> we build next.</div>
+</div>
+
+<script>
+  const BCOL={A:'#3aa35e',C:'#3a6ea3',G:'#d6a13a',T:'#c0392b'};
+  const COMP={A:'T',T:'A',C:'G',G:'C'};
+  const TOP="TGCAGT"+"ACGTGA"+"TCAGGT"; // motif ACGTGA at idx 6..11
+  function build(){
+    const X0=50,X1=590, n=TOP.length, gw=(X1-X0)/n;
+    const yTop=176, yBot=212;
+    let s='';
+    // backbones
+    s+=`<line x1="${X0}" y1="${yTop}" x2="${X1}" y2="${yTop}" stroke="#9aa3ad" stroke-width="3"/>`;
+    s+=`<line x1="${X0}" y1="${yBot}" x2="${X1}" y2="${yBot}" stroke="#9aa3ad" stroke-width="3"/>`;
+    // rungs + base letters
+    for(let i=0;i<n;i++){ const cx=X0+(i+0.5)*gw, b=TOP[i];
+      s+=`<line x1="${cx}" y1="${yTop}" x2="${cx}" y2="${yBot}" stroke="#dcdce4" stroke-width="6"/>`;
+      s+=`<text x="${cx}" y="${yTop-4}" font-family="monospace" font-size="12" font-weight="700" fill="${BCOL[b]}" text-anchor="middle">${b}</text>`;
+      s+=`<text x="${cx}" y="${yBot+13}" font-family="monospace" font-size="11" fill="#bbb" text-anchor="middle">${COMP[b]}</text>`;
+    }
+    // motif window
+    const mx0=X0+6*gw, mx1=X0+12*gw;
+    s+=`<rect x="${mx0}" y="${yTop-20}" width="${mx1-mx0}" height="${yBot-yTop+26}" fill="#5e3aa3" opacity="0.06" stroke="#b9add6" stroke-width="1.2" rx="4"/>`;
+    s+=`<text x="${(mx0+mx1)/2}" y="${yBot+30}" font-family="sans-serif" font-size="11" fill="#5e3aa3" text-anchor="middle" font-weight="700">the TF's binding motif</text>`;
+    // TF blob
+    const cx=(mx0+mx1)/2;
+    s+=`<ellipse cx="${cx}" cy="86" rx="92" ry="46" fill="#2b8a8a" opacity="0.92"/>`;
+    s+=`<text x="${cx}" y="80" font-family="sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">transcription</text>`;
+    s+=`<text x="${cx}" y="98" font-family="sans-serif" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">factor</text>`;
+    // base-specific contacts (dashed) to motif bases
+    for(let i=6;i<12;i++){ const bx=X0+(i+0.5)*gw;
+      s+=`<line x1="${bx}" y1="130" x2="${bx}" y2="${yTop-18}" stroke="#5e3aa3" stroke-width="1.3" stroke-dasharray="3 2"/>`;
+      s+=`<circle cx="${bx}" cy="${yTop-18}" r="2.6" fill="#5e3aa3"/>`;
+    }
+    s+=`<text x="${cx+150}" y="120" font-family="sans-serif" font-size="11" fill="#5e3aa3" text-anchor="middle">base-specific</text>`;
+    s+=`<text x="${cx+150}" y="134" font-family="sans-serif" font-size="11" fill="#5e3aa3" text-anchor="middle">contacts</text>`;
+    document.getElementById('fig').innerHTML=s;
+  }
+  build();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

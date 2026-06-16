@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Why a PWM Doesn't Work for Proteins</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 10px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+
+  /* compact two-up: DNA works | Protein breaks */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 8px auto 0; max-width: 980px; }
+  .col { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; }
+  .col svg { max-width: 270px; }
+  .col.dna { border-left: 4px solid #2b6cb0; background: #f5f9fc; }
+  .col.pro { border-left: 4px solid #c83636; background: #fcf6f6; }
+  .col .ch { font-family: var(--font-sans); font-size: 13px; font-weight: 700; }
+  .col.dna .ch { color: #2b6cb0; } .col.pro .ch { color: #c83636; }
+  .col .cs { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .col .cap { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--text); margin-top: 6px; }
+  .col .cap b { color: var(--text); }
+  .col.dna .cap b { color: #2b6cb0; } .col.pro .cap b { color: #c83636; }
+  .col .form { font-family: var(--font-serif); font-size: 15px; text-align: center; padding: 6px 0 2px; }
+  .col .form sub { font-size: 0.62em; } .col .form sup { font-size: 0.64em; }
+
+  /* second breakdown — epistasis mini-chart */
+  .epi { max-width: 940px; margin: 6px auto 0; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 18px 4px; }
+  .epi svg { max-width: 380px; }
+  .epi .ehead { display: flex; align-items: baseline; gap: 12px; justify-content: space-between; }
+  .epi .et { font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: #c83636; }
+  .epi .es { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); }
+  .epi .body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; align-items: center; margin-top: 6px; }
+  .epi .body .right { font-family: var(--font-serif); font-size: 14px; line-height: 1.6; color: var(--text); }
+  .epi .body .right b { color: #c83636; }
+  .epi .body .right .eq { font-size: 16px; padding: 6px 0; }
+  .epi .body .right sub { font-size: 0.66em; }
+
+  .closer { text-align: center; font-family: var(--font-serif); font-size: 14.5px; margin: 8px auto 0; max-width: 920px; color: var(--text); line-height: 1.5; }
+  .closer b { color: var(--accent); }
+  .closer .arrow { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Proteins Don't Decompose by Position</h1>
+  <div class="subtitle">Why a PWM-style table can't capture antibody–antigen binding</div>
+
+  <div class="compare">
+
+    <!-- DNA: works -->
+    <div class="col dna">
+      <div class="ch">① DNA — what we just did</div>
+      <div class="cs">linear strand &nbsp;·&nbsp; one number per (position, base)</div>
+      <svg id="dnafig" viewBox="0 0 380 150" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="form"><span style="color:#2b6cb0;font-weight:700">−&Delta;G</span> = &Sigma;<sub>p</sub> w<sub>p</sub>(base<sub>p</sub>) &nbsp;<span style="color:var(--text-muted);font-size:11px;font-family:var(--font-sans)">a clean sum</span></div>
+      <div class="cap">Every position contacts the protein <b>independently</b>. Energy adds up. A table indexed by (position, base) captures the binding.</div>
+    </div>
+
+    <!-- Protein: breaks -->
+    <div class="col pro">
+      <div class="ch">② Protein — what doesn't carry over</div>
+      <div class="cs">3D-folded chains &nbsp;·&nbsp; ~20 contacts out of ~10⁴ possible residue pairs</div>
+      <svg id="profig" viewBox="0 0 380 150" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="form"><span style="color:#c83636;font-weight:700">−&Delta;G</span> &ne; &Sigma;<sub>p</sub> w<sub>p</sub>(aa<sub>p</sub>) &nbsp;<span style="color:var(--text-muted);font-size:11px;font-family:var(--font-sans)">no position-by-position recipe</span></div>
+      <div class="cap"><b>Which</b> residues touch is set by the 3D fold, not by sequence order — and contacts are residue <b>pairs</b>, not single positions. The "position" axis a PWM needs simply isn't there.</div>
+    </div>
+  </div>
+
+  <!-- second breakdown: epistasis -->
+  <div class="epi">
+    <div class="ehead">
+      <div class="et">③ And even at the contacts that ARE there, energies don't add — epistasis</div>
+      <div class="es">a double-mutant example</div>
+    </div>
+    <div class="body">
+      <svg id="epifig" viewBox="0 0 480 124" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="right">
+        Mutation A alone costs <b>+1.0</b>, mutation B alone <b>+0.8</b>.<br>
+        Additive prediction: <b>+1.8 kcal/mol</b>. &nbsp; Measured: <b>+2.8</b>.<br>
+        <div class="eq">&Delta;&Delta;G<sub>AB</sub> &ne; &Delta;&Delta;G<sub>A</sub> + &Delta;&Delta;G<sub>B</sub></div>
+        <span style="color:var(--text-muted);font-size:12px;font-family:var(--font-sans)">One mutation changes the <em>cost</em> of the other — even if the contact list were known, no per-position table could reproduce this.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="closer">So for proteins the binding-energy landscape <b>cannot be written as a sum over sequence positions</b> &nbsp;<span class="arrow">→</span>&nbsp; the decomposition still exists, but in a different basis. <b>We have to learn it.</b></div>
+</div>
+
+<script>
+  const BCOL={A:'#3aa35e',C:'#3a6ea3',G:'#d6a13a',T:'#c0392b'};
+
+  // ---- left: DNA — TF over a linear strand with per-position contributions ----
+  function buildDNA(){
+    const X0=24,X1=356, yProt=24, yDNA=98;
+    const seq=['A','C','G','T','G','A'], n=seq.length, gw=(X1-X0)/n;
+    let s='';
+    // TF blob
+    s+=`<ellipse cx="${(X0+X1)/2}" cy="${yProt+8}" rx="${(X1-X0)/2-20}" ry="22" fill="#2b8a8a" opacity="0.92"/>`;
+    s+=`<text x="${(X0+X1)/2}" y="${yProt+12}" font-family="sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">transcription factor</text>`;
+    // DNA backbone (double strand)
+    s+=`<line x1="${X0}" y1="${yDNA}" x2="${X1}" y2="${yDNA}" stroke="#9aa3ad" stroke-width="2.2"/>`;
+    s+=`<line x1="${X0}" y1="${yDNA+14}" x2="${X1}" y2="${yDNA+14}" stroke="#9aa3ad" stroke-width="2.2"/>`;
+    // bases + per-position arrows
+    for(let i=0;i<n;i++){ const cx=X0+(i+0.5)*gw, b=seq[i];
+      s+=`<line x1="${cx}" y1="${yDNA}" x2="${cx}" y2="${yDNA+14}" stroke="#dcdce4" stroke-width="5"/>`;
+      s+=`<text x="${cx}" y="${yDNA-3}" font-family="monospace" font-size="13" font-weight="700" fill="${BCOL[b]}" text-anchor="middle">${b}</text>`;
+      // independent contact (vertical dashed)
+      s+=`<line x1="${cx}" y1="${yProt+30}" x2="${cx}" y2="${yDNA-12}" stroke="#2b6cb0" stroke-width="1.3" stroke-dasharray="3 2"/>`;
+      s+=`<circle cx="${cx}" cy="${yProt+30}" r="2.4" fill="#2b6cb0"/>`;
+    }
+    // axis label
+    s+=`<text x="${(X0+X1)/2}" y="${yDNA+34}" font-family="sans-serif" font-size="10.5" fill="#6b7280" text-anchor="middle">every position contacts → one number each</text>`;
+    document.getElementById('dnafig').innerHTML=s;
+  }
+
+  // ---- right: Protein — antibody residues contacting antigen residues, as pairs ----
+  function buildProtein(){
+    let s='';
+    // Ab CDR loops
+    s+=`<path d="M 50 56 q 24 -40 48 0" fill="none" stroke="#5a6b7a" stroke-width="3" stroke-linecap="round"/>`;
+    s+=`<path d="M 124 60 q 30 -46 60 0" fill="none" stroke="#5a6b7a" stroke-width="3" stroke-linecap="round"/>`;
+    s+=`<path d="M 214 56 q 34 -50 68 0" fill="none" stroke="#5a6b7a" stroke-width="3" stroke-linecap="round"/>`;
+    s+=`<text x="190" y="12" font-family="sans-serif" font-size="10.5" fill="#5a6b7a" text-anchor="middle">antibody CDR loops</text>`;
+    // antigen blob
+    s+=`<path d="M 44 126 q 22 -30 56 -18 q 28 8 48 -8 q 28 -16 60 -2 q 28 16 60 0 q 28 -12 56 10 q 6 16 -18 22 q -54 14 -126 4 q -60 -10 -104 6 q -32 6 -36 -14 z" fill="#d98a3d" opacity="0.5" stroke="#a05e23" stroke-width="1.2"/>`;
+    s+=`<text x="190" y="147" font-family="sans-serif" font-size="10.5" fill="#a05e23" text-anchor="middle">antigen surface (folded)</text>`;
+    // contact pairs: Ab amino acid ↔ Ag amino acid (single-letter codes, scattered positions)
+    const P=[ {x:72, ab:'R',an:31, ag:'D',gn:45},
+              {x:138,ab:'Y',an:52, ag:'E',gn:88},
+              {x:196,ab:'W',an:99, ag:'F',gn:12},
+              {x:262,ab:'S',an:91, ag:'N',gn:63} ];
+    const yA=80, yG=108, r=8.5;
+    for(const p of P){
+      s+=`<line x1="${p.x}" y1="${yA}" x2="${p.x}" y2="${yG}" stroke="#c83636" stroke-width="1.6" stroke-dasharray="3 2"/>`;
+      // Ab residue
+      s+=`<text x="${p.x}" y="${yA-13}" font-family="sans-serif" font-size="7.5" fill="#4a5560" text-anchor="middle">${p.ab}${p.an}</text>`;
+      s+=`<circle cx="${p.x}" cy="${yA}" r="${r}" fill="#5a6b7a"/>`;
+      s+=`<text x="${p.x}" y="${yA+3.4}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#fff" text-anchor="middle">${p.ab}</text>`;
+      // Ag residue
+      s+=`<circle cx="${p.x}" cy="${yG}" r="${r}" fill="#c98a3d"/>`;
+      s+=`<text x="${p.x}" y="${yG+3.4}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#fff" text-anchor="middle">${p.ag}</text>`;
+      s+=`<text x="${p.x}" y="${yG+19}" font-family="sans-serif" font-size="7.5" fill="#7a4a18" text-anchor="middle">${p.ag}${p.gn}</text>`;
+    }
+    // annotate the pairing explicitly
+    s+=`<text transform="translate(${P[3].x+15},${(yA+yG)/2}) rotate(-90)" font-family="sans-serif" font-size="8" fill="#c83636" text-anchor="middle">a contact pair</text>`;
+    document.getElementById('profig').innerHTML=s;
+  }
+
+  // ---- bottom: epistasis bar trio ----
+  function buildEpi(){
+    const X0=20,X1=460, y0=104, scale=22;        // px per kcal
+    const bars=[ {lab:'mut A',         dG:1.0, fill:'#e7a3a3', solid:true},
+                 {lab:'mut B',         dG:0.8, fill:'#e7a3a3', solid:true},
+                 {lab:'predicted A+B', dG:1.8, fill:'#fff',    dashed:true,  border:'#c83636'},
+                 {lab:'measured A+B',  dG:2.8, fill:'#c83636', solid:true} ];
+    const n=bars.length, gw=(X1-X0)/n;
+    let s='';
+    s+=`<line x1="${X0-6}" y1="${y0}" x2="${X1}" y2="${y0}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    s+=`<text x="${X0-8}" y="${y0+4}" font-family="sans-serif" font-size="9.5" fill="#999" text-anchor="end">0</text>`;
+    s+=`<text transform="translate(8,${y0-32}) rotate(-90)" font-family="sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">ΔΔG (kcal/mol)</text>`;
+    for(let i=0;i<n;i++){ const cx=X0+(i+0.5)*gw, h=bars[i].dG*scale, bw=58;
+      const stroke=bars[i].border||'#c83636';
+      s+=`<rect x="${cx-bw/2}" y="${y0-h}" width="${bw}" height="${h}" rx="3" fill="${bars[i].fill}" stroke="${stroke}" stroke-width="${bars[i].dashed?1.4:1}" ${bars[i].dashed?'stroke-dasharray="3 3"':''}/>`;
+      s+=`<text x="${cx}" y="${y0-h-3}" font-family="serif" font-size="11" fill="${stroke}" text-anchor="middle" font-weight="700">+${bars[i].dG.toFixed(1)}</text>`;
+      s+=`<text x="${cx}" y="${y0+14}" font-family="sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">${bars[i].lab}</text>`;
+    }
+    // gap arrow between predicted and measured
+    const px=X0+2.5*gw, mx=X0+3.5*gw, pH=1.8*scale, mH=2.8*scale;
+    s+=`<line x1="${px+30}" y1="${y0-pH}" x2="${mx-30}" y2="${y0-mH}" stroke="#c83636" stroke-width="1.4" stroke-dasharray="3 2"/>`;
+    s+=`<text x="${(px+mx)/2-6}" y="${y0-mH-9}" font-family="sans-serif" font-size="10.5" fill="#c83636" text-anchor="middle" font-weight="700">+1.0 epistasis</text>`;
+    document.getElementById('epifig').innerHTML=s;
+  }
+
+  buildDNA(); buildProtein(); buildEpi();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

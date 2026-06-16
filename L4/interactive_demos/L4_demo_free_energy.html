@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — What Is Free Energy?</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.55; margin:2px auto 8px; max-width:860px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:8px 16px; }
+  .intro b { color: var(--accent); }
+  .eqline { text-align:center; font-family: var(--font-serif); font-size:18px; margin:6px auto 4px; font-variant-numeric:tabular-nums; }
+  .eqline .fav { color:#2b6cb0; font-weight:700; } .eqline .opp { color:#c83636; font-weight:700; } .eqline .net { color: var(--accent); font-weight:700; }
+
+  .main { display:flex; gap:18px; justify-content:center; align-items:flex-start; max-width:1200px; margin:2px auto 0; flex-wrap:wrap; }
+  .chart { flex:0 1 580px; }
+  svg { width:100%; max-width:600px; height:auto; display:block; }
+  .molfig { text-align:center; margin:0 auto 12px; }
+  .molfig .imgwrap { position:relative; display:inline-block; animation: figin 0.8s ease both; }
+  .molfig img { width:188px; height:auto; display:block; margin:0 auto; }
+  .molfig .pulse { position:absolute; left:55%; top:55%; width:42%; height:42%; border:2px solid var(--accent); border-radius:8px; opacity:0; animation: pulsering 2.8s ease-in-out infinite; pointer-events:none; }
+  @keyframes pulsering { 0%,100%{opacity:0; transform:scale(0.9);} 50%{opacity:0.55; transform:scale(1.02);} }
+  @keyframes figin { from{opacity:0; transform:scale(0.96);} to{opacity:1; transform:scale(1);} }
+  .molcap { font-family: var(--font-sans); font-size:11px; line-height:1.45; color: var(--text-muted); margin-top:8px; }
+  .molcap b { color: var(--accent); }
+  .axlab { font-family: var(--font-sans); font-size:9px; fill: var(--text-muted); }
+  .axtitle { font-family: var(--font-sans); font-size:10px; fill: var(--text-muted); font-weight:700; }
+  .barval { font-family: var(--font-serif); font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .barlab { font-family: var(--font-sans); font-size:10px; font-weight:700; }
+  .barsub { font-family: var(--font-serif); font-size:9px; fill: var(--text-muted); }
+  .statelab { font-family: var(--font-sans); font-size:10px; fill: var(--text-muted); font-style:italic; }
+
+  .side { flex:0 0 330px; }
+  .read { border:1px solid var(--rule); border-radius:8px; padding:12px 16px; background:#fbfaff; text-align:center; }
+  .read .rg { font-family: var(--font-serif); font-size:30px; font-weight:700; color: var(--accent); font-variant-numeric:tabular-nums; }
+  .read .rgl { font-family: var(--font-sans); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color: var(--text-muted); }
+  .read .kd { font-family: var(--font-serif); font-size:15px; margin-top:6px; color: var(--text); }
+  .read .verdict { margin-top:8px; font-family: var(--font-sans); font-size:13px; font-weight:700; padding:5px 0; border-radius:5px; }
+  .read .verdict.yes { color:#2b6cb0; } .read .verdict.no { color:#c83636; }
+  .cap { font-family: var(--font-serif); font-size:13.5px; line-height:1.55; color: var(--text); margin-top:12px; min-height:84px; }
+  .cap b { color: var(--accent); }
+
+  .spine { max-width:900px; margin:10px auto 0; border-left:3px solid var(--accent); background:#fbfaff; border-radius:6px; padding:9px 16px; font-family: var(--font-sans); font-size:12px; line-height:1.5; color: var(--text); }
+  .spine b { color: var(--accent); }
+  .ctrls { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:10px; }
+  .ctrls .counter { font-family: var(--font-sans); font-size:11px; color: var(--text-muted); letter-spacing:0.5px; }
+  .btns button { font-family: var(--font-sans); font-size:13px; padding:6px 15px; border:1px solid var(--rule); background:white; color: var(--text); border-radius:5px; cursor:pointer; margin:0 3px; }
+  .btns button.primary { border-color: var(--accent); background: var(--accent); color:#fff; }
+  .btns button:disabled { opacity:0.4; cursor:default; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>What Is Free Energy?</h1>
+  <div class="subtitle">MRC LECTURE 4 · THE QUANTITY NATURE MINIMIZES — READ STRAIGHT OFF THE BINDING EVENT</div>
+
+  <div class="intro">Free energy isn't abstract. It's the <b>running total</b> of what physically happens when an antibody grabs an antigen — contacts form, loops freeze, water is freed. Add them up: if the total <b>ΔG &lt; 0</b>, the antibody binds. &nbsp;<b>ΔG = ΔH − TΔS</b>, at body temperature (310 K).</div>
+
+  <div class="eqline" id="eqline"></div>
+
+  <div class="main">
+    <div class="chart"><svg id="wf" viewBox="0 0 700 348" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="side">
+      <div class="molfig">
+        <div class="imgwrap"><img src="../../assets/ab_interface.png" alt="antibody–antigen interface"><div class="pulse"></div></div>
+        <div class="molcap">The molecular event: 6 <b>CDR loops</b> grip the epitope. Each dashed line is a residue–residue energy <b>E<sub>ij</sub></b> — together they make up the <b>ΔH</b> in the ledger.</div>
+      </div>
+      <div class="read">
+        <div class="rgl">running free energy</div>
+        <div class="rg" id="rg">0.0</div>
+        <div class="kd" id="kd"></div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+      <div class="cap" id="cap"></div>
+    </div>
+  </div>
+
+  <div class="spine"><b>Tie to the spine:</b> every term in this ledger is real — but for a given antibody–antigen pair you <b>cannot compute them from first principles</b>. That is why we <b>measure</b> ΔG (next slides) and, eventually, <b>learn</b> it.</div>
+
+  <div class="ctrls">
+    <div class="btns"><button id="prevBtn">← Back</button><button id="nextBtn" class="primary">Next →</button><button id="resetBtn">Reset</button></div>
+    <div class="counter" id="counter"></div>
+  </div>
+</div>
+
+<script>
+  const RT = 0.616; // kcal/mol at 310 K
+  const BLUE='#2b6cb0', RED='#c83636', PURP='var(--accent)';
+  const C = [
+    {lab:'contacts', sub:'ΔH', dg:-18.0, color:BLUE,
+     desc:'<b>Contacts form.</b> CDR hydrogen bonds, an Arg–Glu salt bridge, van der Waals packing across the interface. Forming bonds <b>releases energy</b> — favorable enthalpy.'},
+    {lab:'freeze loops', sub:'−TΔS', dg:+9.0, color:RED,
+     desc:'<b>Loops freeze.</b> The flexible CDR-H3 loop and the epitope lock into one shape — they <b>lose conformational freedom</b>. An entropy cost that <b>opposes</b> binding.'},
+    {lab:'free water', sub:'−TΔS', dg:-2.3, color:BLUE,
+     desc:'<b>Water is released.</b> Ordered water caging the buried hydrophobic patch escapes to bulk — an entropy <b>gain</b>. This water release alone buys <b>~40× tighter</b> binding. (the hydrophobic effect)'}
+  ];
+  const NET = C.reduce((s,c)=>s+c.dg,0); // -11.3
+  // cumulative levels: [0, -18, -9, -11.3]
+  const cum=[0]; C.forEach(c=>cum.push(cum[cum.length-1]+c.dg));
+
+  // geometry
+  const GX0=70, GX1=680, GTOP=36, GBOT=312, gHi=1, gLo=-20;
+  const ypx=g=>GTOP+(gHi-g)*(GBOT-GTOP)/(gHi-gLo);
+  const colX=[150,290,430,600], bw=84;
+  const fmtKd=g=>{ const k=Math.exp(g/RT); // molar
+    if(k>=1e-3) return (k*1e3).toFixed(0)+' mM'; if(k>=1e-6) return (k*1e6).toFixed(0)+' µM';
+    if(k>=1e-9) return (k*1e9).toFixed(0)+' nM'; if(k>=1e-12) return (k*1e12).toFixed(0)+' pM'; return k.toExponential(1)+' M'; };
+  const md=v=>(v<0?'−':'')+Math.abs(v).toFixed(1);
+
+  let step=0; const NS=5; // 0 unbound · 1 ΔH · 2 +conf · 3 +hydro · 4 net+verdict
+
+  function draw(){
+    let s='';
+    // axes
+    s+=`<line x1="${GX0}" y1="${GTOP}" x2="${GX0}" y2="${GBOT}" stroke="var(--rule)" stroke-width="1.2"/>`;
+    for(let g=0;g>=-18;g-=5){ const y=ypx(g); s+=`<line x1="${GX0-4}" y1="${y}" x2="${GX1}" y2="${y}" stroke="${g===0?'var(--text-muted)':'var(--rail)'}" stroke-dasharray="${g===0?'4 3':'2 4'}"/>`;
+      s+=`<text class="axlab" x="${GX0-7}" y="${y+3}" text-anchor="end">${g}</text>`; }
+    s+=`<text class="axtitle" transform="translate(20,${(GTOP+GBOT)/2}) rotate(-90)" text-anchor="middle">free energy ΔG (kcal/mol)</text>`;
+    // state labels
+    s+=`<text class="statelab" x="${GX1}" y="${ypx(0)-6}" text-anchor="end">unbound · Ab + Ag apart</text>`;
+    if(step>=4) s+=`<text class="statelab" x="${GX1}" y="${ypx(NET)+16}" text-anchor="end" style="fill:var(--accent)">bound · the complex</text>`;
+    // contribution bars (waterfall)
+    for(let i=0;i<3 && i<step;i++){ const yA=ypx(cum[i]), yB=ypx(cum[i+1]);
+      const rectY=Math.min(yA,yB), rectH=Math.max(3,Math.abs(yA-yB)), x=colX[i]-bw/2;
+      s+=`<rect x="${x}" y="${rectY}" width="${bw}" height="${rectH}" rx="2" fill="${C[i].color}" opacity="0.9"/>`;
+      // connector to next column
+      if(i<2 && step>i+1){ const yc=ypx(cum[i+1]); s+=`<line x1="${colX[i]+bw/2}" y1="${yc}" x2="${colX[i+1]-bw/2}" y2="${yc}" stroke="var(--text-muted)" stroke-dasharray="3 3"/>`; }
+      // value
+      const sign=C[i].dg<0?'−':'+'; s+=`<text class="barval" x="${colX[i]}" y="${(yA+yB)/2+4}" text-anchor="middle" fill="#fff">${sign}${Math.abs(C[i].dg).toFixed(1)}</text>`;
+      s+=`<text class="barlab" x="${colX[i]}" y="${GBOT+16}" text-anchor="middle" fill="${C[i].color}">${C[i].lab}</text>`;
+      s+=`<text class="barsub" x="${colX[i]}" y="${GBOT+28}" text-anchor="middle">${C[i].sub}</text>`;
+    }
+    // net bar
+    if(step>=4){ const yT=ypx(0), yB=ypx(NET), x=colX[3]-bw/2;
+      s+=`<line x1="${colX[2]+bw/2}" y1="${yB}" x2="${colX[3]-bw/2}" y2="${yB}" stroke="var(--text-muted)" stroke-dasharray="3 3"/>`;
+      s+=`<rect x="${x}" y="${yT}" width="${bw}" height="${yB-yT}" rx="2" fill="${PURP}"/>`;
+      s+=`<text class="barval" x="${colX[3]}" y="${yB-7}" text-anchor="middle" fill="${PURP}">${md(NET)}</text>`;
+      s+=`<text class="barlab" x="${colX[3]}" y="${GBOT+16}" text-anchor="middle" fill="${PURP}">net ΔG</text>`;
+    }
+    document.getElementById('wf').innerHTML=s;
+
+    // running readout
+    const g = step===0?0:(step>=4?NET:cum[Math.min(step,3)]);
+    document.getElementById('rg').textContent = md(g);
+    document.getElementById('kd').innerHTML = step===0?'&nbsp;':`K<sub>d</sub> ≈ <b>${fmtKd(g)}</b>`;
+    const v=document.getElementById('verdict');
+    if(step===0){ v.textContent=''; v.className='verdict'; }
+    else if(step>=4){ v.textContent='ΔG < 0  →  the antibody binds'; v.className='verdict yes'; }
+    else { v.textContent = g<0?'favorable so far…':'unfavorable so far'; v.className='verdict '+(g<0?'yes':'no'); }
+
+    // equation line (builds up)
+    const parts=['<span style="color:var(--text-muted)">ΔG = ΔH − TΔS = </span>'];
+    for(let i=0;i<3;i++){ if(i<step){ const cl=C[i].dg<0?'fav':'opp'; const sign=i===0?'':(C[i].dg<0?' − ':' + '); const val=(i===0?(C[i].dg<0?'−':'')+Math.abs(C[i].dg).toFixed(1):Math.abs(C[i].dg).toFixed(1)); parts.push(`<span class="${cl}">${sign}${val}</span>`);} }
+    if(step>=4) parts.push(` <span style="color:var(--text-muted)">=</span> <span class="net">${md(NET)}</span> <span style="color:var(--text-muted)">kcal/mol</span>`);
+    document.getElementById('eqline').innerHTML = step===0 ? '<span style="color:var(--text-muted)">ΔG = ΔH − TΔS</span>' : parts.join('');
+
+    // caption
+    const caps=['<b>Two molecules, free in solution.</b> Set this unbound state as the zero of free energy. Now bring them together and tally what happens.',
+      C[0].desc, C[1].desc, C[2].desc,
+      '<b>Add them up.</b> Contacts (−18) + frozen loops (+9) + freed water (−2.3) = <b>−11.3 kcal/mol</b>. The complex is lower in free energy than the free molecules, so the antibody binds — K<sub>d</sub> ≈ 11 nM. Note: without the water-release term it would be ~450 nM.'];
+    document.getElementById('cap').innerHTML = caps[step];
+    document.getElementById('counter').textContent=`STEP ${step+1} / ${NS}`;
+    document.getElementById('prevBtn').disabled=step===0; document.getElementById('nextBtn').disabled=step===NS-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('intro')]);
+  }
+  function go(d){ const n=step+d; if(n>=0&&n<NS){ step=n; draw(); } }
+  document.getElementById('nextBtn').addEventListener('click',()=>go(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>go(-1));
+  document.getElementById('resetBtn').addEventListener('click',()=>{step=0;draw();});
+  draw();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); if(step<NS-1){go(1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); if(step>0){go(-1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

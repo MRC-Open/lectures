@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC Tutorial — Session 3: Thermodynamics &amp; Bilinearity</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="mrc_styles.css">
+<style>
+  body { padding: 0; }
+  .deck { position: relative; min-height: 100vh; }
+  .slide { display: none; height: 100vh; overflow: auto; padding: 60px 48px; }
+  .slide.active { display: flex; flex-direction: column; }
+  .slide-inner { max-width: 820px; margin: 0 auto; width: 100%; }
+
+  .slide h2 { font-family: var(--font-sans); font-size: 32px; font-weight: 500; letter-spacing: -0.3px; margin: 0 0 6px 0; color: var(--text); line-height: 1.2; }
+  .slide .slide-subtitle { font-family: var(--font-sans); color: var(--text-muted); font-size: 16px; margin-bottom: 32px; font-style: italic; font-weight: 400; line-height: 1.4; }
+  .slide ul.bullets { font-size: 19px; line-height: 1.8; list-style: none; padding: 0; margin: 0; }
+  .slide ul.bullets > li { padding: 7px 0 7px 26px; position: relative; }
+  .slide ul.bullets > li::before { content: ""; position: absolute; left: 4px; top: 18px; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .slide ul.bullets ul { margin: 5px 0 0 0; padding-left: 0; list-style: none; }
+  .slide ul.bullets ul > li { padding: 3px 0 3px 22px; position: relative; color: var(--text-muted); font-size: 17px; }
+  .slide ul.bullets ul > li::before { content: "—"; position: absolute; left: 0; top: 3px; color: var(--text-muted); background: none; width: auto; height: auto; }
+  .slide strong { font-weight: 700; color: var(--text); }
+  .slide em { font-style: italic; color: var(--text); }
+
+  .eq-block { background: white; border-left: 3px solid var(--accent); padding: 16px 24px; margin: 18px 0; font-size: 22px; }
+  .note-block { border: 1.5px solid var(--accent); background: var(--accent-faint); border-radius: 8px; padding: 12px 18px; margin: 16px 0; font-size: 16px; line-height: 1.55; }
+  .note-block .nl { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); font-weight: 700; display:block; margin-bottom: 4px; }
+
+  .slide.title-card { align-items: center; justify-content: center; text-align: center; }
+  .slide.title-card.active { display: flex; }
+  .slide.title-card .title-main { font-family: var(--font-sans); font-size: 52px; font-weight: 400; letter-spacing: -0.6px; margin: 0 0 14px 0; line-height: 1.15; }
+  .slide.title-card .title-sub { font-family: var(--font-sans); font-size: 22px; color: var(--text-muted); margin-bottom: 56px; font-style: italic; font-weight: 300; max-width: 660px; margin-left: auto; margin-right: auto; line-height: 1.4; }
+  .slide.title-card .author { font-family: var(--font-serif); font-size: 22px; color: var(--text); margin-bottom: 10px; }
+  .slide.title-card .affiliation { font-family: var(--font-serif); font-size: 18px; color: var(--text-muted); margin: 0; line-height: 1.65; }
+  .slide.title-card .term { font-family: var(--font-sans); margin-top: 32px; color: var(--accent); font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+
+  .slide.divider { background: var(--text); color: white; align-items: center; justify-content: center; text-align: center; }
+  .slide.divider.active { display: flex; }
+  .slide.divider .divider-eyebrow { font-family: var(--font-sans); color: var(--accent); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; font-weight: 500; }
+  .slide.divider .divider-title { font-family: var(--font-sans); font-size: 42px; font-weight: 400; color: white; max-width: 820px; line-height: 1.25; margin: 0; letter-spacing: -0.4px; }
+  .slide.divider .divider-sub { font-family: var(--font-serif); font-size: 18px; color: rgba(255,255,255,0.7); margin-top: 18px; max-width: 680px; line-height: 1.5; }
+
+  .slide.demo { padding: 0; }
+  .slide.demo iframe { display: block; width: 100%; height: 100%; flex: 1; border: none; }
+
+  table.summary { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 17px; }
+  table.summary th, table.summary td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; line-height: 1.45; }
+  table.summary th { font-family: var(--font-sans); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--text); }
+  table.summary td:first-child { color: var(--text); font-weight: 500; }
+
+  .identity-block { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 22px; margin: 12px 0; }
+  .identity-block .heading { font-family: var(--font-sans); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .identity-block .eq { font-size: 21px; color: var(--text); }
+
+  .deck-counter { position: fixed; bottom: 22px; right: 32px; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; z-index: 100; pointer-events: none; }
+  .deck-counter.on-dark { color: rgba(255,255,255,0.7); }
+  .deck-hint { position: fixed; bottom: 22px; left: 32px; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; z-index: 100; pointer-events: none; }
+  .deck-hint.on-dark { color: rgba(255,255,255,0.7); }
+  .deck-present { position: fixed; top: 22px; right: 32px; z-index: 100; font-family: var(--font-sans); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; padding: 8px 14px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 4px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+  .deck-present:hover { border-color: var(--accent); color: var(--accent); }
+  :fullscreen .deck-present { display: none; }
+
+  @media (min-width: 1400px) {
+    .slide-inner { max-width: 960px; }
+    .slide h2 { font-size: 38px; }
+    .slide .slide-subtitle { font-size: 18px; }
+    .slide ul.bullets { font-size: 21px; }
+    .eq-block { font-size: 25px; }
+    .identity-block .eq { font-size: 24px; }
+    table.summary { font-size: 19px; }
+    .slide.title-card .title-main { font-size: 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- 1 title -->
+<section class="slide title-card active" data-slide="1">
+  <div>
+    <div class="title-main">Thermodynamics of Molecular Recognition</div>
+    <div class="title-sub">Tutorial Session 3 — Free Energy, the Boltzmann Distribution, and Bilinearity (Lectures 4 + 5)</div>
+    <div class="author">Sai T. Reddy</div>
+    <p class="affiliation">Reddy Lab · ETH Zurich · Botnar Institute of Immune Engineering</p>
+    <div class="term">19 June 2026 · Session 3 of 4</div>
+  </div>
+</section>
+
+<!-- 2 where we are -->
+<section class="slide" data-slide="2">
+  <div class="slide-inner">
+    <h2>The Pivot — From AI to Physics</h2>
+    <div class="slide-subtitle">Building the other half of the identity</div>
+    <ul class="bullets">
+      <li><strong>Sessions 1–3 so far (the AI half):</strong> ✓ linear algebra, the transformer, contrastive learning with InfoNCE</li>
+      <li><strong>Today (the physics half):</strong> where does the <em>score</em> come from?</li>
+      <li>Lecture 4 — the <strong>energy landscape</strong> and the Boltzmann distribution: binding probability <em>is</em> softmax</li>
+      <li>Lecture 5 — <strong>can we compute that landscape?</strong> Given vs. emergent bilinearity</li>
+      <li>Then (Lecture 6): the proof — why softmax is the <em>only</em> function that could sit there</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3 today's question -->
+<section class="slide" data-slide="3">
+  <div class="slide-inner">
+    <h2>Today's Question</h2>
+    <div class="slide-subtitle">What is the probability that a molecule selects a specific target?</div>
+    <ul class="bullets">
+      <li>An antibody encounters a pool of candidate antigens</li>
+      <li>Each pair has a binding free energy $\Delta G$</li>
+      <li><strong>Question:</strong> what is the probability the antibody selects antigen $j$?</li>
+      <li><strong>Answer:</strong> the Boltzmann distribution — from the second law of thermodynamics</li>
+      <li><strong>Punchline:</strong> the answer is <em>softmax</em> — derived in 1877, used by transformers since 2017</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 free energy — binding-ledger waterfall -->
+<section class="slide demo" data-slide="4"><iframe src="L4/interactive_demos/L4_demo_free_energy.html" loading="lazy"></iframe></section>
+
+<!-- 5 THE SPINE — binding energy landscape (true / measured / learned) -->
+<section class="slide demo" data-slide="5"><iframe src="L4/interactive_demos/L4_demo_landscape.html" loading="lazy"></iframe></section>
+
+<!-- 6 Boltzmann — fills the wells (temperature slider) -->
+<section class="slide demo" data-slide="6"><iframe src="L4/interactive_demos/L4_demo_boltzmann.html" loading="lazy"></iframe></section>
+
+<!-- 7 why max entropy — counting demo (formal algebra → WB1 PDF) -->
+<section class="slide demo" data-slide="7"><iframe src="L4/interactive_demos/L4_demo_maxentropy.html" loading="lazy"></iframe></section>
+
+<!-- 9 Boltzmann summary — one equation, read four ways (visual) -->
+<section class="slide demo" data-slide="8"><iframe src="L4/interactive_demos/L4_demo_boltzmann_summary.html" loading="lazy"></iframe></section>
+
+<!-- 9 Kd and dG — SPR measurement (visual, interactive) -->
+<section class="slide demo" data-slide="9"><iframe src="L4/interactive_demos/L4_demo_kd_spr.html" loading="lazy"></iframe></section>
+
+<!-- 10 competition = softmax (visual, interactive) -->
+<section class="slide demo" data-slide="10"><iframe src="L4/interactive_demos/L4_demo_competition.html" loading="lazy"></iframe></section>
+
+<!-- 11 the identity + encoder mapping (visual) -->
+<section class="slide demo" data-slide="11"><iframe src="L4/interactive_demos/L4_demo_identity.html" loading="lazy"></iframe></section>
+
+<!-- 12 the convergence dictionary (visual recap — closes Part A) -->
+<section class="slide demo" data-slide="12"><iframe src="L4/interactive_demos/L4_demo_dictionary.html" loading="lazy"></iframe></section>
+
+<!-- 13 the dot-product question + two kinds of bilinearity (combined, visual) -->
+<section class="slide demo" data-slide="13"><iframe src="L5/interactive_demos/L5_demo_bilinearity.html" loading="lazy"></iframe></section>
+
+<!-- 14 bridge: how a TF reads DNA -->
+<section class="slide demo" data-slide="14"><iframe src="L5/interactive_demos/L5_demo_tf_reads_dna.html" loading="lazy"></iframe></section>
+
+<!-- 15 bridge: binding energy is additive per position -->
+<section class="slide demo" data-slide="15"><iframe src="L5/interactive_demos/L5_demo_additivity.html" loading="lazy"></iframe></section>
+
+<!-- 16 bridge: the motif -> the PWM (origin of the matrix) -->
+<section class="slide demo" data-slide="16"><iframe src="L5/interactive_demos/L5_demo_pwm_origin.html" loading="lazy"></iframe></section>
+
+<!-- PWM / TF dot product — comprehensive 5-step walkthrough (visual) -->
+<section class="slide demo" data-slide="17"><iframe src="L5/interactive_demos/L5_demo_pwm.html" loading="lazy"></iframe></section>
+
+<!-- 18 proteins don't decompose by position (visual) -->
+<section class="slide demo" data-slide="18"><iframe src="L5/interactive_demos/L5_demo_protein_breakdown.html" loading="lazy"></iframe></section>
+
+<!-- 19 the encoding problem — change of basis (visual) -->
+<section class="slide demo" data-slide="19"><iframe src="L5/interactive_demos/L5_demo_encoding.html" loading="lazy"></iframe></section>
+
+<!-- 20 emergent Ab-Ag — Session-2 matrices, learned features (visual) -->
+<section class="slide demo" data-slide="20"><iframe src="L5/interactive_demos/L5_demo_emergent.html" loading="lazy"></iframe></section>
+
+<!-- 21 attention pooling (animated) -->
+<section class="slide demo" data-slide="21"><iframe src="L5/interactive_demos/L5_demo_attnpool.html" loading="lazy"></iframe></section>
+
+<!-- 22 where emergent bilinearity breaks down (visual, honest scoping) -->
+<section class="slide demo" data-slide="22"><iframe src="L5/interactive_demos/L5_demo_emergent_limits.html" loading="lazy"></iframe></section>
+
+<!-- 23 affinity calibration (§7 — rankings → real ΔG) -->
+<section class="slide demo" data-slide="23"><iframe src="L5/interactive_demos/L5_demo_calibration.html" loading="lazy"></iframe></section>
+
+<!-- 24 given vs emergent + architecture (visual) -->
+<section class="slide demo" data-slide="24"><iframe src="L5/interactive_demos/L5_demo_same_math.html" loading="lazy"></iframe></section>
+
+<!-- 25 why SFMs exist — three ways (visual) -->
+<section class="slide demo" data-slide="25"><iframe src="L5/interactive_demos/L5_demo_three_ways.html" loading="lazy"></iframe></section>
+
+<!-- 26 summary — Session 3 in one breath (visual) -->
+<section class="slide demo" data-slide="26"><iframe src="L5/interactive_demos/L5_demo_l5summary.html" loading="lazy"></iframe></section>
+
+<!-- 27 next — set up the SFM project (visual) -->
+<section class="slide demo" data-slide="27"><iframe src="L5/interactive_demos/L5_demo_next.html" loading="lazy"></iframe></section>
+
+</div>
+
+<div class="deck-counter" id="counter">SLIDE 1 / 32</div>
+<div class="deck-hint" id="hint">← →  navigate · F  fullscreen</div>
+<button class="deck-present" id="presentBtn">▶ Present</button>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const hint = document.getElementById('hint');
+  let current = 1;
+
+  function show(n) {
+    n = Math.max(1, Math.min(total, n));
+    current = n;
+    slides.forEach((s, i) => s.classList.toggle('active', i === n - 1));
+    counter.textContent = `SLIDE ${n} / ${total}`;
+    const active = slides[n - 1];
+    const isDark = active && active.classList.contains('divider');
+    counter.classList.toggle('on-dark', isDark);
+    hint.classList.toggle('on-dark', isDark);
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([active]);
+    const iframe = active && active.querySelector('iframe');
+    if (iframe) setTimeout(() => { try { iframe.contentWindow.focus(); } catch (e) {} }, 80);
+    else window.focus();
+    history.replaceState(null, '', `#slide=${n}`);
+  }
+  function next() { if (current < total) show(current + 1); }
+  function prev() { if (current > 1) show(current - 1); }
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || e.data.type !== 'mrc-deck-advance') return;
+    if (e.data.direction === 'next') next(); else if (e.data.direction === 'prev') prev();
+  });
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const el = document.documentElement;
+      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+    } else {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+    }
+  }
+  document.getElementById('presentBtn').addEventListener('click', toggleFullscreen);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown': e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': e.preventDefault(); prev(); break;
+      case 'Home': e.preventDefault(); show(1); break;
+      case 'End': e.preventDefault(); show(total); break;
+      case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
+    }
+  });
+
+  const m = location.hash.match(/slide=(\d+)/);
+  if (m) show(parseInt(m[1])); else show(1);
+</script>
+
+</body>
+</html>

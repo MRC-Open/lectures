@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — The Convergence Dictionary</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 12px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+
+  .anchor { text-align: center; font-family: var(--font-serif); font-size: 18px; margin: 10px auto 4px; color: var(--text); }
+  .anchor .sc { color: #2b6cb0; font-weight: 700; } .anchor .tp { color: #c83636; font-weight: 700; } .anchor .zc { color: var(--accent); font-weight: 700; }
+  .anchor sub { font-size: 0.62em; } .anchor sup { font-size: 0.64em; }
+
+  .dict { max-width: 920px; margin: 12px auto 0; }
+  .seclab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: center; margin: 10px 0 4px; }
+
+  .heads { display: grid; grid-template-columns: 1fr 58px 1fr; align-items: center; margin-bottom: 4px; }
+  .heads .h { font-family: var(--font-sans); font-size: 12px; font-weight: 700; letter-spacing: 0.4px; padding: 4px 12px; }
+  .heads .hl { text-align: right; color: #2b6cb0; }
+  .heads .hr { text-align: left; color: var(--accent); }
+
+  .row { display: grid; grid-template-columns: 1fr 58px 1fr; align-items: stretch; margin: 4px 0; }
+  .row .ai, .row .ph { border: 1px solid var(--rule); border-radius: 7px; padding: 6px 14px; display: flex; align-items: center; font-size: 15px; }
+  .row .ai { justify-content: flex-end; text-align: right; font-family: var(--font-sans); background: #f7fafc; }
+  .row .ph { justify-content: flex-start; font-family: var(--font-serif); background: #fbfaff; }
+  .row .ai .lab, .row .ph .lab { color: var(--text-muted); font-size: 13px; }
+  .row .eq { display: flex; align-items: center; justify-content: center; }
+  .row .eq span { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-family: var(--font-sans); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .sym { font-family: var(--font-serif); font-weight: 700; }
+  .sc { color: #2b6cb0; } .tp { color: #c83636; } .zc { color: var(--accent); }
+  .row sub { font-size: 0.62em; } .row sup { font-size: 0.64em; }
+
+  .foot { text-align: center; font-family: var(--font-serif); font-size: 14.5px; color: var(--text); margin-top: 10px; }
+  .foot b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Convergence Dictionary</h1>
+  <div class="subtitle">Every concept from the AI half has a physical twin</div>
+
+  <div class="anchor">one equation, two languages: &nbsp; <span class="sc">softmax</span>(<span class="sc">q·k</span> / <span class="tp">&tau;</span>) &nbsp;=&nbsp; e<sup><span class="sc">−&Delta;G</span>/<span class="tp">k<sub>B</sub>T</span></sup> / <span class="zc">Z</span></div>
+
+  <div class="dict">
+    <div class="heads">
+      <div class="h hl">AI · Sessions 1–2</div><div></div><div class="h hr">Physics · today</div>
+    </div>
+
+    <div class="seclab">the equation</div>
+
+    <div class="row">
+      <div class="ai">dot product&nbsp; <span class="sym sc">q·k<sub>j</sub></span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="sym sc">−&Delta;G<sub>j</sub></span>&nbsp; <span class="lab">binding energy</span></div>
+    </div>
+    <div class="row">
+      <div class="ai">softmax temperature&nbsp; <span class="sym tp">&tau;</span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="sym tp">k<sub>B</sub>T</span>&nbsp; <span class="lab">thermal energy</span></div>
+    </div>
+    <div class="row">
+      <div class="ai">softmax denominator&nbsp; <span class="sym zc">&Sigma; e<sup>(·)</sup></span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="sym zc">Z</span>&nbsp; <span class="lab">partition function</span></div>
+    </div>
+    <div class="row">
+      <div class="ai">softmax output&nbsp; <span class="sym zc">P<sub>j</sub></span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="lab">Boltzmann selection probability</span></div>
+    </div>
+
+    <div class="seclab">the training set-up</div>
+
+    <div class="row">
+      <div class="ai"><span class="sym" style="color:var(--text)">InfoNCE loss</span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="lab">−log-likelihood of the Boltzmann selection</span></div>
+    </div>
+    <div class="row">
+      <div class="ai"><span class="sym" style="color:var(--text)">in-batch negatives</span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="lab">the competitor pool of non-cognate targets</span></div>
+    </div>
+    <div class="row">
+      <div class="ai">learned temperature&nbsp; <span class="sym tp">&tau;</span></div>
+      <div class="eq"><span>=</span></div>
+      <div class="ph"><span class="lab">the physical temperature</span>&nbsp; <span class="sym tp">k<sub>B</sub>T</span></div>
+    </div>
+  </div>
+
+  <div class="foot">The AI half and the physics half were never two subjects. They are <b>one equation</b> in two vocabularies — which is why the architecture is <b>prescribed</b>, not designed.</div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

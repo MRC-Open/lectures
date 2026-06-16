@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — The Binding Energy Landscape</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .intro { text-align:center; font-family: var(--font-sans); font-size:13px; line-height:1.55; margin:2px auto 8px; max-width:880px; color: var(--text); background: var(--accent-faint); border-radius:6px; padding:8px 16px; }
+  .intro b { color: var(--accent); }
+  .toggles { display:flex; gap:8px; justify-content:center; margin:6px 0 8px; }
+  .tbtn { font-family: var(--font-sans); font-size:13px; padding:6px 15px; border:1px solid var(--rule); background:white; color: var(--text-muted); border-radius:4px; cursor:pointer; }
+  .tbtn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); font-weight:600; }
+  .row { display:flex; gap:18px; justify-content:center; align-items:center; flex-wrap:wrap; max-width:1100px; margin:0 auto; }
+  .chartwrap { flex:0 1 620px; position:relative; }
+  svg { width:100%; height:auto; display:block; }
+  .molfig { flex:0 0 196px; text-align:center; }
+  .molfig .imgwrap { position:relative; display:inline-block; animation: figin 0.8s ease both; }
+  .molfig img { width:196px; height:auto; display:block; }
+  .molfig .pulse { position:absolute; left:55%; top:55%; width:42%; height:42%; border:2px solid var(--accent); border-radius:8px; opacity:0; animation: pulsering 2.8s ease-in-out infinite; pointer-events:none; }
+  @keyframes pulsering { 0%,100%{opacity:0; transform:scale(0.9);} 50%{opacity:0.55; transform:scale(1.02);} }
+  @keyframes figin { from{opacity:0; transform:scale(0.96);} to{opacity:1; transform:scale(1);} }
+  .molcap { font-family: var(--font-sans); font-size:11px; line-height:1.45; color: var(--text-muted); margin-top:8px; max-width:196px; }
+  .molcap b { color: var(--accent); }
+  .axlab { font-family: var(--font-sans); font-size:9px; fill: var(--text-muted); }
+  .axtitle { font-family: var(--font-sans); font-size:10px; fill: var(--text-muted); font-weight:700; }
+  .welllab { font-family: var(--font-sans); font-size:10px; font-weight:700; }
+  .warn { font-family: var(--font-sans); font-size:11px; fill:#b5651d; font-weight:700; }
+  .cap { font-family: var(--font-serif); font-size:14px; line-height:1.55; color: var(--text); text-align:center; max-width:820px; margin:8px auto 0; min-height:48px; }
+  .cap b { color: var(--accent); }
+  .ways { display:flex; gap:10px; justify-content:center; max-width:820px; margin:12px auto 0; }
+  .way { flex:1; border:1px solid var(--rule); border-radius:7px; padding:8px 12px; font-family: var(--font-sans); font-size:11.5px; line-height:1.4; color: var(--text-muted); text-align:center; background:white; }
+  .way.on { border-color: var(--accent); background: var(--accent-faint); color: var(--text); }
+  .way .wh { font-weight:700; color: var(--accent); display:block; font-size:12.5px; margin-bottom:2px; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Binding Energy Landscape</h1>
+  <div class="subtitle">MRC LECTURE 4 · THE LAW OF RECOGNITION — AND WHY YOU CAN'T COMPUTE IT</div>
+
+  <div class="intro">Take <b>one antibody</b> and every antigen it could ever meet. Its binding free energy ΔG across that space is a <b>landscape</b> — the deep <b>wells</b> are the antigens it grabs. Thermodynamics fills the wells (next slide). But first: <b>how do you even get this surface?</b></div>
+
+  <div class="toggles">
+    <button class="tbtn on" data-m="true">① the true surface</button>
+    <button class="tbtn" data-m="measure">② what we measure</button>
+    <button class="tbtn" data-m="learn">③ what an SFM learns</button>
+  </div>
+
+  <div class="row">
+    <div class="chartwrap"><svg id="ls" viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="molfig">
+      <div class="imgwrap"><img src="../../assets/ab_interface.png" alt="antibody–antigen interface"><div class="pulse"></div></div>
+      <div class="molcap">The molecular event behind every well: <b>CDR loops</b> reading the antigen. A <b>deep well</b> = many complementary contacts (<b>E<sub>ij</sub></b>).</div>
+    </div>
+  </div>
+  <div class="cap" id="cap"></div>
+
+  <div class="ways" id="ways"></div>
+</div>
+
+<script>
+  const PX0=64, PX1=694, PY0=40, PY1=292, gTop=1, gBot=-15;
+  const xpx=xf=>PX0+xf*(PX1-PX0);
+  const ypx=g=>PY0+(gTop-g)/(gTop-gBot)*(PY1-PY0);
+  const ACC='var(--accent)';
+  // landscape: baseline 0, Gaussian wells (avoid -x**2 unary-exponent pitfall → use -z*z)
+  const gfun=W=>xf=>{ let s=0; for(const [c,d,w] of W){ const z=(xf-c)/w; s+=d*Math.exp(-z*z); } return -s; };
+  const trueW=[[0.20,13,0.055],[0.54,7,0.07],[0.79,4,0.05]];
+  const learnW=[[0.205,12.2,0.06],[0.54,7.5,0.07],[0.78,2.8,0.055],[0.40,1.7,0.045]];
+  const trueY=gfun(trueW), learnY=gfun(learnW);
+  const path=fn=>{ let d=''; for(let i=0;i<=120;i++){ const xf=i/120; d+=(i?'L':'M')+xpx(xf).toFixed(1)+','+ypx(fn(xf)).toFixed(1); } return d; };
+  const RT=0.616, fmtKd=g=>{ const k=Math.exp(g/RT); if(k>=1e-6) return (k*1e6).toFixed(1)+' µM'; if(k>=1e-9) return (k*1e9).toFixed(0)+' nM'; return (k*1e12).toFixed(0)+' pM'; };
+  const measX=[0.10,0.20,0.33,0.54,0.66,0.88];
+
+  const WAYS=[
+    {key:'measure', h:'① measure', t:'one ΔG at a time — SPR / ITC / BLI'},
+    {key:'compute', h:'② compute', t:'exactly — but only nucleic acids (Lecture 5)'},
+    {key:'learn', h:'③ learn', t:'the whole surface, from data — the SFM'}
+  ];
+  let mode='true';
+
+  function draw(){
+    let s='';
+    // axes + grid
+    s+=`<line x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}" stroke="var(--rule)"/>`;
+    for(let g=0;g>=-15;g-=5){ const y=ypx(g); s+=`<line x1="${PX0-4}" y1="${y}" x2="${PX1}" y2="${y}" stroke="${g===0?'var(--text-muted)':'var(--rail)'}" stroke-dasharray="${g===0?'4 3':'2 5'}"/>`;
+      s+=`<text class="axlab" x="${PX0-7}" y="${y+3}" text-anchor="end">${g}</text>`; }
+    s+=`<text class="axtitle" transform="translate(20,${(PY0+PY1)/2}) rotate(-90)" text-anchor="middle">binding ΔG (kcal/mol)</text>`;
+    s+=`<text class="axtitle" x="${(PX0+PX1)/2}" y="${PY1+26}" text-anchor="middle">every candidate antigen this antibody could meet →</text>`;
+
+    if(mode==='true'){
+      s+=`<path d="${path(trueY)}" fill="none" stroke="#333" stroke-width="2.5"/>`;
+      // well annotations
+      s+=`<circle cx="${xpx(0.20)}" cy="${ypx(trueY(0.20))}" r="4" fill="#333"/><text class="welllab" x="${xpx(0.20)}" y="${ypx(trueY(0.20))+18}" text-anchor="middle" fill="#333">cognate · tightest</text>`;
+      s+=`<text class="welllab" x="${xpx(0.54)}" y="${ypx(trueY(0.54))+16}" text-anchor="middle" fill="var(--text-muted)">cross-reactive</text>`;
+      s+=`<text class="welllab" x="${xpx(0.92)}" y="${ypx(0)-8}" text-anchor="middle" fill="var(--text-muted)">non-binders</text>`;
+      s+=`<text class="warn" x="${(PX0+PX1)/2}" y="22" text-anchor="middle">⚠ real — but for a protein you cannot compute this surface from sequence</text>`;
+    } else {
+      // faded true reference in measure/learn modes
+      s+=`<path d="${path(trueY)}" fill="none" stroke="var(--rule)" stroke-width="2" stroke-dasharray="4 4"/>`;
+      s+=`<text class="axlab" x="${PX1}" y="${PY0+12}" text-anchor="end" style="fill:var(--text-muted);font-style:italic">— true surface (unknown)</text>`;
+    }
+    if(mode==='measure'){
+      measX.forEach((xf,i)=>{ const y=ypx(trueY(xf));
+        s+=`<line x1="${xpx(xf)}" y1="${ypx(0)}" x2="${xpx(xf)}" y2="${y}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"/>`;
+        s+=`<circle cx="${xpx(xf)}" cy="${y}" r="5.5" fill="var(--accent)" stroke="#fff" stroke-width="1.5"/>`; });
+      const xf=0.20; s+=`<text class="welllab" x="${xpx(xf)}" y="${ypx(trueY(xf))+18}" text-anchor="middle" fill="var(--accent)">${fmtKd(trueY(xf))}</text>`;
+    }
+    if(mode==='learn'){
+      s+=`<path d="${path(learnY)}" fill="none" stroke="var(--accent)" stroke-width="2.6"/>`;
+      s+=`<text class="welllab" x="${xpx(0.40)}" y="${ypx(learnY(0.40))-7}" text-anchor="middle" fill="#b5651d">small errors where data is sparse</text>`;
+    }
+    document.getElementById('ls').innerHTML=s;
+
+    const caps={
+      'true':'This is the real binding landscape for one antibody. Deep wells = the antigens it binds; the flat plain = the millions it ignores. It is fixed by physics — yet for a protein antibody you <b>cannot compute it from sequence</b> (the contacts depend on 3-D structure).',
+      'measure':'What you can actually obtain: <b>a handful of points.</b> Each SPR / ITC experiment gives <b>one ΔG</b> — one dot. Rigorous, but you would need millions of experiments to map the whole surface. Most of it stays dark.',
+      'learn':'What an SFM gives you: <b>the entire surface</b>, learned from only ~4,000 measured pairs. It is an <b>approximation</b> (note the small errors off in the tails) — but it covers <b>every</b> antigen, including ones never measured. That is why SFMs exist.'
+    };
+    document.getElementById('cap').innerHTML=caps[mode];
+    document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+    document.getElementById('ways').innerHTML=WAYS.map(w=>`<div class="way ${w.key===mode?'on':''}"><span class="wh">${w.h}</span>${w.t}</div>`).join('');
+  }
+  document.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.m;draw();}));
+  draw();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

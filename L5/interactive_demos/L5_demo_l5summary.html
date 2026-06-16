@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Session 3 Summary</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+
+  .beats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; max-width: 960px; margin: 16px auto 0; }
+  .beat { border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px; padding: 11px 14px; background: white; }
+  .beat .n { font-family: var(--font-sans); font-size: 11px; font-weight: 700; color: var(--accent); }
+  .beat .eq { font-family: var(--font-serif); font-size: 16px; margin: 3px 0 4px; }
+  .beat .eq .sc { color: #2b6cb0; font-weight: 700; } .beat .eq .tp { color: #c83636; font-weight: 700; } .beat .eq sub { font-size: 0.62em; } .beat .eq sup { font-size: 0.64em; }
+  .beat .d { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--text-muted); }
+  .beat .d b { color: var(--text); font-weight: 600; }
+  .beat.key { border-left-color: var(--accent); background: var(--accent-faint); }
+
+  .punch { max-width: 880px; margin: 16px auto 0; text-align: center; font-family: var(--font-serif); font-size: 18px; color: var(--text); line-height: 1.5; }
+  .punch b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Summary</h1>
+  <div class="subtitle">Session 3 in one breath</div>
+
+  <div class="beats">
+    <div class="beat">
+      <div class="n">1 · FREE ENERGY</div>
+      <div class="eq">ΔG = ΔH − TΔS</div>
+      <div class="d">what nature minimizes — favorable binding is <b>lower ΔG</b></div>
+    </div>
+    <div class="beat">
+      <div class="n">2 · BOLTZMANN = SOFTMAX</div>
+      <div class="eq">P = e<sup>−E/<span class="tp">k<sub>B</sub>T</span></sup> / Z</div>
+      <div class="d">the distribution that <b>fills the landscape</b> — and it <em>is</em> softmax</div>
+    </div>
+    <div class="beat">
+      <div class="n">3 · READING THE LANDSCAPE</div>
+      <div class="eq">ΔG = RT ln K<sub>d</sub></div>
+      <div class="d">every measured affinity is <b>one point</b> on the surface</div>
+    </div>
+    <div class="beat">
+      <div class="n">4 · COMPETITION = SOFTMAX</div>
+      <div class="eq">Boltzmann 1877 = attention 2017</div>
+      <div class="d">one antibody, many antigens → <b>softmax of binding energies</b></div>
+    </div>
+    <div class="beat">
+      <div class="n">5 · ENERGY IS A DOT PRODUCT</div>
+      <div class="eq">−ΔG = <span class="sc">q·k</span></div>
+      <div class="d"><b>exact</b> for DNA (given) · <b>learned</b> for proteins (emergent)</div>
+    </div>
+    <div class="beat key">
+      <div class="n">6 · WHY THE SFM</div>
+      <div class="eq">can't compute → <b style="color:var(--accent)">learn it</b></div>
+      <div class="d">the SFM learns the landscape you can't measure or compute</div>
+    </div>
+  </div>
+
+  <div class="punch">The score <b>is</b> the energy; competition <b>is</b> softmax; the energy <b>is</b> a dot product. <b>That is the whole machine.</b></div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

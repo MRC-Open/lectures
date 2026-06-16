@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — Competitive Binding = Softmax</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 14px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; width: 100%; height: auto; }
+
+  .eqhead { text-align: center; font-family: var(--font-serif); font-size: 22px; margin: 8px auto 2px; }
+  .eqhead sub { font-size: 0.66em; } .eqhead sup { font-size: 0.66em; }
+  .eqhead .smx { color: var(--accent); font-weight: 700; }
+  .eqcap { text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+
+  .grid { display: grid; grid-template-columns: 0.7fr 1.3fr; gap: 22px; align-items: center; margin-top: 4px; }
+  .grid > div:first-child svg { max-width: 250px; margin: 0 auto; }
+  .panel-label { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; text-align: center; }
+
+  table.calc { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  table.calc th { font-family: var(--font-sans); font-size: 9.5px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; text-align: left; padding: 0 8px 5px; border-bottom: 1px solid var(--text); }
+  table.calc td { padding: 6px 8px; border-bottom: 1px solid var(--rule); font-family: var(--font-serif); font-size: 15px; }
+  table.calc .chip { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+  table.calc .wt { color: var(--text-muted); font-size: 13px; }
+  .pbar-wrap { display: flex; align-items: center; gap: 8px; }
+  .pbar-track { flex: 1; height: 14px; background: #f0eef6; border-radius: 3px; overflow: hidden; min-width: 80px; }
+  .pbar { height: 100%; border-radius: 3px; }
+  .pval { font-family: var(--font-serif); font-weight: 700; min-width: 52px; text-align: right; font-size: 14px; }
+  tr.zrow td { border-bottom: none; padding-top: 8px; font-weight: 700; color: var(--accent); }
+  tr.zrow .zlab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+
+  .tabs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  .tab { font-family: var(--font-sans); font-size: 12px; font-weight: 600; padding: 6px 13px; border: 1px solid var(--rule); border-radius: 6px; background: white; cursor: pointer; color: var(--text); transition: all .12s; }
+  .tab:hover { border-color: var(--accent); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .insight { font-family: var(--font-serif); font-size: 14.5px; text-align: center; margin-top: 12px; line-height: 1.5; color: var(--text); max-width: 880px; margin-left: auto; margin-right: auto; }
+  .insight b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Competitive Binding = Softmax</h1>
+  <div class="subtitle">One antibody, a pool of antigens — the denominator is the competition</div>
+
+  <div class="eqhead">P(binds&nbsp;j) =
+    e<sup>−&Delta;G<sub>j</sub>/RT</sup> &frasl; &Sigma;<sub>k</sub> e<sup>−&Delta;G<sub>k</sub>/RT</sup>
+    &nbsp;=&nbsp; <span class="smx">softmax</span>(−&Delta;G / RT)
+  </div>
+  <div class="eqcap">apply the Boltzmann factor to every competitor, then normalize — that normalizer is the partition function Z</div>
+
+  <div class="grid">
+    <div>
+      <div class="panel-label">one antibody · many antigens</div>
+      <svg id="scene" viewBox="0 0 240 196" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div>
+      <table class="calc">
+        <thead><tr><th>antigen</th><th>&Delta;G (kcal/mol)</th><th>Boltzmann weight e<sup>−&Delta;G/RT</sup></th><th>selection probability</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="insight">The denominator <b>Z</b> is the competition: a great binder can still lose to a better one. <b>Softmax, not argmax</b> — the leftover percentage is the physical basis of cross-reactivity and off-target binding.</div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const RT=0.616;
+  const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  const sup=s=>String(s).split('').map(c=>SUP[c]||c).join('');
+  const fmtSci=x=>{const e=x.toExponential(1),[m,ex]=e.split('e');return `${m}×10${sup(parseInt(ex))}`;};
+  const fmtG=g=>(g<0?'−':'')+Math.abs(g).toFixed(1);
+  // map ΔG (−12 strong .. −5 weak) → heat t (0 blue strong .. 1 red weak)
+  const col=dG=>heat((dG+12)/7);
+
+  const SCEN=[
+    {name:'weak rivals',   dG:[-10,-8,-6]},
+    {name:'near-ties',     dG:[-10,-9.5,-9]},
+    {name:'a stronger rival', dG:[-10,-11,-8]},
+    {name:'all equal',     dG:[-9,-9,-9]},
+  ];
+  const LBL=['Ag A','Ag B','Ag C'];
+  let sel=0;
+
+  function render(){
+    const dG=SCEN[sel].dG;
+    const w=dG.map(g=>Math.exp(-g/RT));
+    const Z=w.reduce((a,b)=>a+b,0);
+    const P=w.map(x=>x/Z);
+
+    // ---- scene ----
+    let s='';
+    // antibody (Y) at left
+    s+=`<g stroke="#5a6b7a" stroke-width="3.4" fill="none" stroke-linecap="round"><path d="M34 160 V120 M34 120 L20 102 M34 120 L48 102"/></g>`;
+    const ys=[40,98,156];
+    for(let i=0;i<3;i++){
+      s+=`<line x1="46" y1="118" x2="120" y2="${ys[i]}" stroke="#c9ccd1" stroke-width="1.2" stroke-dasharray="3 3"/>`;
+    }
+    for(let i=0;i<3;i++){
+      s+=`<circle cx="132" cy="${ys[i]}" r="13" fill="${col(dG[i])}" stroke="#fff" stroke-width="1.5"/>`;
+      s+=`<text x="154" y="${ys[i]-1}" font-family="sans-serif" font-size="12" font-weight="700" fill="#333">${LBL[i]}</text>`;
+      s+=`<text x="154" y="${ys[i]+13}" font-family="serif" font-size="12" fill="#777">&Delta;G = ${fmtG(dG[i])}</text>`;
+    }
+    document.getElementById('scene').innerHTML=s;
+
+    // ---- table ----
+    let r='';
+    for(let i=0;i<3;i++){
+      const pct=(P[i]*100);
+      const pctTxt = pct>=10?pct.toFixed(0)+'%' : pct>=1?pct.toFixed(1)+'%' : pct.toFixed(2)+'%';
+      r+=`<tr>
+        <td><span class="chip" style="background:${col(dG[i])}"></span>${LBL[i]}</td>
+        <td>${fmtG(dG[i])}</td>
+        <td class="wt">${fmtSci(w[i])}</td>
+        <td><div class="pbar-wrap"><div class="pbar-track"><div class="pbar" style="width:${(P[i]*100).toFixed(1)}%;background:${col(dG[i])}"></div></div><span class="pval">${pctTxt}</span></div></td>
+      </tr>`;
+    }
+    r+=`<tr class="zrow"><td colspan="2"><span class="zlab">partition function</span> &nbsp;Z = &Sigma; weights</td><td colspan="2">= ${fmtSci(Z)} &nbsp;<span style="font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--text-muted)">← the competition</span></td></tr>`;
+    document.getElementById('rows').innerHTML=r;
+
+    // ---- tabs ----
+    document.getElementById('tabs').innerHTML=SCEN.map((q,i)=>`<button class="tab ${i===sel?'active':''}" data-i="${i}">${q.name}</button>`).join('');
+    document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{sel=+b.dataset.i;render();});
+  }
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

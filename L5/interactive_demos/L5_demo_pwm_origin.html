@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Where the PWM Comes From</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .flow { display: grid; grid-template-columns: auto 38px auto 38px auto; align-items: center; justify-content: center; gap: 0 6px; margin: 16px auto 0; }
+  .arr { font-family: var(--font-sans); font-size: 22px; color: var(--accent); text-align: center; }
+  .panel .pl { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: center; margin-bottom: 5px; }
+  .seqs { font-family: monospace; font-size: 15px; line-height: 1.5; letter-spacing: 4px; text-align: center; }
+  table.pwm { border-collapse: collapse; margin: 0 auto; font-variant-numeric: tabular-nums; }
+  table.pwm td { width: 26px; height: 22px; text-align: center; font-family: var(--font-serif); font-size: 12px; border: 1px solid #e6e6ee; }
+  table.pwm .rl { font-family: var(--font-sans); font-weight: 700; font-size: 11px; border: none; width: 16px; }
+  .flow { margin-top: 10px; }
+  .link { max-width: 880px; margin: 14px auto 0; border: 1.5px solid var(--accent); border-radius: 9px; background: var(--accent-faint); padding: 12px 18px; }
+  .link .why { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--text); text-align: center; }
+  .link .why b { color: var(--accent); }
+  .link .eqn { font-family: var(--font-serif); font-size: 17px; text-align: center; margin: 8px 0 6px; }
+  .link .eqn sub { font-size: 0.62em; } .link .eqn sup { font-size: 0.64em; }
+  .link .eqn .tp { color: #c83636; font-weight: 700; }
+  .link .concl { font-family: var(--font-serif); font-size: 17px; text-align: center; border-top: 1px solid #d9cdee; padding-top: 8px; }
+  .link .concl .sc { color: #2b6cb0; font-weight: 700; } .link .concl .zc { color: var(--accent); font-weight: 700; }
+  .link .concl b { color: var(--accent); }
+  .link .concl sub { font-size: 0.62em; }
+  .cite { text-align: center; font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .cite a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
+  .cite a:hover { border-bottom-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The PWM <em>Is</em> the Binding-Energy Table</h1>
+  <div class="subtitle">Counting a TF's sites measures its per-base energies — so ΔG becomes a dot product</div>
+
+  <div class="flow">
+    <div class="panel">
+      <div class="pl">known binding sites (aligned)</div>
+      <div class="seqs" id="seqs"></div>
+    </div>
+    <div class="arr">→</div>
+    <div class="panel">
+      <div class="pl">count per position → logo</div>
+      <svg id="logo" viewBox="0 0 320 92" width="320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="arr">→</div>
+    <div class="panel">
+      <div class="pl">the weight matrix (PWM)</div>
+      <div id="mat"></div>
+    </div>
+  </div>
+
+  <div class="link">
+    <div class="why">A TF's bound sites are a <b>Boltzmann sample</b> — a tighter base (lower ΔG) appears <em>exponentially</em> more often. So <b>counting frequencies measures energies</b>:</div>
+    <div class="eqn">f<sub>p</sub>(b) &nbsp;∝&nbsp; e<sup>−&Delta;G<sub>p</sub>(b) / <span class="tp">k<sub>B</sub>T</span></sup> &nbsp;&nbsp;⇒&nbsp;&nbsp; w<sub>p</sub>(b) ≡ −&Delta;G<sub>p</sub>(b) / <span class="tp">k<sub>B</sub>T</span> = log&thinsp;f<sub>p</sub>(b) + const</div>
+    <div class="concl">So &nbsp;<span class="sc">−&Delta;G<sub>site</sub></span> = &Sigma;<sub>p</sub> w<sub>p</sub>(base<sub>p</sub>) = <span class="sc">tf</span> · <span class="zc">dna<sub>j</sub></span> &nbsp;— <b>the PWM is the energy table; ΔG is the dot product.</b></div>
+    <div class="cite">derived by <a href="https://doi.org/10.1016/0022-2836(87)90354-8" target="_blank" rel="noopener">Berg &amp; von Hippel, <i>J. Mol. Biol.</i> 193:723 (1987)</a> &nbsp;·&nbsp; standardised in <a href="https://doi.org/10.1093/bioinformatics/16.1.16" target="_blank" rel="noopener">Stormo, <i>Bioinformatics</i> 16:16 (2000)</a></div>
+  </div>
+</div>
+
+<script>
+  const BASES=['A','C','G','T'];
+  const BCOL={A:'#3aa35e',C:'#3a6ea3',G:'#d6a13a',T:'#c0392b'};
+  const SITES=['ACGTGA','ACGTGA','ACGTGA','ACGTGA','ACGTGA','TCGTGA','ACCTGC','GCGTGA'];
+  const L=6, N=SITES.length;
+  // counts per position
+  const cnt=BASES.reduce((o,b)=>(o[b]=Array(L).fill(0),o),{});
+  for(const s of SITES) for(let p=0;p<L;p++) cnt[s[p]][p]++;
+
+  // aligned sequences (color the consensus base lightly)
+  document.getElementById('seqs').innerHTML=SITES.map(s=>
+    '<div>'+s.split('').map(b=>`<span style="color:${BCOL[b]}">${b}</span>`).join('')+'</div>').join('');
+
+  // logo
+  function buildLogo(){
+    const x0=14,colW=48,yBase=66,H=52;
+    let s='';
+    for(let p=0;p<L;p++){
+      const col=BASES.map(b=>[b,cnt[b][p]]).filter(d=>d[1]>0).sort((a,b)=>a[1]-b[1]);
+      let cy=yBase;
+      for(const [b,c] of col){ const h=(c/N)*H, x=x0+p*colW;
+        s+=`<g transform="translate(${x+2},${cy-h}) scale(${(colW-4)/10},${h/10})"><text x="0" y="9.2" font-family="Arial, sans-serif" font-weight="800" font-size="11" fill="${BCOL[b]}" textLength="10" lengthAdjust="spacingAndGlyphs">${b}</text></g>`;
+        cy-=h;
+      }
+      s+=`<text x="${x0+p*colW+colW/2}" y="${yBase+13}" font-family="sans-serif" font-size="9" fill="#999" text-anchor="middle">${p+1}</text>`;
+    }
+    document.getElementById('logo').innerHTML=s;
+  }
+  buildLogo();
+
+  // matrix
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  let h='<table class="pwm">';
+  for(const b of BASES){ h+=`<tr><td class="rl" style="color:${BCOL[b]}">${b}</td>`;
+    for(let p=0;p<L;p++){ const v=cnt[b][p]; h+=`<td style="background:${heat(1-v/N)}">${v}</td>`; }
+    h+='</tr>'; }
+  h+='</table>';
+  document.getElementById('mat').innerHTML=h;
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — The Identity: Boltzmann = Vaswani</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; width: 100%; height: auto; }
+
+  /* two equations, column-aligned so the identity is visible */
+  .idgrid { display: grid; grid-template-columns: max-content max-content max-content 14px max-content; gap: 10px 12px; justify-content: center; align-items: center; font-family: var(--font-serif); font-size: 22px; margin: 14px auto 0; }
+  .idgrid .tag { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: right; line-height: 1.2; }
+  .idgrid .sl { color: var(--text-muted); text-align: center; }
+  .idgrid sub { font-size: 0.6em; } .idgrid sup { font-size: 0.62em; }
+  .sc { color: #2b6cb0; font-weight: 700; }   /* score: −ΔG  /  q·k */
+  .tp { color: #c83636; font-weight: 700; }    /* temperature: k_BT  /  τ */
+
+  .score { text-align: center; font-family: var(--font-serif); font-size: 21px; margin: 16px auto 0; padding: 9px 18px; background: var(--accent-faint); border: 1px solid var(--accent); border-radius: 8px; display: inline-block; }
+  .scorewrap { text-align: center; }
+  .score .lab { font-family: var(--font-sans); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-right: 10px; }
+  .score sub { font-size: 0.62em; }
+
+  .flowlabel { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: center; margin: 18px 0 2px; }
+  #flow { max-width: 940px; margin: 0 auto; }
+
+  .caption { text-align: center; font-family: var(--font-serif); font-size: 15px; line-height: 1.5; color: var(--text); max-width: 860px; margin: 12px auto 0; }
+  .caption b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Identity</h1>
+  <div class="subtitle">Boltzmann (1877) = Vaswani (2017) — and the dot product is the bridge</div>
+
+  <div class="idgrid">
+    <div class="tag">molecular binding<br>Boltzmann · 1877</div>
+    <div>P(bind&nbsp;j) =</div>
+    <div>exp(<span class="sc">−&Delta;G<sub>j</sub></span> / <span class="tp">k<sub>B</sub>T</span>)</div>
+    <div class="sl">&frasl;</div>
+    <div>&Sigma;<sub>k</sub> exp(<span class="sc">−&Delta;G<sub>k</sub></span> / <span class="tp">k<sub>B</sub>T</span>)</div>
+
+    <div class="tag">transformer attention<br>Vaswani · 2017</div>
+    <div>A(j) =</div>
+    <div>exp(<span class="sc">q·k<sub>j</sub></span> / <span class="tp">&tau;</span>)</div>
+    <div class="sl">&frasl;</div>
+    <div>&Sigma;<sub>k</sub> exp(<span class="sc">q·k<sub>k</sub></span> / <span class="tp">&tau;</span>)</div>
+  </div>
+
+  <div class="scorewrap">
+    <div class="score"><span class="lab">the one identification</span>s<sub>j</sub> = <span class="sc">−&Delta;G<sub>j</sub></span> / <span class="tp">k<sub>B</sub>T</span> = <span class="sc">q·k<sub>j</sub></span> / <span class="tp">&tau;</span></div>
+  </div>
+
+  <div class="flowlabel">how the SFM realizes it — slide 57's encoder mapping</div>
+  <svg id="flow" viewBox="0 0 940 176" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ah" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0 0 L6.5 3 L0 6 z" fill="#9aa3ad"/></marker>
+    </defs>
+
+    <!-- Ab lane -->
+    <text x="82" y="22" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">antibody CDR-H3</text>
+    <rect x="20" y="30" width="124" height="42" rx="7" fill="#eef3f5" stroke="#5a6b7a" stroke-width="1.4"/>
+    <text x="82" y="56" font-family="sans-serif" font-size="14" font-weight="600" fill="#3b4754" text-anchor="middle">Ab encoder</text>
+    <line x1="146" y1="51" x2="196" y2="51" stroke="#9aa3ad" stroke-width="1.6" marker-end="url(#ah)"/>
+    <text x="214" y="57" font-family="serif" font-size="22" font-weight="700" fill="#2b6cb0" text-anchor="middle">q</text>
+
+    <!-- Ag lane -->
+    <text x="82" y="106" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">antigen epitope</text>
+    <rect x="20" y="114" width="124" height="42" rx="7" fill="#fbf3ea" stroke="#c0903f" stroke-width="1.4"/>
+    <text x="82" y="140" font-family="sans-serif" font-size="14" font-weight="600" fill="#7a5a22" text-anchor="middle">Ag encoder</text>
+    <line x1="146" y1="135" x2="196" y2="135" stroke="#9aa3ad" stroke-width="1.6" marker-end="url(#ah)"/>
+    <text x="214" y="141" font-family="serif" font-size="22" font-weight="700" fill="#2b6cb0" text-anchor="middle">k<tspan font-size="13" dy="4">j</tspan></text>
+
+    <!-- converge into dot-product box -->
+    <path d="M232 51 C 280 51, 280 93, 322 93" fill="none" stroke="#c9ccd1" stroke-width="1.6"/>
+    <path d="M232 135 C 280 135, 280 93, 322 93" fill="none" stroke="#c9ccd1" stroke-width="1.6"/>
+
+    <rect x="322" y="66" width="196" height="54" rx="9" fill="#fbfaff" stroke="#5e3aa3" stroke-width="1.6"/>
+    <text x="420" y="89" font-family="serif" font-size="20" font-weight="700" fill="#2b6cb0" text-anchor="middle">q · k<tspan font-size="12" dy="3">j</tspan></text>
+    <text x="420" y="109" font-family="serif" font-size="14" fill="#555" text-anchor="middle">&#8776; &minus;&Delta;G<tspan font-size="9" dy="3">j</tspan><tspan dy="-3" font-size="14">  (binding energy)</tspan></text>
+
+    <!-- to softmax -->
+    <line x1="518" y1="93" x2="576" y2="93" stroke="#9aa3ad" stroke-width="1.6" marker-end="url(#ah)"/>
+    <text x="547" y="84" font-family="sans-serif" font-size="11" fill="#c83636" text-anchor="middle">÷ &tau;</text>
+    <rect x="576" y="71" width="118" height="44" rx="9" fill="#5e3aa3"/>
+    <text x="635" y="98" font-family="sans-serif" font-size="15" font-weight="600" fill="#fff" text-anchor="middle">softmax</text>
+
+    <!-- to P -->
+    <line x1="694" y1="93" x2="752" y2="93" stroke="#9aa3ad" stroke-width="1.6" marker-end="url(#ah)"/>
+    <text x="845" y="89" font-family="serif" font-size="19" font-weight="700" fill="#5e3aa3" text-anchor="middle">P(bind&nbsp;j)</text>
+    <text x="845" y="107" font-family="sans-serif" font-size="10.5" fill="#6b7280" text-anchor="middle">selection probability</text>
+  </svg>
+
+  <div class="caption">Same function, derived independently, <b>140 years apart</b>. The SFM learns its two encoders so the embedding dot product <b>q·k<sub>j</sub> reproduces the binding energy −ΔG<sub>j</sub></b> — then softmax does the physics for free.</div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

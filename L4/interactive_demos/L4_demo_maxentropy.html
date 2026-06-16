@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — Why Maximum Entropy?</title>
+<script>
+  MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .eqzone { text-align:center; margin:6px auto 4px; }
+  .eqzone .eq { font-size:24px; }
+  .eqzone .eqcap { font-family: var(--font-sans); font-size:11px; letter-spacing:0.5px; text-transform:uppercase; color: var(--accent); font-weight:700; margin-top:2px; }
+  .defs { display:flex; flex-wrap:wrap; gap:6px 18px; justify-content:center; max-width:880px; margin:8px auto 0; }
+  .def { font-family: var(--font-sans); font-size:12px; color: var(--text); }
+  .def .sym { font-family: var(--font-serif); font-weight:700; color: var(--accent); margin-right:5px; }
+  .def .d { color: var(--text-muted); }
+
+  .viz { min-height:218px; display:flex; align-items:center; justify-content:center; gap:24px; flex-wrap:wrap; margin:12px auto 0; }
+  .lad { text-align:center; }
+  .lad svg { display:block; margin:0 auto; }
+  .lad .ladt { font-family: var(--font-sans); font-size:11px; font-weight:700; margin-bottom:3px; }
+  .lad .ladw { font-family: var(--font-serif); font-size:12px; font-variant-numeric:tabular-nums; margin-top:4px; color: var(--text-muted); }
+  .lad .ladw b { font-size:15px; }
+  .lad.win .ladw b { color: var(--accent); } .lad.win { padding:6px 8px; border:1.5px solid var(--accent); border-radius:8px; background:#fbfaff; }
+  .worked { font-family: var(--font-serif); font-size:14px; font-variant-numeric:tabular-nums; text-align:center; }
+  .worked .res { color: var(--accent); font-weight:700; font-size:17px; }
+  .axhint { font-family: var(--font-sans); font-size:9px; color: var(--text-muted); }
+
+  .cap { font-family: var(--font-serif); font-size:14px; line-height:1.55; color: var(--text); text-align:center; max-width:860px; margin:10px auto 0; min-height:60px; }
+  .cap b { color: var(--accent); }
+  .wbref { display:inline-block; margin-top:6px; font-family: var(--font-sans); font-size:12px; color: var(--accent); font-weight:600; border:1px solid var(--accent); border-radius:5px; padding:4px 10px; text-decoration:none; }
+  .ctrls { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:10px; }
+  .counter { font-family: var(--font-sans); font-size:11px; color: var(--text-muted); letter-spacing:0.5px; }
+  .btns button { font-family: var(--font-sans); font-size:13px; padding:6px 15px; border:1px solid var(--rule); background:white; color: var(--text); border-radius:5px; cursor:pointer; margin:0 3px; }
+  .btns button.primary { border-color: var(--accent); background: var(--accent); color:#fff; }
+  .btns button:disabled { opacity:0.4; cursor:default; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Why Maximum Entropy?</h1>
+  <div class="subtitle">MRC LECTURE 4 · WHERE THE EXPONENTIAL COMES FROM — IT'S A COUNTING ARGUMENT</div>
+
+  <div class="eqzone"><div class="eq" id="eq"></div><div class="eqcap" id="eqcap"></div></div>
+  <div class="defs" id="defs"></div>
+  <div class="viz" id="viz"></div>
+  <div class="cap" id="cap"></div>
+
+  <div class="ctrls">
+    <div class="btns"><button id="prevBtn">← Back</button><button id="nextBtn" class="primary">Next →</button><button id="resetBtn">Reset</button></div>
+    <div class="counter" id="counter"></div>
+  </div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const fact=n=>{let f=1;for(let i=2;i<=n;i++)f*=i;return f;};
+  const mult=d=>fact(d.reduce((a,b)=>a+b,0))/d.reduce((p,n)=>p*fact(n),1);
+  // distributions over energy levels E = 0,1,2,3 ; all have N=10 and total energy U=10
+  const EXP=[4,3,2,1], PEAK=[3,4,3,0], BIM=[6,0,2,2];
+
+  function ladder(dist, sc=1){
+    const rowH=30*sc, r=6*sc, gap=15*sc, padL=20*sc, top=8*sc;
+    const maxn=Math.max(...dist), w=padL+12*sc+maxn*gap+8, h=top+4*rowH+4;
+    let s=`<svg viewBox="0 0 ${w} ${h}" width="${Math.round(w)}">`;
+    for(let e=3;e>=0;e--){ const y=top+(3-e)*rowH+rowH-2;
+      s+=`<line x1="${padL}" y1="${y}" x2="${w-4}" y2="${y}" stroke="var(--rule)" stroke-width="1"/>`;
+      s+=`<text class="axhint" x="${padL-4}" y="${y-3}" text-anchor="end">${e}</text>`;
+      for(let i=0;i<dist[e];i++){ const cx=padL+10*sc+i*gap, cy=y-r-1.5; s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${heat(e/3)}" stroke="#fff" stroke-width="${0.8*sc}"/>`; }
+    }
+    return s+`</svg>`;
+  }
+  const ladBlock=(dist,title,sc,win)=>`<div class="lad ${win?'win':''}"><div class="ladt">${title}</div>${ladder(dist,sc)}<div class="ladw">W = <b>${mult(dist).toLocaleString('en-US')}</b></div></div>`;
+
+  const STEPS=[
+    { eq:'P(j) = \\dfrac{e^{-E_j/k_BT}}{Z}', eqcap:'the canonical Boltzmann distribution',
+      defs:[['P(j)','probability that state (well) j is occupied'],['E<sub>j</sub>','binding energy of state j'],['k<sub>B</sub>','Boltzmann’s constant — the energy↔temperature conversion'],['T','absolute temperature (K)'],['Z','partition function — the normalizer (sum over all states) that makes the probabilities add to 1']],
+      cap:'We have been using this exponential law all session. But <b>why</b> $e^{-E/k_BT}$ — why that exact shape? The answer is not more physics; it is a <b>counting argument</b>. It starts with a second Boltzmann equation.', viz:'none' },
+    { eq:'S = k_B \\log W', eqcap:'Boltzmann’s entropy (his tombstone equation)',
+      defs:[['S','entropy'],['k<sub>B</sub>','Boltzmann’s constant (the same constant)'],['W','multiplicity — the number of microscopic arrangements (microstates) that look identical from the outside']],
+      cap:'Entropy is just $k_B$ times the <b>log of the number of ways</b>. The second law then says: a system drifts into the macrostate it can be built the <b>most ways</b> — <b>maximum W = maximum entropy</b>. So to find the distribution, we just <b>count the ways</b>.', viz:'none' },
+    { eq:'W = \\dfrac{N!}{n_0!\\, n_1!\\, n_2!\\, n_3!}', eqcap:'multiplicity — counting the arrangements',
+      defs:[['N','total number of particles'],['n<sub>j</sub>','how many particles sit in energy level j'],['W','number of distinct arrangements (microstates) of that macrostate']],
+      cap:'A <b>macrostate</b> is just the head-count per energy level $(n_0, n_1, \\ldots)$. Its multiplicity $W$ counts how many ways you can arrange the particles to get it. Here: <b>10 particles</b> across <b>4 energy levels</b>, in an exponential shape.', viz:'one' },
+    { eq:'W = \\dfrac{N!}{n_0!\\, n_1!\\, n_2!\\, n_3!}', eqcap:'same N, same energy — which shape wins?',
+      defs:[], cap:'<b>Same 10 particles, same total energy (10 units)</b> — three different shapes. Count the arrangements: the <b>exponential</b> shape can be built <b>far more ways</b> (3× the peaked, 10× the bimodal). That is the maximum-entropy macrostate — and at real scale ($N\\sim10^{23}$) it wins by a factor like $e^{10^{23}}$, so the system is <b>essentially never</b> anywhere else.', viz:'three' },
+    { eq:'P(j) = \\dfrac{e^{-E_j/k_BT}}{Z}', eqcap:'the winner, made exact',
+      defs:[['β','the energy constraint’s Lagrange multiplier — it turns out to equal 1/k<sub>B</sub>T']],
+      cap:'Maximising $W$ at <b>fixed particle number</b> and <b>fixed energy</b> gives exactly the exponential. <b>Stirling’s approximation</b> tames the enormous factorials; <b>Lagrange multipliers</b> impose the two constraints — the energy one is what tilts “uniform” into “exponential,” and its multiplier $\\beta = 1/k_BT$. Both are standard tools.', viz:'result' }
+  ];
+  let step=0; const NS=STEPS.length;
+
+  function render(){
+    const s=STEPS[step];
+    document.getElementById('eq').innerHTML='$'+s.eq+'$';
+    document.getElementById('eqcap').textContent=s.eqcap;
+    document.getElementById('defs').innerHTML=s.defs.map(([sym,d])=>`<span class="def"><span class="sym">${sym}</span><span class="d">${d}</span></span>`).join('');
+    let v='';
+    if(s.viz==='one'){ v=`<div>${ladBlock(EXP,'an exponential macrostate',1.3,false)}</div>`+
+      `<div class="worked">W = 10! / (4!·3!·2!·1!)<br>= 3,628,800 / 288 = <span class="res">12,600</span><br><span style="color:var(--text-muted);font-size:11px">12,600 different arrangements give this one shape</span></div>`; }
+    else if(s.viz==='three'){ v=ladBlock(PEAK,'peaked',0.92,false)+ladBlock(BIM,'bimodal',0.92,false)+ladBlock(EXP,'exponential ✓',0.92,true); }
+    else if(s.viz==='result'){ v=`<div>${ladBlock(EXP,'maximum-W shape',1.15,true)}</div>`+
+      `<div class="worked" style="max-width:320px">the max-W distribution is exactly<br><span class="res">n<sub>j</sub> ∝ e<sup>−E<sub>j</sub>/k<sub>B</sub>T</sup></span><br><span style="color:var(--text-muted);font-size:11px">max W → Boltzmann → softmax</span></div>`; }
+    document.getElementById('viz').innerHTML=v;
+    let cap=s.cap;
+    if(step===NS-1) cap+=' <br><a class="wbref" href="../derivations/L4_WB1_BoltzmannDerivation.pdf" target="_blank">→ full algebra: Whiteboard WB1 · Boltzmann from Maximum Entropy (PDF)</a>';
+    document.getElementById('cap').innerHTML=cap;
+    document.getElementById('counter').textContent=`STEP ${step+1} / ${NS}`;
+    document.getElementById('prevBtn').disabled=step===0; document.getElementById('nextBtn').disabled=step===NS-1;
+    if(window.MathJax&&window.MathJax.typesetPromise) window.MathJax.typesetPromise([document.getElementById('eq'),document.getElementById('cap')]);
+  }
+  function go(d){ const n=step+d; if(n>=0&&n<NS){ step=n; render(); } }
+  document.getElementById('nextBtn').addEventListener('click',()=>go(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>go(-1));
+  document.getElementById('resetBtn').addEventListener('click',()=>{step=0;render();});
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); if(step<NS-1){go(1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); if(step>0){go(-1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

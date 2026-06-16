@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Two Kinds of Bilinearity</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+
+  .ask { text-align: center; max-width: 880px; margin: 12px auto 0; font-family: var(--font-serif); font-size: 16px; line-height: 1.55; color: var(--text); }
+  .ask .need { background: var(--accent-faint); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 16px; display: inline-block; margin-top: 6px; }
+  .ask .sc { color: #2b6cb0; font-weight: 700; } .ask sub { font-size: 0.62em; } .ask sup { font-size: 0.64em; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 940px; margin: 16px auto 0; }
+  .card { border: 1px solid var(--rule); border-radius: 9px; padding: 14px 18px; }
+  .card.given { border-top: 4px solid #2b6cb0; }
+  .card.emer { border-top: 4px solid var(--accent); }
+  .card .ct { font-family: var(--font-sans); font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  .card.given .ct { color: #2b6cb0; } .card.emer .ct { color: var(--accent); }
+  .card .cs { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+  .card .eq { font-family: var(--font-serif); font-size: 19px; text-align: center; padding: 8px; background: #fafafa; border-radius: 6px; margin-bottom: 10px; }
+  .card .eq sub { font-size: 0.64em; }
+  .card .eq .blue { color: #2b6cb0; font-weight: 700; } .card .eq .pur { color: var(--accent); font-weight: 700; }
+  .card ul { margin: 0; padding: 0; list-style: none; }
+  .card li { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--text); padding: 4px 0 4px 18px; position: relative; }
+  .card li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 5px; height: 5px; border-radius: 50%; }
+  .card.given li::before { background: #2b6cb0; } .card.emer li::before { background: var(--accent); }
+  .card li b { font-weight: 700; }
+  .card .ex { font-family: var(--font-sans); font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--rule); color: var(--text-muted); }
+  .card .ex b { color: var(--text); }
+
+  .foot { text-align: center; font-family: var(--font-serif); font-size: 15px; margin-top: 14px; color: var(--text); }
+  .foot b { color: #2b6cb0; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Does the Binding Energy Decompose as a Dot Product?</h1>
+  <div class="subtitle">Lecture 4 left ΔG abstract — the identity needs it to be a dot product</div>
+
+  <div class="ask">
+    Attention scores with a dot product: s<sub>j</sub> = <span class="sc">q·k<sub>j</sub></span> / &tau;. For the identity to hold, the binding energy must <em>be</em> a dot product.
+    <div class="need"><b>It is — in one of two ways.</b></div>
+  </div>
+
+  <div class="cols">
+    <div class="card given">
+      <div class="ct">① Given bilinearity</div>
+      <div class="cs">the dot product is handed to us by physics</div>
+      <div class="eq">E = −<span class="blue">q<sub>phys</sub></span> · <span class="blue">k<sub>phys</sub></span></div>
+      <ul>
+        <li><b>Interpretable</b> physical features — nucleotide × position</li>
+        <li>Parameters are <b>tabulated</b>, measured once — the <em>form</em> is not learned</li>
+        <li>The energy decomposes <b>exactly</b>, by position, in raw sequence space</li>
+      </ul>
+      <div class="ex"><b>Where:</b> TF–DNA (PWM) · DNA/RNA duplex (SantaLucia) · CRISPR guide–target</div>
+    </div>
+
+    <div class="card emer">
+      <div class="ct">② Emergent bilinearity</div>
+      <div class="cs">the SFM learns the dot product</div>
+      <div class="eq">E ≈ −<span class="pur">Encoder(A)</span> · <span class="pur">Encoder(T)</span></div>
+      <ul>
+        <li><b>Abstract</b> learned coordinates — no physical meaning per axis</li>
+        <li>The encoder <b>discovers</b> the representation from data</li>
+        <li>The energy decomposes only <b>approximately</b>, in a learned space</li>
+      </ul>
+      <div class="ex"><b>Where:</b> antibody–antigen · TCR–pMHC · enzyme–substrate · drug–target</div>
+    </div>
+  </div>
+
+  <div class="foot">Both feed the same convergence equation. <b>Part B starts with the case where the dot product is exact and visible — TF–DNA.</b></div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

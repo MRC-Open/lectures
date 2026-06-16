@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Binding Energy Adds Up Position by Position</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 18px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 10px auto 0; max-width: 560px; height: auto; }
+  .eq { text-align: center; font-family: var(--font-serif); font-size: 21px; margin: 14px auto 0; }
+  .eq sub { font-size: 0.62em; }
+  .eq .res { color: var(--accent); font-weight: 700; }
+  .pts { max-width: 880px; margin: 12px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pt { border-radius: 7px; padding: 10px 14px; font-family: var(--font-sans); font-size: 13px; line-height: 1.5; }
+  .pt.good { border: 1px solid var(--rule); border-left: 4px solid #2b6cb0; background: #f5f9fc; }
+  .pt.bad  { border: 1px solid var(--rule); border-left: 4px solid #c83636; background: #fcf6f6; }
+  .pt b { font-weight: 700; }
+  .pt.good b { color: #2b6cb0; } .pt.bad b { color: #c83636; }
+  .bridge { text-align: center; font-family: var(--font-sans); font-size: 13px; color: var(--text-muted); margin: 8px auto 0; max-width: 760px; line-height: 1.5; }
+  .bridge b { color: var(--accent); }
+  .parallel { text-align: center; font-family: var(--font-sans); font-size: 11.5px; color: var(--text); margin: 10px auto 0; max-width: 880px; line-height: 1.55; padding-top: 8px; border-top: 1px dashed var(--rule); }
+  .parallel b { color: #2b6cb0; font-weight: 700; }
+  .parallel a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
+  .parallel a:hover { border-bottom-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Binding Energy Adds Up, Position by Position</h1>
+  <div class="subtitle">Independent contacts → the energy decomposes by position</div>
+
+  <svg id="fig" viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <div class="eq">&Delta;G<sub>site</sub> = &Sigma;<sub>p</sub> &Delta;G<sub>p</sub>(base<sub>p</sub>) = <span id="terms"></span> = <span class="res" id="tot"></span> kcal/mol</div>
+  <div class="bridge">These are <b>real, measured energies</b> (kcal/mol) — not abstract scores.</div>
+
+  <div class="pts">
+    <div class="pt good"><b>Yes — they are exactly measured.</b> The <b>total</b> ΔG of any site comes straight from SPR/ITC (last slide). The <b>per-position</b> energies are measured too: SantaLucia obtained the DNA-duplex values by <b>calorimetry</b> — real thermodynamics, no model. The PWM (next) is just a convenient way to <em>read the same energies from sequences</em>.</div>
+    <div class="pt bad"><b>Why proteins are harder (later).</b> In antibody–antigen binding the contacts are <b>not</b> independent — one residue's effect depends on its neighbours (epistasis). The energy will <em>not</em> decompose by position, so it must be <b>learned</b>.</div>
+  </div>
+
+  <div class="parallel">Two parallel proofs of <em>given bilinearity</em> for nucleic acids: &nbsp;<b>DNA duplex hybridisation</b> → <a href="https://doi.org/10.1073/pnas.95.4.1460" target="_blank" rel="noopener">SantaLucia, <i>PNAS</i> 1998</a>  ·  &nbsp;<b>TF–DNA binding</b> → <a href="https://doi.org/10.1016/0022-2836(87)90354-8" target="_blank" rel="noopener">Berg &amp; von Hippel, <i>JMB</i> 1987</a> &nbsp;<span style="color:var(--text-muted)">(the next slide builds the second case)</span></div>
+</div>
+
+<script>
+  const BCOL={A:'#3aa35e',C:'#3a6ea3',G:'#d6a13a',T:'#c0392b'};
+  const SITE=['A','C','G','T','G','A'];
+  const dG=[-1.5,-2.4,-2.0,-1.8,-2.3,-1.8];   // per-position contribution (kcal/mol)
+  const fg=v=>(v<0?'−':'')+Math.abs(v).toFixed(1);
+  function build(){
+    const X0=80,X1=600,n=SITE.length, gw=(X1-X0)/n, y0=24, scale=58; // px per kcal
+    let s='';
+    s+=`<line x1="${X0-10}" y1="${y0}" x2="${X1}" y2="${y0}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    s+=`<text x="${X0-16}" y="${y0+4}" font-family="sans-serif" font-size="10" fill="#999" text-anchor="end">0</text>`;
+    s+=`<text transform="translate(20,${y0+90}) rotate(-90)" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">ΔG contribution</text>`;
+    for(let p=0;p<n;p++){
+      const cx=X0+(p+0.5)*gw, h=Math.abs(dG[p])*scale, bw=46;
+      s+=`<rect x="${cx-bw/2}" y="${y0}" width="${bw}" height="${h}" rx="3" fill="${BCOL[SITE[p]]}" opacity="0.85"/>`;
+      s+=`<text x="${cx}" y="${y0+h+16}" font-family="serif" font-size="17" font-weight="700" fill="${BCOL[SITE[p]]}" text-anchor="middle">${SITE[p]}</text>`;
+      s+=`<text x="${cx}" y="${y0+h+30}" font-family="sans-serif" font-size="10" fill="#777" text-anchor="middle">pos ${p+1}</text>`;
+      s+=`<text x="${cx}" y="${y0+h/2+4}" font-family="serif" font-size="11" fill="#fff" text-anchor="middle">${fg(dG[p])}</text>`;
+    }
+    document.getElementById('fig').innerHTML=s;
+    document.getElementById('terms').innerHTML=dG.map(v=>`(${fg(v)})`).join(' + ');
+    document.getElementById('tot').textContent=fg(dG.reduce((a,b)=>a+b,0));
+  }
+  build();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

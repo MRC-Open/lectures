@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — The Boltzmann Distribution, Read Four Ways</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.4px; }
+
+  /* hero equation (HTML, color-coded to the cards) */
+  .hero { text-align: center; margin: 8px auto 4px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; font-family: var(--font-serif); }
+  .hero .lhs { font-size: 38px; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; }
+  .frac .num { font-size: 30px; padding: 0 12px 4px; }
+  .frac .bar { width: 100%; height: 2px; background: var(--text); }
+  .frac .den { font-size: 30px; padding: 4px 12px 0; }
+  .hero sup { font-size: 0.62em; }
+  .hero sub { font-size: 0.62em; }
+  .bf  { color: #2b6cb0; font-weight: 700; }   /* Boltzmann factor — blue */
+  .kt  { color: #c83636; font-weight: 700; }   /* temperature — red */
+  .zed { color: var(--accent); font-weight: 700; }
+  .smx { color: var(--text); }
+  .eqnote { font-size: 21px; color: var(--text-muted); }
+  .eqnote .smx { color: var(--text); font-weight: 600; }
+
+  .herohint { text-align: center; font-family: var(--font-sans); font-size: 12.5px; color: var(--text-muted); max-width: 760px; margin: 6px auto 0; line-height: 1.5; }
+  .herohint b { color: var(--text); font-weight: 600; }
+
+  /* four reading cards */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; max-width: 940px; margin: 14px auto 0; }
+  .card { border: 1px solid var(--rule); border-left-width: 4px; border-radius: 7px; padding: 10px 16px; display: grid; grid-template-columns: 92px 1fr; gap: 14px; align-items: center; background: white; }
+  .card.c1 { border-left-color: #2b6cb0; }
+  .card.c2 { border-left-color: #c83636; }
+  .card.c3 { border-left-color: var(--accent); }
+  .card.c4 { border-left-color: var(--text); background: var(--accent-faint); }
+  .card .icon { width: 92px; height: 56px; }
+  .card .body .ct { font-family: var(--font-serif); font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+  .card.c1 .ct { color: #2b6cb0; } .card.c2 .ct { color: #c83636; } .card.c3 .ct { color: var(--accent); } .card.c4 .ct { color: var(--text); }
+  .card .body .cd { font-family: var(--font-sans); font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+  .card .body .cd b { color: var(--text); font-weight: 600; }
+  .card .body .cd sub, .card .body .ct sub { font-size: 0.75em; }
+  .card .body .ct sup { font-size: 0.7em; }
+
+  /* capstone */
+  .capstone { text-align: center; margin: 13px auto 0; max-width: 880px; }
+  .capstone .flow { font-family: var(--font-serif); font-size: 19px; color: var(--text); }
+  .capstone .flow .arr { color: var(--accent); margin: 0 8px; font-family: var(--font-sans); }
+  .capstone .flow b { color: var(--accent); }
+  .capstone .sub { font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); margin-top: 5px; font-style: italic; }
+
+  @media (min-width: 1400px) {
+    .cards { max-width: 1100px; }
+    .card .body .cd { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The Boltzmann Distribution</h1>
+  <div class="subtitle">One equation — read four ways</div>
+
+  <div class="hero">
+    <span class="lhs"><span class="smx">P</span>(j) =</span>
+    <span class="frac">
+      <span class="num"><span class="bf">e<sup>&minus;E<sub>j</sub>/<span class="kt">k<sub>B</sub>T</span></sup></span></span>
+      <span class="bar"></span>
+      <span class="den"><span class="zed">Z</span></span>
+    </span>
+    <span class="eqnote">= <span class="smx">softmax</span>(&minus;E / k<sub>B</sub>T)</span>
+  </div>
+  <div class="herohint">The single object we built across the last four slides — <b>free energy</b> → <b>the landscape</b> → <b>filling the wells</b> → <b>why the exponential</b>. Every symbol now has a job.</div>
+
+  <div class="cards">
+
+    <div class="card c1">
+      <svg class="icon" viewBox="0 0 92 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M6 8 C 26 8, 34 48, 46 48 C 58 48, 66 8, 86 8" fill="none" stroke="#2b6cb0" stroke-width="2.4"/>
+        <circle cx="46" cy="46" r="6" fill="#2b6cb0"/>
+      </svg>
+      <div class="body">
+        <div class="ct">e<sup>&minus;E<sub>j</sub>/k<sub>B</sub>T</sup> — the Boltzmann factor</div>
+        <div class="cd">One antigen's <b>statistical weight</b>. A deeper binding well (more negative E<sub>j</sub>) is exponentially more occupied — at body temperature, every extra ~0.6 kcal/mol roughly <b>doubles the odds</b>.</div>
+      </div>
+    </div>
+
+    <div class="card c2">
+      <svg class="icon" viewBox="0 0 92 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- cold: peaked -->
+        <rect x="6"  y="14" width="6" height="34" fill="#c83636"/>
+        <rect x="14" y="34" width="6" height="14" fill="#e7a3a3"/>
+        <rect x="22" y="40" width="6" height="8"  fill="#e7a3a3"/>
+        <text x="17" y="55" font-family="sans-serif" font-size="7" fill="#999" text-anchor="middle">cold</text>
+        <path d="M40 30 L52 30 M48 26 L52 30 L48 34" fill="none" stroke="#999" stroke-width="1.6"/>
+        <!-- hot: flat -->
+        <rect x="62" y="30" width="6" height="18" fill="#e7a3a3"/>
+        <rect x="70" y="28" width="6" height="20" fill="#e7a3a3"/>
+        <rect x="78" y="31" width="6" height="17" fill="#e7a3a3"/>
+        <text x="73" y="55" font-family="sans-serif" font-size="7" fill="#999" text-anchor="middle">hot</text>
+      </svg>
+      <div class="body">
+        <div class="ct">k<sub>B</sub>T — the temperature</div>
+        <div class="cd">The <b>contrast knob</b>. Cold → the tightest binder wins outright (argmax). Hot → every antigen looks equal (uniform). At 310 K, k<sub>B</sub>T = <b>0.62 kcal/mol</b>.</div>
+      </div>
+    </div>
+
+    <div class="card c3">
+      <svg class="icon" viewBox="0 0 92 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <text x="8" y="36" font-family="serif" font-size="30" fill="#5e3aa3">&#931;</text>
+        <rect x="34" y="12" width="7" height="36" fill="#5e3aa3"/>
+        <rect x="44" y="24" width="7" height="24" fill="#8d6fc4"/>
+        <rect x="54" y="33" width="7" height="15" fill="#b6a3d8"/>
+        <rect x="64" y="39" width="7" height="9"  fill="#d3c7e8"/>
+        <line x1="32" y1="48" x2="74" y2="48" stroke="#5e3aa3" stroke-width="1.6"/>
+      </svg>
+      <div class="body">
+        <div class="ct">Z = &#931;<sub>k</sub> e<sup>&minus;E<sub>k</sub>/k<sub>B</sub>T</sup> — the partition function</div>
+        <div class="cd">The denominator. It <b>sums the weights of every competing antigen</b>, turning raw weights into probabilities. Every thermodynamic quantity can be recovered from Z alone.</div>
+      </div>
+    </div>
+
+    <div class="card c4">
+      <svg class="icon" viewBox="0 0 92 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="10" y="10" width="9" height="38" rx="1.5" fill="#5e3aa3"/>
+        <rect x="24" y="26" width="9" height="22" rx="1.5" fill="#b6a3d8"/>
+        <rect x="38" y="34" width="9" height="14" rx="1.5" fill="#d3c7e8"/>
+        <rect x="52" y="38" width="9" height="10" rx="1.5" fill="#d3c7e8"/>
+        <rect x="66" y="41" width="9" height="7"  rx="1.5" fill="#d3c7e8"/>
+        <line x1="8" y1="48" x2="80" y2="48" stroke="var(--text-muted)" stroke-width="1.4"/>
+      </svg>
+      <div class="body">
+        <div class="ct">the whole form = softmax</div>
+        <div class="cd">Maximum entropy <b>forced this exact shape</b> — no other function survives the counting argument. It is the <b>identical</b> function a transformer computes over its scores. Same equation, different field.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="capstone">
+    <div class="flow">maximum entropy <span class="arr">&rarr;</span> <b>Boltzmann distribution</b> <span class="arr">&rarr;</span> softmax</div>
+    <div class="sub">one function, derived independently in physics, information theory, and machine learning — no known exception at equilibrium in 150 years</div>
+  </div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

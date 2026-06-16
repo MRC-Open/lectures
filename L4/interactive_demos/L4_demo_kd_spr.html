@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L4 — K_d, ΔG and the Boltzmann factor inside it</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 8px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  .panel-label { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 3px; }
+  svg { display: block; width: 100%; height: auto; }
+
+  .top { display: grid; grid-template-columns: 0.84fr 1.16fr; gap: 20px; margin-top: 4px; align-items: start; }
+  .top > div:first-child svg { max-width: 205px; margin: 0 auto; }
+  #sensor { max-width: 420px; margin: 0 auto; }
+  .defs { font-family: var(--font-serif); font-size: 14px; text-align: center; margin-top: 6px; color: var(--text); }
+  .defs sub { font-size: 0.72em; }
+  .sprbox { border: 1px solid var(--rule); border-radius: 7px; background: #fafafa; padding: 7px 11px; margin-top: 6px; font-family: var(--font-sans); font-size: 10.5px; line-height: 1.45; color: var(--text-muted); text-align: left; }
+  .sprbox .h { font-size: 9.5px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 2px; }
+  .sprbox b { color: var(--text); } .sprbox .on { color: #2b6cb0; font-weight: 700; } .sprbox .off { color: #c83636; font-weight: 700; }
+  .sprbox sub { font-size: 0.78em; }
+
+  /* preset tabs */
+  .tabs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .tab { font-family: var(--font-sans); font-size: 12px; font-weight: 600; padding: 5px 13px 6px; border: 1px solid var(--rule); border-radius: 6px; background: white; cursor: pointer; color: var(--text); text-align: center; line-height: 1.25; transition: all .12s; }
+  .tab .s { display: block; font-size: 9.5px; font-weight: 500; color: var(--text-muted); }
+  .tab:hover { border-color: var(--accent); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tab.active .s { color: rgba(255,255,255,0.8); }
+
+  /* worked plug-in boxes */
+  .work { display: grid; grid-template-columns: 1fr 1fr 1.12fr; gap: 12px; margin-top: 9px; }
+  .wk { border-left: 3px solid var(--accent); background: #fbfaff; border-radius: 0 6px 6px 0; padding: 7px 14px; }
+  .wk.boltz { border: 1.5px solid var(--accent); border-left-width: 4px; background: var(--accent-faint); border-radius: 6px; }
+  .wk .wkh { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 6px; }
+  .wk .ln { font-family: var(--font-serif); font-size: 15px; line-height: 1.75; color: var(--text); }
+  .wk .ln sub { font-size: 0.7em; } .wk .ln sup { font-size: 0.72em; }
+  .wk .res { color: var(--accent); font-weight: 700; }
+  .wk .cap { font-family: var(--font-sans); font-size: 11px; line-height: 1.45; color: var(--text-muted); margin-top: 6px; }
+  .wk.boltz .cap { color: var(--text); }
+  .wk.boltz .cap b { color: var(--accent); }
+
+  .foot { font-family: var(--font-serif); font-size: 15px; text-align: center; margin-top: 8px; color: var(--text); line-height: 1.5; }
+  .foot b { color: var(--accent); }
+  .foot sub { font-size: 0.72em; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>K<sub>d</sub>, &Delta;G, and the Boltzmann Factor Inside Them</h1>
+  <div class="subtitle">The number every biologist measures — is an energy</div>
+
+  <div class="top">
+
+    <!-- LEFT: SPR chip (antigen bound at the Fab arm tip / variable region) -->
+    <div>
+      <div class="panel-label">The experiment — SPR</div>
+      <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" aria-label="SPR chip schematic">
+        <line x1="240" y1="22" x2="70" y2="22" stroke="#9aa3ad" stroke-width="2"/>
+        <path d="M70 22 l9 -5 v10 z" fill="#9aa3ad"/>
+        <text x="248" y="26" font-family="sans-serif" font-size="11" fill="#6b7280">flow</text>
+        <text x="150" y="14" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">antigen in solution</text>
+        <!-- free antigen -->
+        <g fill="#d98a3d">
+          <circle cx="100" cy="50" r="6"/><circle cx="150" cy="42" r="6"/><circle cx="205" cy="54" r="6"/>
+          <circle cx="128" cy="72" r="6"/><circle cx="240" cy="64" r="6"/>
+        </g>
+        <!-- gold chip -->
+        <rect x="12" y="170" width="276" height="18" rx="3" fill="#c9a84c"/>
+        <rect x="12" y="170" width="276" height="5" rx="3" fill="#dcc06a"/>
+        <text x="150" y="183" font-family="sans-serif" font-size="10" fill="#7a6420" text-anchor="middle" font-weight="600">gold chip · antibody immobilized</text>
+        <!-- immobilized antibodies (Y); arms = variable regions -->
+        <g stroke="#5a6b7a" stroke-width="3.4" fill="none" stroke-linecap="round">
+          <path d="M45 170 V150 M45 150 L34 134 M45 150 L56 134"/>
+          <path d="M105 170 V150 M105 150 L94 134 M105 150 L116 134"/>
+          <path d="M165 170 V150 M165 150 L154 134 M165 150 L176 134"/>
+          <path d="M225 170 V150 M225 150 L214 134 M225 150 L236 134"/>
+        </g>
+        <!-- antigen bound AT an arm tip (variable region), not in the cleft -->
+        <g fill="#d98a3d">
+          <circle cx="31" cy="128" r="6.5"/>    <!-- ab1, left Fab tip -->
+          <circle cx="179" cy="128" r="6.5"/>   <!-- ab3, right Fab tip -->
+        </g>
+        <text x="150" y="118" font-family="sans-serif" font-size="9" fill="#b5701f" text-anchor="middle" font-style="italic">antigen binds the variable-region tip</text>
+      </svg>
+      <div class="defs">K<sub>d</sub> = [Ab]&thinsp;[Ag] / [Ab:Ag] = k<sub>off</sub> / k<sub>on</sub></div>
+      <div class="sprbox">
+        <div class="h">how SPR reads the physics</div>
+        The <b>rising</b> curve gives the <span class="on">on-rate k<sub>on</sub></span> (M⁻¹s⁻¹) — how fast Ab and Ag find each other. The <b>falling</b> curve gives the <span class="off">off-rate k<sub>off</sub></span> (s⁻¹) — how fast they let go, set by the barrier out of the energy well. Their ratio is the equilibrium <b>K<sub>d</sub> = k<sub>off</sub>/k<sub>on</sub></b>, and <b>ΔG = RT ln K<sub>d</sub></b> — so kinetics on a chip <b>measure the binding free energy</b> directly.
+      </div>
+    </div>
+
+    <!-- RIGHT: sensorgram + preset tabs -->
+    <div>
+      <div class="panel-label">The sensorgram — pick an antibody</div>
+      <svg id="sensor" viewBox="0 0 480 220" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="tabs" id="tabs"></div>
+    </div>
+  </div>
+
+  <!-- WORKED PLUG-IN MATH -->
+  <div class="work">
+    <div class="wk" id="b1"></div>
+    <div class="wk" id="b2"></div>
+    <div class="wk boltz" id="b3"></div>
+  </div>
+
+  <div class="foot">Every K<sub>d</sub> a biologist reports is a <b>Boltzmann factor</b> — and a single point on the landscape. For proteins, we will <b>learn</b> the rest.</div>
+</div>
+
+<script>
+  // ---- presets: kon fixed, koff varies ----
+  const PRESETS=[
+    {name:'Weak',        s:'100 nM · fast off', kon:1e6, koff:1e-1},
+    {name:'Moderate',    s:'10 nM',             kon:1e6, koff:1e-2},
+    {name:'Tight',       s:'1 nM',              kon:1e6, koff:1e-3},
+    {name:'Therapeutic', s:'100 pM · slow off', kon:1e6, koff:1e-4},
+  ];
+  let sel=1;
+
+  // ---- sensorgram geometry ----
+  const X0=46, X1=466, YT=14, YB=186, Rp=92, RMAX=108;
+  const xt=t=>X0+t/100*(X1-X0), yr=r=>YB-r/RMAX*(YB-YT);
+  const T_INJ=12, T_END=52, kobs=0.16;
+  const assoc=t=>Rp*(1-Math.exp(-kobs*(t-T_INJ)));
+
+  // ---- formatting ----
+  const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  const sup=s=>String(s).split('').map(c=>SUP[c]||c).join('');
+  const fmtSci=x=>{const e=x.toExponential(1),[m,ex]=e.split('e');return `${m}×10${sup(parseInt(ex))}`;};
+  const fmtPow=x=>`10${sup(Math.round(Math.log10(x)))}`;
+  const sig=v=>v>=100?Math.round(v):v>=10?v.toFixed(0):v>=1?v.toFixed(1):v.toFixed(2);
+  const fmtKd=Kd=>{const nM=Kd*1e9;return nM>=1?`${sig(nM)} nM`:`${sig(Kd*1e12)} pM`;};
+
+  function drawSensor(koff){
+    const logoff=Math.log10(koff);
+    const t01=(-1-logoff)/3;                  // weak 0 .. therapeutic 1
+    const fracEnd=0.04+0.90*t01, D=-Math.log(fracEnd)/(100-T_END);
+    const r52=assoc(T_END);
+    let pts=[];
+    for(let t=0;t<=100;t++){let r=t<T_INJ?0:(t<=T_END?assoc(t):r52*Math.exp(-D*(t-T_END)));pts.push(`${xt(t).toFixed(1)},${yr(r).toFixed(1)}`);}
+    const curve=pts.join(' ');
+    let g='';
+    g+=`<line x1="${X0}" y1="${YB}" x2="${X1}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    g+=`<line x1="${X0}" y1="${YT}" x2="${X0}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    g+=`<rect x="${xt(T_INJ)}" y="${YT}" width="${xt(T_END)-xt(T_INJ)}" height="${YB-YT}" fill="#5e3aa3" opacity="0.05"/>`;
+    g+=`<line x1="${xt(T_INJ)}" y1="${YT}" x2="${xt(T_INJ)}" y2="${YB}" stroke="#b9add6" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    g+=`<line x1="${xt(T_END)}" y1="${YT}" x2="${xt(T_END)}" y2="${YB}" stroke="#b9add6" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    g+=`<polygon points="${xt(0)},${yr(0)} ${curve} ${xt(100)},${yr(0)}" fill="#5e3aa3" opacity="0.08"/>`;
+    g+=`<polyline points="${curve}" fill="none" stroke="#5e3aa3" stroke-width="2.6"/>`;
+    g+=`<text x="${xt(33)}" y="${yr(24)}" font-family="sans-serif" font-size="11" fill="#5e3aa3" text-anchor="middle" font-weight="600">association (k_on)</text>`;
+    g+=`<text x="${xt(76)}" y="${yr(r52*Math.exp(-D*24))-9}" font-family="sans-serif" font-size="11" fill="#5e3aa3" text-anchor="middle" font-weight="600">dissociation (k_off)</text>`;
+    g+=`<text x="${xt(32)}" y="${YT+11}" font-family="sans-serif" font-size="9.5" fill="#9a8ec4" text-anchor="middle">antigen injected</text>`;
+    g+=`<text x="${xt(78)}" y="${YT+11}" font-family="sans-serif" font-size="9.5" fill="#9aa3ad" text-anchor="middle">buffer wash</text>`;
+    g+=`<text x="${(X0+X1)/2}" y="${YB+22}" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">time →</text>`;
+    g+=`<text transform="translate(13,${(YT+YB)/2}) rotate(-90)" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">response (RU)</text>`;
+    document.getElementById('sensor').innerHTML=g;
+  }
+
+  function render(){
+    const p=PRESETS[sel];
+    const Kd=p.koff/p.kon, lnKd=Math.log(Kd), dG=0.616*lnKd, Ka=1/Kd, expArg=-dG/0.616;
+    drawSensor(p.koff);
+    // tabs
+    document.getElementById('tabs').innerHTML=PRESETS.map((q,i)=>
+      `<button class="tab ${i===sel?'active':''}" data-i="${i}">${q.name}<span class="s">${q.s}</span></button>`).join('');
+    document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{sel=+b.dataset.i;render();});
+    // worked boxes
+    document.getElementById('b1').innerHTML=
+      `<div class="wkh">① K<sub>d</sub> from the SPR rates</div>
+       <div class="ln">K<sub>d</sub> = k<sub>off</sub> / k<sub>on</sub><br>
+       = ${fmtSci(p.koff)} s⁻¹ / ${fmtSci(p.kon)} M⁻¹s⁻¹<br>
+       = <span class="res">${fmtPow(Kd)} M = ${fmtKd(Kd)}</span></div>`;
+    document.getElementById('b2').innerHTML=
+      `<div class="wkh">② K<sub>d</sub> → binding free energy</div>
+       <div class="ln">&Delta;G = RT ln K<sub>d</sub><br>
+       = 0.616 × ln(${fmtPow(Kd)})<br>
+       = 0.616 × (${lnKd.toFixed(1)}) = <span class="res">−${Math.abs(dG).toFixed(1)} kcal/mol</span></div>`;
+    document.getElementById('b3').innerHTML=
+      `<div class="wkh">③ the Boltzmann factor inside K<sub>d</sub></div>
+       <div class="ln">K<sub>a</sub> = 1/K<sub>d</sub> = exp(−&Delta;G / RT)<br>
+       = exp(${expArg.toFixed(1)}) = <span class="res">${fmtSci(Ka)} M⁻¹</span></div>
+       <div class="cap"><b>exp(−ΔG/RT)</b> is the Boltzmann factor — the same e<sup>−E/k<sub>B</sub>T</sup> that fills the wells, now inside the K<sub>d</sub> you measure on the bench.</div>`;
+  }
+  render();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

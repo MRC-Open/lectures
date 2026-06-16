@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Emergent Bilinearity (Antibody–Antigen)</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 12px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 900px; margin: 10px auto 0; }
+  .branch { text-align: center; }
+  .bh { font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; }
+  .branch.ab .bh { color: #5a6b7a; } .branch.ag .bh { color: #a05e23; }
+  .seq { font-family: monospace; font-size: 15px; letter-spacing: 5px; margin: 3px 0; }
+  .branch.ab .seq { color: #5a6b7a; } .branch.ag .seq { color: #a05e23; }
+  .step { font-family: var(--font-sans); font-size: 10.5px; color: var(--accent); font-weight: 600; margin: 4px 0; }
+  .step .enc { font-weight: 700; }
+
+  table.mat { border-collapse: collapse; margin: 2px auto; }
+  table.mat td { width: 34px; height: 23px; text-align: center; font-family: var(--font-serif); font-size: 11.5px; border: 1px solid #fff; font-variant-numeric: tabular-nums; }
+  table.mat .rl { width: 19px; font-family: var(--font-sans); font-weight: 700; font-size: 12px; border: none; color: var(--text-muted); }
+  table.mat .dh td { font-family: var(--font-sans); font-size: 8px; color: #b3b3bd; border: none; height: 11px; }
+  .matcap { font-family: var(--font-sans); font-size: 9.5px; color: var(--text-muted); margin-top: 2px; }
+
+  table.vec { border-collapse: collapse; margin: 2px auto; }
+  table.vec td { width: 34px; height: 24px; text-align: center; font-family: var(--font-serif); font-size: 11.5px; border: 1px solid #fff; font-variant-numeric: tabular-nums; }
+  table.vec .vl { border: none; font-family: var(--font-serif); font-weight: 700; font-size: 18px; width: 28px; }
+  .branch.ab .vec .vl { color: #2b6cb0; } .branch.ag .vec .vl { color: #2b6cb0; }
+
+  .score { text-align: center; margin: 14px auto 0; }
+  .score .big { font-family: var(--font-serif); font-size: 19px; }
+  .score .big .qk { color: #2b6cb0; font-weight: 700; }
+  .score .big sub { font-size: 0.62em; }
+  .score .expand { font-family: var(--font-serif); font-size: 13.5px; color: var(--text-muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .score .expand b { color: var(--accent); }
+
+  .connect { max-width: 900px; margin: 12px auto 0; border-left: 3px solid var(--accent); background: #fbfaff; border-radius: 0 8px 8px 0; padding: 10px 16px; font-family: var(--font-sans); font-size: 13px; line-height: 1.55; color: var(--text); }
+  .connect b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Emergent Bilinearity — Antibody &times; Antigen</h1>
+  <div class="subtitle">The same matrices from Session 2 — now the features are learned</div>
+
+  <div class="cols2">
+    <div class="branch ab">
+      <div class="bh">ANTIBODY · CDR-H3</div>
+      <div class="seq">C A R D Y</div>
+      <div class="step">↓ <span class="enc">AntiBERTy</span> (pretrained antibody LM)</div>
+      <div id="abmat"></div>
+      <div class="matcap">embedding matrix — residues × features</div>
+      <div class="step">↓ mean-pool over residues</div>
+      <div id="abq"></div>
+    </div>
+
+    <div class="branch ag">
+      <div class="bh">ANTIGEN · epitope</div>
+      <div class="seq">N S A S F</div>
+      <div class="step">↓ <span class="enc">ESM-2</span> (pretrained protein LM)</div>
+      <div id="agmat"></div>
+      <div class="matcap">embedding matrix — residues × features</div>
+      <div class="step">↓ mean-pool over residues</div>
+      <div id="agk"></div>
+    </div>
+  </div>
+
+  <div class="score">
+    <div class="big">s = <span class="qk">q</span> · <span class="qk">k</span> / &tau; &nbsp;&nbsp;→&nbsp;&nbsp; softmax over the batch <span style="font-family:var(--font-sans);font-size:11px;color:var(--text-muted)">(in-batch negatives — Session 2)</span></div>
+    <div class="expand" id="dot"></div>
+  </div>
+
+  <div class="connect">
+    <b>Exactly Session 2.</b> A sequence becomes an <b>embedding matrix</b> (rows = residues, columns = features); you <b>pool</b> it to one vector and score a pair with a <b>dot product</b>. The only new part: the encoder is <b>pretrained</b> on millions of sequences, so the features are <b>learned</b> — not the one-hot bases of a PWM. Same machine, learned coordinates — this is how an antibody–antigen SFM reaches strong retrieval from only <b>~4,000 pairs</b>.
+  </div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const VMIN=-1.5, VMAX=2.0;
+  const col=v=>heat((v-VMIN)/(VMAX-VMIN));
+  const fnum=x=>x.toFixed(1).replace('-','−');
+
+  const D=6;
+  const AB={labels:['C','A','R','D','Y'], M:[
+    [1.2,-0.4,0.8,1.5,-0.2,0.6],
+    [0.9,-0.1,1.1,0.7,0.3,0.4],
+    [1.6,-0.6,0.5,1.2,-0.5,0.9],
+    [0.7,0.2,0.9,1.0,0.1,0.3],
+    [1.1,-0.3,0.7,1.3,-0.1,0.7]]};
+  const AG={labels:['N','S','A','S','F'], M:[
+    [0.8,0.5,-0.3,1.2,0.4,0.9],
+    [1.0,0.2,0.1,0.9,0.6,0.5],
+    [0.6,0.4,-0.1,1.1,0.3,0.7],
+    [0.9,0.3,0.0,1.0,0.5,0.6],
+    [1.2,0.1,0.2,1.3,0.2,0.8]]};
+  const pool=M=>{const v=Array(D).fill(0); for(const r of M) for(let j=0;j<D;j++) v[j]+=r[j]; return v.map(x=>+(x/M.length).toFixed(1));};
+  const q=pool(AB.M), k=pool(AG.M);
+
+  function renderMat(id, data){
+    let h='<table class="mat"><tr class="dh"><td></td>';
+    for(let j=0;j<D;j++) h+=`<td>d${j+1}</td>`;
+    h+='</tr>';
+    for(let i=0;i<data.M.length;i++){
+      h+=`<tr><td class="rl">${data.labels[i]}</td>`;
+      for(let j=0;j<D;j++){ const v=data.M[i][j]; h+=`<td style="background:${col(v)}">${fnum(v)}</td>`; }
+      h+='</tr>';
+    }
+    h+='</table>';
+    document.getElementById(id).innerHTML=h;
+  }
+  function renderVec(id, vec, name){
+    let h='<table class="vec"><tr><td class="vl">'+name+'</td>';
+    for(let j=0;j<D;j++) h+=`<td style="background:${col(vec[j])};outline:2px solid #2b6cb0;outline-offset:-2px">${fnum(vec[j])}</td>`;
+    h+='</tr></table>';
+    document.getElementById(id).innerHTML=h;
+  }
+  renderMat('abmat',AB); renderMat('agmat',AG);
+  renderVec('abq',q,'q'); renderVec('agk',k,'k');
+
+  // dot product expansion
+  let terms=[], dot=0;
+  for(let j=0;j<D;j++){ dot+=q[j]*k[j]; terms.push(`(${fnum(q[j])})(${fnum(k[j])})`); }
+  dot=+dot.toFixed(1);
+  document.getElementById('dot').innerHTML=`q · k = ${terms.join(' + ')} = <b>${fnum(dot)}</b>`;
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

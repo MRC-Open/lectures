@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Affinity Calibration</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 12px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+
+  .two { display: grid; grid-template-columns: 1fr 1.04fr; gap: 28px; max-width: 960px; margin: 8px auto 0; align-items: center; }
+  .panel-label { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; text-align: center; }
+
+  .idrow { font-family: var(--font-serif); font-size: 16px; text-align: center; background: #fafafa; border-radius: 6px; padding: 8px; }
+  .idrow .sc { color: #2b6cb0; font-weight: 700; } .idrow sub { font-size: 0.62em; }
+  .idnote { font-family: var(--font-sans); font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin: 6px 0 0; }
+  .idnote b { color: var(--text); font-weight: 600; }
+
+  .fit { font-family: var(--font-serif); font-size: 21px; text-align: center; margin: 12px 0 4px; }
+  .fit .w { color: #c83636; font-weight: 700; } .fit .b { color: #2b8a5e; font-weight: 700; } .fit .sc { color: #2b6cb0; font-weight: 700; }
+  .fit sub { font-size: 0.6em; }
+  .defs { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-family: var(--font-sans); font-size: 12px; margin: 2px auto 0; max-width: 440px; }
+  .defs .s { font-family: var(--font-serif); font-weight: 700; text-align: right; }
+  .defs .s.w { color: #c83636; } .defs .s.b { color: #2b8a5e; }
+  .defs .m { color: var(--text-muted); }
+
+  .lev { margin-top: 12px; border-left: 3px solid var(--accent); background: #fbfaff; border-radius: 0 8px 8px 0; padding: 10px 14px; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--text); }
+  .lev b { color: var(--accent); }
+  .lev .big { font-family: var(--font-serif); font-weight: 700; color: var(--accent); }
+
+  .foot { text-align: center; font-family: var(--font-serif); font-size: 14.5px; margin-top: 12px; color: var(--text); }
+  .foot b { color: var(--accent); }
+  .future { max-width: 760px; margin: 12px auto 0; border: 1px dashed var(--accent); border-radius: 8px; padding: 8px 16px; text-align: center; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--text-muted); }
+  .future .tag { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); margin-right: 8px; }
+  .future b { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Affinity Calibration — From Rankings to Real ΔG</h1>
+  <div class="subtitle">Two numbers turn a contrastive score into kcal/mol</div>
+
+  <div class="two">
+    <div>
+      <div class="panel-label">a handful of measured K<sub>d</sub> &nbsp;calibrate the whole scale</div>
+      <svg id="cal" viewBox="0 0 372 264" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div>
+      <div class="idrow"><span class="sc">s<sub>ij</sub></span> = −ΔG<sub>ij</sub> / k<sub>B</sub>T + constant</div>
+      <div class="idnote">The contrastive score <span style="color:#2b6cb0;font-weight:700">s = q·k</span> already <b>is</b> the binding energy — up to a constant. That constant <b>cancels in the softmax</b>, so ranking needs no measured affinity. But to read off <b>real kcal/mol</b>, calibrate it out:</div>
+
+      <div class="fit">ΔG<sub>pred</sub> = <span class="w">w</span> · <span class="sc">s</span> + <span class="b">b</span></div>
+      <div class="defs">
+        <div class="s w">w</div><div class="m">slope — unit conversion to kcal/mol (≈ −k<sub>B</sub>T = −0.62 if perfectly scaled)</div>
+        <div class="s b">b</div><div class="m">intercept — the thermodynamic reference state (the unbound baseline)</div>
+      </div>
+
+      <div class="lev"><b>The decoupling principle.</b> The energy <em>landscape</em> is learned from <b>cheap binary binding pairs</b> (thousands → millions). The <em>unit conversion</em> needs only <b>~500 measured K<sub>d</sub></b> (SPR/ITC/BLI) — two numbers, fixed cost. Leverage ratio: <span class="big">8 : 1</span> at 4k pairs → <span class="big">2,000 : 1</span> at 1M.</div>
+    </div>
+  </div>
+
+  <div class="foot">Rankings come free from binary data; <b>absolute affinity costs just two calibrated numbers</b> — w and b.</div>
+  <div class="future"><span class="tag">▸ area of future work</span>Affinity-labelled data (measured K<sub>d</sub>) is <b>scarce</b>, and calibration <b>across domains</b> is largely unexplored — a strong <b>SFM student-project</b> direction.</div>
+</div>
+
+<script>
+  function buildCal(){
+    const X0=48,X1=350,YT=14,YB=210;
+    const X=x=>X0+x*(X1-X0), Y=y=>YB-y*(YB-YT);
+    // calibration points: measured ΔG (y) vs SFM score s (x) — tight linear
+    const pts=[[0.12,0.18],[0.24,0.27],[0.36,0.41],[0.47,0.46],[0.58,0.60],[0.70,0.66],[0.82,0.80],[0.90,0.85]];
+    // fit line (illustrative): y = 0.9 x + 0.07
+    const a=0.86, c=0.08;
+    let s='';
+    s+=`<line x1="${X0}" y1="${YB}" x2="${X1}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    s+=`<line x1="${X0}" y1="${YT}" x2="${X0}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    // fit line
+    s+=`<line x1="${X(0)}" y1="${Y(c)}" x2="${X(1)}" y2="${Y(a*1+c)}" stroke="#5e3aa3" stroke-width="2"/>`;
+    // points (measured)
+    for(const [x,y] of pts){ s+=`<circle cx="${X(x)}" cy="${Y(y)}" r="4.2" fill="#2b6cb0" stroke="#fff" stroke-width="1"/>`; }
+    // slope/intercept annotations
+    s+=`<text x="${X(0.74)}" y="${Y(0.50)}" font-family="serif" font-size="13" fill="#c83636" font-weight="700" transform="rotate(-26 ${X(0.74)} ${Y(0.50)})">slope w</text>`;
+    s+=`<circle cx="${X(0)}" cy="${Y(c)}" r="3.5" fill="#2b8a5e"/>`;
+    s+=`<text x="${X(0)+8}" y="${Y(c)+13}" font-family="serif" font-size="12" fill="#2b8a5e" font-weight="700">intercept b</text>`;
+    s+=`<text x="${X(0.5)}" y="${Y(0.97)}" font-family="sans-serif" font-size="9.5" fill="#6b7280" text-anchor="middle">~500 points fix the line</text>`;
+    // axis titles
+    s+=`<text x="${(X0+X1)/2}" y="${YB+24}" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">SFM score &nbsp;s = q·k&nbsp; →</text>`;
+    s+=`<text transform="translate(16,${(YT+YB)/2}) rotate(-90)" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">measured ΔG = RT ln K_d</text>`;
+    document.getElementById('cal').innerHTML=s;
+  }
+  buildCal();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

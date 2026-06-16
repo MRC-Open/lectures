@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — TF–DNA: The PWM Score Is the Attention Score</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 12px; }
+  .eyebrow { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 700; text-align: center; }
+  h1 { text-align: center; margin: 2px 0 2px; }
+  .stepcap { text-align: center; font-family: var(--font-sans); font-size: 13px; color: var(--text-muted); font-style: italic; max-width: 840px; margin: 4px auto 0; line-height: 1.45; min-height: 34px; }
+
+  .stage-area { min-height: 400px; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+  .step { display: none; width: 100%; }
+  .step.active { display: block; }
+  svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+
+  .eq { font-family: var(--font-serif); text-align: center; }
+  .sc { color: #2b6cb0; font-weight: 700; } .tp { color: #c83636; font-weight: 700; } .zc { color: var(--accent); font-weight: 700; }
+  sub { font-size: 0.64em; } sup { font-size: 0.66em; }
+
+  .s1eq { font-size: 22px; margin-bottom: 4px; } .s1eq sub { font-size: 0.6em; }
+
+  /* PWM table */
+  .seqrow { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  .seqrow b { font-family: var(--font-serif); font-size: 18px; letter-spacing: 6px; }
+  table.pwm { border-collapse: collapse; margin: 0 auto; font-variant-numeric: tabular-nums; }
+  table.pwm td, table.pwm th { width: 44px; height: 32px; text-align: center; font-family: var(--font-serif); font-size: 16px; border: 1px solid #e6e6ee; }
+  table.pwm .seqh { font-family: var(--font-sans); font-weight: 700; font-size: 17px; border: none; }
+  table.pwm .posh { font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); border: none; font-weight: 600; }
+  table.pwm .rowlab { font-family: var(--font-sans); font-weight: 700; font-size: 14px; width: 24px; border: none; }
+  table.pwm td.pick { outline: 3px solid var(--accent); outline-offset: -3px; font-weight: 700; border-radius: 3px; position: relative; z-index: 1; }
+  .sumline { text-align: center; font-family: var(--font-serif); font-size: 18px; margin-top: 12px; }
+  .sumline .res { color: var(--accent); font-weight: 700; }
+
+  .alg { max-width: 760px; margin: 0 auto; }
+  .algrow { font-family: var(--font-serif); font-size: 21px; text-align: center; padding: 6px 0; }
+  .algrow sub { font-size: 0.6em; }
+  .algnote { font-family: var(--font-sans); font-size: 11.5px; color: var(--text-muted); text-align: center; padding: 2px 0; }
+  .algnote b { color: var(--accent); }
+  .algrow.final { background: var(--accent-faint); border: 1.5px solid var(--accent); border-radius: 8px; padding: 11px; }
+  .wex { max-width: 720px; margin: 12px auto 0; border-top: 1px dashed var(--rule); padding-top: 8px; }
+  .wex .wexh { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .wex table { border-collapse: collapse; margin: 0 auto; font-variant-numeric: tabular-nums; }
+  .wex td { font-family: var(--font-serif); font-size: 15px; padding: 3px 14px; }
+  .wex td.seq { font-family: monospace; letter-spacing: 2px; }
+  .wex td.sc { color: #2b6cb0; font-weight: 700; }
+  .wex td.p { color: var(--accent); font-weight: 700; text-align: right; }
+  .wex tr.win td { border-bottom: 1px solid var(--rule); }
+  .wex .calc { text-align: center; font-family: var(--font-serif); font-size: 15px; margin-top: 8px; }
+  .wex .calc sup { font-size: 0.7em; }
+
+  /* step 5 thermo = AI */
+  .map { max-width: 760px; margin: 0 auto; }
+  .maprow { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; margin: 7px 0; }
+  .maprow .th { text-align: right; font-family: var(--font-serif); font-size: 16px; padding: 8px 14px; background: #eef3f8; border-radius: 7px; }
+  .maprow .ai { text-align: left; font-family: var(--font-serif); font-size: 16px; padding: 8px 14px; background: #fbfaff; border-radius: 7px; }
+  .maprow .eqd { text-align: center; }
+  .maprow .eqd span { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-family: var(--font-sans); font-size: 13px; font-weight: 700; align-items: center; justify-content: center; }
+  .maprow .lab { color: var(--text-muted); font-size: 13px; }
+  .maphead { display: grid; grid-template-columns: 1fr 40px 1fr; margin-bottom: 4px; }
+  .maphead .h { font-family: var(--font-sans); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .maphead .h.l { text-align: right; color: #2b6cb0; padding-right: 14px; } .maphead .h.r { text-align: left; color: var(--accent); padding-left: 14px; }
+  .map sub { font-size: 0.64em; }
+
+  .ctrls { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
+  .counter { font-family: var(--font-sans); font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
+  .btns button { font-family: var(--font-sans); font-size: 13px; padding: 6px 15px; border: 1px solid var(--rule); background: white; color: var(--text); border-radius: 5px; cursor: pointer; margin: 0 3px; }
+  .btns button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .btns button:disabled { opacity: 0.4; cursor: default; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <div class="eyebrow">Given bilinearity · TF–DNA</div>
+  <h1>The PWM Score Is the Attention Score</h1>
+  <div class="stepcap" id="cap"></div>
+
+  <div class="stage-area">
+
+    <!-- STEP 1 — Boltzmann occupancy over genomic DNA -->
+    <div class="step" id="s1">
+      <div class="eq s1eq">P(TF binds site j) = exp(<span class="sc">−E<sub>j</sub></span> / <span class="tp">k<sub>B</sub>T</span>) &frasl; &Sigma;<sub>ℓ</sub> exp(<span class="sc">−E<sub>ℓ</sub></span> / <span class="tp">k<sub>B</sub>T</span>)</div>
+      <svg id="land" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- STEP 2 — PWM lookup & sum (with logo) -->
+    <div class="step" id="s2">
+      <div style="text-align:center;margin-bottom:4px"><span style="font-family:var(--font-sans);font-size:11px;color:var(--text-muted)">the TF's motif as a sequence logo &nbsp;→&nbsp; written out as the PWM (from the previous slide)</span></div>
+      <svg id="logo2" viewBox="0 0 300 70" width="300" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="seqrow">candidate DNA site being scored: &nbsp;<b id="siteseq"></b></div>
+      <div id="pwmtable"></div>
+      <div class="sumline">E<sub>j</sub> = &Sigma;<sub>p</sub> w(p, base<sub>p</sub>) = <span id="sumexp"></span> = <span class="res" id="sumval"></span> &nbsp;<span style="font-family:var(--font-sans);font-size:12px;color:var(--text-muted)">(the PWM score = binding strength)</span></div>
+    </div>
+
+    <!-- STEP 3 — vector / dot product form -->
+    <div class="step" id="s3">
+      <svg id="vec" viewBox="0 0 660 220" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="eq" id="s3calc" style="font-size:19px;margin-top:8px"></div>
+    </div>
+
+    <!-- STEP 4 — substitute into Boltzmann -->
+    <div class="step" id="s4">
+      <div class="alg">
+        <div class="algnote">① binding follows Boltzmann over sites</div>
+        <div class="algrow">P(site j) = exp(<span class="sc">−E<sub>j</sub></span>/<span class="tp">k<sub>B</sub>T</span>) &frasl; &Sigma; exp(<span class="sc">−E<sub>ℓ</sub></span>/<span class="tp">k<sub>B</sub>T</span>)</div>
+        <div class="algnote">② substitute the dot product &nbsp; <b>E<sub>j</sub> = −&thinsp;tf · dna<sub>j</sub></b></div>
+        <div class="algrow">P(site j) = exp(<span class="sc">tf·dna<sub>j</sub></span>/<span class="tp">k<sub>B</sub>T</span>) &frasl; &Sigma; exp(<span class="sc">tf·dna<sub>ℓ</sub></span>/<span class="tp">k<sub>B</sub>T</span>)</div>
+        <div class="algnote">③ relabel &nbsp; <b>tf → q,&nbsp; dna<sub>j</sub> → k<sub>j</sub>,&nbsp; k<sub>B</sub>T → τ</b></div>
+        <div class="algrow final">P(j) = exp(<span class="sc">q·k<sub>j</sub></span>/<span class="tp">τ</span>) &frasl; &Sigma; exp(<span class="sc">q·k<sub>ℓ</sub></span>/<span class="tp">τ</span>) &nbsp;<span style="font-family:var(--font-sans);font-size:13px;color:var(--accent);font-weight:700">= the transformer attention equation</span></div>
+      </div>
+      <div class="wex">
+        <div class="wexh">worked example — three DNA windows, each scored by its dot product (τ = 1 in score units)</div>
+        <table>
+          <tr class="win"><td class="seq">ACGTGA</td><td>q·k = <span class="sc" style="color:#2b6cb0">44</span></td><td>cognate site</td><td class="p">99.97%</td></tr>
+          <tr><td class="seq">AGGTGA</td><td>q·k = <span class="sc" style="color:#2b6cb0">36</span></td><td>1 mismatch</td><td class="p">0.03%</td></tr>
+          <tr><td class="seq">AGCTGA</td><td>q·k = <span class="sc" style="color:#2b6cb0">30</span></td><td>2 mismatches</td><td class="p">≈0%</td></tr>
+        </table>
+        <div class="calc">P(ACGTGA) = e<sup>44</sup> &frasl; (e<sup>44</sup> + e<sup>36</sup> + e<sup>30</sup>) = 1 &frasl; (1 + e<sup>−8</sup> + e<sup>−14</sup>) = <span style="color:var(--accent);font-weight:700">0.9997</span></div>
+      </div>
+    </div>
+
+    <!-- STEP 5 — thermodynamics = AI -->
+    <div class="step" id="s5">
+      <div class="map">
+        <div class="maphead"><div class="h l">Biophysics measurement · TF–DNA</div><div></div><div class="h r">AI calculation · attention</div></div>
+        <div class="maprow"><div class="th">TF base preferences (the <b>PWM</b>)</div><div class="eqd"><span>=</span></div><div class="ai">the query <b class="sc">q</b></div></div>
+        <div class="maprow"><div class="th">the DNA site (one-hot)</div><div class="eqd"><span>=</span></div><div class="ai">the key <b class="sc">k<sub>j</sub></b></div></div>
+        <div class="maprow"><div class="th">binding energy <b>E<sub>j</sub> = tf·dna<sub>j</sub></b></div><div class="eqd"><span>=</span></div><div class="ai">attention score <b class="sc">q·k<sub>j</sub></b></div></div>
+        <div class="maprow"><div class="th">thermal energy <b class="tp">k<sub>B</sub>T</b> = 0.6 kcal/mol</div><div class="eqd"><span>=</span></div><div class="ai">temperature <b class="tp">τ</b></div></div>
+        <div class="maprow"><div class="th">Boltzmann occupancy P(site j)</div><div class="eqd"><span>=</span></div><div class="ai">the attention weight</div></div>
+      </div>
+      <div style="text-align:center;font-family:var(--font-serif);font-size:15px;margin-top:12px;color:var(--text)">The PWM score a biologist computes on the bench <b style="color:var(--accent)">is</b> the transformer's attention score. Not an analogy — the same arithmetic, with the temperature a real physical constant.</div>
+    </div>
+
+  </div>
+
+  <div class="ctrls">
+    <span class="btns"><button id="prevBtn">← Back</button><button id="nextBtn" class="primary">Next →</button><button id="resetBtn">Reset</button></span>
+    <span class="counter" id="counter"></span>
+  </div>
+</div>
+
+<script>
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+  // ---- shared example (built on the previous slide) ----
+  const DNA=['A','C','G','T','G','A'], BASES=['A','C','G','T'];
+  // counts from the 8 aligned binding sites on the previous slide (each column sums to 8)
+  const PWM={A:[6,0,0,0,0,7], C:[0,8,1,0,0,1], G:[1,0,7,0,8,0], T:[1,0,0,8,0,0]};
+  const TOT=8, WMAX=8;
+  const BCOL={A:'#3aa35e',C:'#3a6ea3',G:'#d6a13a',T:'#c0392b'};
+  const picks=DNA.map((b,p)=>PWM[b][p]);     // [6,8,7,7,8,7]
+  const score=picks.reduce((a,b)=>a+b,0);     // 43
+
+  const CAPS=[
+    'Step 1 — binding follows Boltzmann. A transcription factor scans genomic DNA; each position is a candidate site. A deeper site (lower energy) is more occupied. (Bintu et al. 2005)',
+    'Step 2 — score a site with the PWM. Look up the weight of the base present at each position of the candidate site, and add them up. That sum is the binding energy.',
+    'Step 3 — that sum is a dot product. Writing the site as a one-hot vector, it picks exactly one PWM weight per position — so the score is tf · dnaⱼ.',
+    'Step 4 — substitute and relabel. Put E = −tf·dna into the Boltzmann occupancy; three lines of algebra later, it is the transformer’s attention equation, exactly.',
+    'Step 5 — the punchline. The thermodynamic calculation a biologist does and the AI attention calculation are the same arithmetic — here with no learning at all.'
+  ];
+
+  // ---- sequence logo (stacked scaled letters) ----
+  function logoSVG(x0, yBase, colW, H){
+    let s='';
+    for(let p=0;p<DNA.length;p++){
+      const col=BASES.map(b=>[b,PWM[b][p]]).filter(d=>d[1]>0).sort((a,b)=>a[1]-b[1]); // ascending → stack bottom-up
+      let cy=yBase;
+      for(const [b,c] of col){
+        const h=(c/TOT)*H; const x=x0+p*colW;
+        s+=`<g transform="translate(${x+1},${cy-h}) scale(${(colW-2)/10},${h/10})"><text x="0" y="9.2" font-family="Arial, sans-serif" font-weight="800" font-size="11" fill="${BCOL[b]}" textLength="10" lengthAdjust="spacingAndGlyphs">${b}</text></g>`;
+        cy-=h;
+      }
+      s+=`<text x="${x0+p*colW+colW/2}" y="${yBase+11}" font-family="sans-serif" font-size="8.5" fill="#999" text-anchor="middle">${p+1}</text>`;
+    }
+    return s;
+  }
+
+  // ---- step 1: genomic landscape with DNA on the x-axis ----
+  function buildLandscape(){
+    const W=[[0.12,11,0.05],[0.30,6,0.06],[0.50,16,0.045],[0.68,7,0.06],[0.86,9,0.05]];
+    const X0=52,X1=614,YT=18,YB=196;
+    const g=xf=>{let s=0;for(const[c,d,w]of W){const z=(xf-c)/w;s+=d*Math.exp(-z*z);}return -s;};
+    const xs=[]; for(let i=0;i<=200;i++)xs.push(i/200);
+    const vals=xs.map(g), lo=Math.min(...vals), hi=Math.max(...vals);
+    const X=xf=>X0+xf*(X1-X0), Yv=v=>YB-(v-lo)/(hi-lo)*(YB-YT);
+    let pts=xs.map((xf,i)=>`${X(xf).toFixed(1)},${Yv(vals[i]).toFixed(1)}`).join(' ');
+    let bi=0; for(let i=1;i<vals.length;i++) if(vals[i]<vals[bi]) bi=i;
+    const bx=X(xs[bi]), by=Yv(vals[bi]);
+    let s='';
+    s+=`<line x1="${X0}" y1="${YB}" x2="${X1}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    s+=`<line x1="${X0}" y1="${YT}" x2="${X0}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    s+=`<polyline points="${pts}" fill="none" stroke="#2b8a8a" stroke-width="2.6"/>`;
+    s+=`<circle cx="${bx}" cy="${by-14}" r="13" fill="#2b8a8a"/>`;
+    s+=`<text x="${bx}" y="${by-10}" font-family="sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">TF</text>`;
+    s+=`<text transform="translate(16,${(YT+YB)/2}) rotate(-90)" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">binding energy Eⱼ (kcal/mol)</text>`;
+    s+=`<text x="${X1-2}" y="${YT+10}" font-family="sans-serif" font-size="11" fill="#c83636" text-anchor="end">kʙT ≈ 0.6 kcal/mol</text>`;
+    // genomic DNA strand along the x-axis
+    const GEN="TGCAGTCATGAC"+"ACGTGA"+"TCAGGTCAATCG"; // window at idx 12..17
+    const n=GEN.length, gw=(X1-X0)/n, gy=YB+22;
+    s+=`<line x1="${X0}" y1="${gy-9}" x2="${X1}" y2="${gy-9}" stroke="#d7d2e6" stroke-width="1"/>`;
+    s+=`<line x1="${X0}" y1="${gy+5}" x2="${X1}" y2="${gy+5}" stroke="#d7d2e6" stroke-width="1"/>`;
+    for(let i=0;i<n;i++){ const b=GEN[i], cx=X0+(i+0.5)*gw;
+      s+=`<text x="${cx}" y="${gy}" font-family="monospace" font-size="10" fill="${BCOL[b]||'#999'}" text-anchor="middle">${b}</text>`; }
+    // highlight the window under the deepest well
+    const wx0=X0+12*gw, wx1=X0+18*gw;
+    s+=`<rect x="${wx0}" y="${gy-12}" width="${wx1-wx0}" height="20" fill="none" stroke="#5e3aa3" stroke-width="1.6" rx="3"/>`;
+    s+=`<line x1="${bx}" y1="${by}" x2="${(wx0+wx1)/2}" y2="${gy-12}" stroke="#5e3aa3" stroke-width="1.2" stroke-dasharray="3 3"/>`;
+    s+=`<text x="${(wx0+wx1)/2}" y="${gy+22}" font-family="sans-serif" font-size="10.5" fill="#5e3aa3" text-anchor="middle" font-weight="700">site j = ACGTGA</text>`;
+    s+=`<text x="${(X0+X1)/2}" y="${gy+40}" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">genomic DNA — each position is a candidate binding site (a 6-bp window)</text>`;
+    document.getElementById('land').innerHTML=s;
+  }
+
+  // ---- step 2: PWM table ----
+  function buildTable(){
+    document.getElementById('logo2').innerHTML=logoSVG(8,52,46,42);
+    document.getElementById('siteseq').textContent=DNA.join(' ');
+    let h='<table class="pwm"><tr><td class="rowlab"></td>';
+    for(let p=0;p<DNA.length;p++) h+=`<td class="seqh" style="color:${BCOL[DNA[p]]}">${DNA[p]}</td>`;
+    h+='</tr><tr><td class="rowlab"></td>';
+    for(let p=0;p<DNA.length;p++) h+=`<td class="posh">pos ${p+1}</td>`;
+    h+='</tr>';
+    for(const b of BASES){
+      h+=`<tr><td class="rowlab" style="color:${BCOL[b]}">${b}</td>`;
+      for(let p=0;p<DNA.length;p++){
+        const v=PWM[b][p], isPick=(DNA[p]===b);
+        h+=`<td class="${isPick?'pick':''}" style="background:${heat(1-v/WMAX)}">${v}</td>`;
+      }
+      h+='</tr>';
+    }
+    h+='</table>';
+    document.getElementById('pwmtable').innerHTML=h;
+    document.getElementById('sumexp').innerHTML=picks.join(' + ');
+    document.getElementById('sumval').textContent=score;
+  }
+
+  // ---- step 3: two vectors with DNA letters + base labels ----
+  function buildVec(){
+    const cw=24, x0=70, yT=44, yD=104, n=DNA.length*4;
+    let s='';
+    s+=`<text x="36" y="${yT+16}" font-family="serif" font-size="15" font-weight="700" fill="#2b6cb0" text-anchor="middle">tf</text>`;
+    s+=`<text x="36" y="${yD+16}" font-family="serif" font-size="15" font-weight="700" fill="#5e3aa3" text-anchor="middle">dnaⱼ</text>`;
+    let idx=0;
+    for(let p=0;p<DNA.length;p++){
+      // DNA letter for this position (above)
+      const gx=x0+(p*4+2)*cw-cw;
+      s+=`<text x="${x0+p*4*cw+2*cw-cw}" y="22" font-family="serif" font-size="16" font-weight="700" fill="${BCOL[DNA[p]]}" text-anchor="middle">${DNA[p]}</text>`;
+      for(let bi=0;bi<4;bi++){
+        const b=BASES[bi], v=PWM[b][p], pick=(DNA[p]===b), x=x0+idx*cw;
+        // base label (tiny) above first row group, per cell
+        s+=`<text x="${x+(cw-2)/2}" y="${yT-4}" font-family="sans-serif" font-size="8" fill="${pick?BCOL[b]:'#bbb'}" text-anchor="middle">${b}</text>`;
+        // tf
+        s+=`<rect x="${x}" y="${yT}" width="${cw-2}" height="24" fill="${heat(1-v/WMAX)}" stroke="${pick?'#5e3aa3':'#e6e6ee'}" stroke-width="${pick?2:0.8}"/>`;
+        s+=`<text x="${x+(cw-2)/2}" y="${yT+16}" font-family="serif" font-size="11" fill="#333" text-anchor="middle">${v}</text>`;
+        // dna one-hot
+        s+=`<rect x="${x}" y="${yD}" width="${cw-2}" height="24" fill="${pick?'#5e3aa3':'#f3f1f8'}" stroke="#e6e6ee" stroke-width="0.8"/>`;
+        s+=`<text x="${x+(cw-2)/2}" y="${yD+16}" font-family="serif" font-size="11" fill="${pick?'#fff':'#bbb'}" text-anchor="middle">${pick?1:0}</text>`;
+        idx++;
+      }
+      s+=`<text x="${x0+p*4*cw+2*cw-cw}" y="${yD+42}" font-family="sans-serif" font-size="9.5" fill="#999" text-anchor="middle">pos ${p+1}</text>`;
+      if(p<DNA.length-1){ const sx=x0+(p+1)*4*cw-1; s+=`<line x1="${sx}" y1="${yT-16}" x2="${sx}" y2="${yD+28}" stroke="#d9d9e3" stroke-width="1"/>`; }
+    }
+    s+=`<text x="${x0+n*cw/2}" y="${yD+62}" font-family="sans-serif" font-size="10.5" fill="#6b7280" text-anchor="middle">the one-hot DNA vector picks exactly one weight per position → the score is a dot product of two ${n}-dim vectors</text>`;
+    document.getElementById('vec').innerHTML=s;
+    const terms=picks.map(w=>`<span class="sc">${w}</span>·1`).join(' + ');
+    document.getElementById('s3calc').innerHTML=
+      `E<sub>j</sub> = tf · dna<sub>j</sub> = ${terms} = <span style="color:var(--accent);font-weight:700">${score}</span>`+
+      `<div style="font-family:var(--font-sans);font-size:12px;color:var(--text-muted);margin-top:4px">the other ${n-DNA.length} products are × 0 — the one-hot keeps only the weight of the base actually present</div>`;
+  }
+
+  // ---- nav ----
+  let step=0; const NS=5;
+  function render(){
+    for(let i=1;i<=NS;i++) document.getElementById('s'+i).classList.toggle('active', i===step+1);
+    document.getElementById('cap').textContent=CAPS[step];
+    document.getElementById('counter').textContent=`STEP ${step+1} / ${NS}`;
+    document.getElementById('prevBtn').disabled=step===0;
+    document.getElementById('nextBtn').disabled=step===NS-1;
+  }
+  function go(d){ const n=step+d; if(n>=0&&n<NS){ step=n; render(); } }
+  buildLandscape(); buildTable(); buildVec(); render();
+  document.getElementById('nextBtn').addEventListener('click',()=>go(1));
+  document.getElementById('prevBtn').addEventListener('click',()=>go(-1));
+  document.getElementById('resetBtn').addEventListener('click',()=>{step=0;render();});
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); if(step<NS-1){go(1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); if(step>0){go(-1);} else window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

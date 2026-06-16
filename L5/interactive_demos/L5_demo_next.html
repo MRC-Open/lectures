@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Next: Set Up Your SFM</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 16px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  .eyebrow { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); font-weight: 700; text-align: center; }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 920px; margin: 16px auto 0; }
+  .card { border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px 16px; }
+  .card .n { font-family: var(--font-sans); font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+  .card .t { font-family: var(--font-sans); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .card .d { font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--text-muted); }
+  .card .d b { color: var(--text); font-weight: 600; }
+  .card.build { border: 2px solid var(--accent); background: var(--accent-faint); }
+  .card.build .t { color: var(--accent); }
+
+  .foot { text-align: center; font-family: var(--font-serif); font-size: 17px; margin: 16px auto 0; color: var(--text); }
+  .foot b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <div class="eyebrow">The final session — set up your SFM project</div>
+  <h1>Next — The Proof, the Architecture, and Your Own SFM</h1>
+  <div class="subtitle">From the identity you’ve seen → the architecture it prescribes → your project</div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="n">① the convergence equation</div>
+      <div class="t">Why softmax is the <em>only</em> choice</div>
+      <div class="d">Luce’s five axioms of competitive selection → the elimination proof (sigmoid, ReLU, polynomials all fail). We’ve seen the identity is <b>visible</b> from both sides; next we show it is <b>forced</b>.</div>
+    </div>
+
+    <div class="card">
+      <div class="n">② the SFM architecture</div>
+      <div class="t">Derived, not designed</div>
+      <div class="d">Every component follows from the physics: <b>dual encoders · dot-product cross-attention · InfoNCE · symmetric loss · learned temperature</b>.</div>
+    </div>
+
+    <div class="card">
+      <div class="n">③ biological domains</div>
+      <div class="t">One architecture, many recognitions</div>
+      <div class="d">The same machine across molecular recognition — antibody–antigen, TCR–pMHC, peptide–MHC, TF–DNA, miRNA–mRNA, CRISPR, enzyme–substrate, drug–target, and more.</div>
+    </div>
+
+    <div class="card build">
+      <div class="n">④ the final project</div>
+      <div class="t">Build your own SFM</div>
+      <div class="d">On <b>your</b> data, with Claude Code + the <code>mrc-sfm-template</code>. You make the domain-expert calls — encoder choice, data curation, masking, leakage-safe splits, hard negatives, evaluation. <b>The architecture is prescribed.</b> The result is a citable artifact.</div>
+    </div>
+  </div>
+
+  <div class="foot">You’ve built <b>both halves of the identity</b>. Next: make it yours.</div>
+</div>
+
+<script>
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

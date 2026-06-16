@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — Where Emergent Bilinearity Breaks Down</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 12px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.3px; }
+  svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  #scatter { max-width: 355px; }
+
+  .top { display: grid; grid-template-columns: 1.05fr 1fr; gap: 26px; max-width: 970px; margin: 8px auto 0; align-items: center; }
+  .panel-label { font-family: var(--font-sans); font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; text-align: center; }
+
+  .verdict2 { display: flex; gap: 12px; }
+  .vchip { flex: 1; border-radius: 7px; padding: 9px 13px; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.45; }
+  .vchip.ok { background: #f0f7f2; border-left: 4px solid #2b8a5e; }
+  .vchip.warn { background: #fcf6f6; border-left: 4px solid #c83636; }
+  .vchip .vh { font-weight: 700; display: block; margin-bottom: 2px; }
+  .vchip.ok .vh { color: #2b8a5e; } .vchip.warn .vh { color: #c83636; }
+  .reframe { margin-top: 12px; border: 1.5px solid var(--accent); background: var(--accent-faint); border-radius: 8px; padding: 10px 14px; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--text); }
+  .reframe b { color: var(--accent); }
+
+  table.miss { width: 100%; max-width: 980px; margin: 14px auto 0; border-collapse: collapse; }
+  table.miss th { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: left; padding: 4px 14px 6px; border-bottom: 1.5px solid var(--text); }
+  table.miss td { padding: 7px 14px; border-bottom: 1px solid var(--rail); font-family: var(--font-sans); font-size: 12.5px; vertical-align: top; line-height: 1.4; }
+  table.miss tr:last-child td { border-bottom: none; }
+  table.miss .what { font-weight: 700; color: #c83636; white-space: nowrap; }
+  table.miss .bio { color: var(--text); }
+  table.miss .fix { color: var(--text-muted); }
+  table.miss .fix b { color: var(--accent); font-weight: 600; }
+
+  .approxnote { text-align: center; font-family: var(--font-serif); font-size: 14px; color: var(--text-muted); margin-top: 12px; }
+  .approxnote b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Where Emergent Bilinearity Breaks Down</h1>
+  <div class="subtitle">Honest scoping — an approximation (≈), not an identity (=)</div>
+
+  <div class="top">
+    <div>
+      <div class="panel-label">predicted score (q·k) &nbsp;vs&nbsp; measured affinity</div>
+      <svg id="scatter" viewBox="0 0 372 270" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div>
+      <div class="verdict2">
+        <div class="vchip ok"><span class="vh">✓ retrieval</span>rank order is preserved — the dominant terms put the right partners on top</div>
+        <div class="vchip warn"><span class="vh">⚠ absolute ΔG</span>can be off at the extremes (pM-tight, mM-weak), where the score saturates</div>
+      </div>
+      <div class="reframe">Each correction is a <b>known architecture variant</b> — cross-attention, equivariant layers, explicit pairwise terms. It <b>refines the equation; it does not break it.</b></div>
+    </div>
+  </div>
+
+  <table class="miss">
+    <thead><tr><th>What the dot product can miss</th><th>A biological example</th><th>→ architecture refinement</th></tr></thead>
+    <tbody>
+      <tr><td class="what">Allostery</td><td class="bio">haemoglobin — O₂ at one site eases binding at the next</td><td class="fix">→ <b>pairwise / cross-attention</b></td></tr>
+      <tr><td class="what">Conformational change</td><td class="bio">induced fit — a flexible CDR-H3 that orders only on binding</td><td class="fix">→ <b>ensemble / flexible encoders</b></td></tr>
+      <tr><td class="what">Coupled water networks</td><td class="bio">bridging waters in the D1.3–lysozyme antibody interface</td><td class="fix">→ <b>explicit interface features</b></td></tr>
+      <tr><td class="what">Kinetic trapping</td><td class="bio">a covalent inhibitor — binding never reaches equilibrium</td><td class="fix">→ <b>outside the Boltzmann model</b></td></tr>
+    </tbody>
+  </table>
+
+  <div class="approxnote">The dot product is the <b>dominant term</b>, not the whole truth — exact for DNA, a strong approximation for proteins.</div>
+</div>
+
+<script>
+  function buildScatter(){
+    const X0=46,X1=352,YT=14,YB=224;
+    const X=x=>X0+x*(X1-X0), Y=y=>YB-y*(YB-YT);
+    const pts=[[0.08,0.17],[0.16,0.21],[0.25,0.28],[0.34,0.35],[0.43,0.44],[0.51,0.52],[0.59,0.57],[0.68,0.65],[0.77,0.71],[0.86,0.76],[0.93,0.80]];
+    let s='';
+    s+=`<line x1="${X0}" y1="${YB}" x2="${X1}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    s+=`<line x1="${X0}" y1="${YT}" x2="${X0}" y2="${YB}" stroke="#c9ccd1" stroke-width="1.4"/>`;
+    // perfect-prediction diagonal
+    s+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="#b9add6" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+    s+=`<text x="${X(0.50)}" y="${Y(0.60)}" font-family="sans-serif" font-size="9.5" fill="#9a8ec4" transform="rotate(-32 ${X(0.50)} ${Y(0.60)})">perfect (= identity)</text>`;
+    // points
+    for(const [x,y] of pts){ s+=`<circle cx="${X(x)}" cy="${Y(y)}" r="4" fill="#5e3aa3" opacity="0.85"/>`; }
+    // middle "ranking preserved"
+    s+=`<text x="${X(0.30)}" y="${Y(0.22)}" font-family="sans-serif" font-size="10.5" fill="#2b8a5e" font-weight="700" text-anchor="middle">order preserved →</text>`;
+    s+=`<text x="${X(0.30)}" y="${Y(0.22)+13}" font-family="sans-serif" font-size="9.5" fill="#2b8a5e" text-anchor="middle">retrieval works</text>`;
+    // high-affinity end: label up-left of cluster with leader
+    s+=`<text x="${X(0.55)}" y="${Y(0.92)}" font-family="sans-serif" font-size="10" fill="#c83636" font-weight="700" text-anchor="middle">tight (pM): saturates</text>`;
+    s+=`<line x1="${X(0.70)}" y1="${Y(0.90)}" x2="${X(0.90)}" y2="${Y(0.81)}" stroke="#c83636" stroke-width="0.9" stroke-dasharray="2 2"/>`;
+    // weak end: label down-right of bottom point with leader
+    s+=`<text x="${X(0.40)}" y="${Y(0.06)}" font-family="sans-serif" font-size="10" fill="#c83636" font-weight="700" text-anchor="middle">weak (mM): floor</text>`;
+    s+=`<line x1="${X(0.26)}" y1="${Y(0.08)}" x2="${X(0.10)}" y2="${Y(0.16)}" stroke="#c83636" stroke-width="0.9" stroke-dasharray="2 2"/>`;
+    // axis titles
+    s+=`<text x="${(X0+X1)/2}" y="${YB+24}" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">predicted score &nbsp;q·k&nbsp; →</text>`;
+    s+=`<text transform="translate(15,${(YT+YB)/2}) rotate(-90)" font-family="sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">measured affinity (−ΔG) →</text>`;
+    document.getElementById('scatter').innerHTML=s;
+  }
+  buildScatter();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>
