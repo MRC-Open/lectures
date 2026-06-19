@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — The Bilinearity Leap</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 6px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px; }
+
+  /* animated q·k dot product (the Session-2 visual) */
+  .dp { max-width: 560px; margin: 2px auto 0; border: 1px solid var(--rule); border-radius: 10px; padding: 7px 16px 8px; }
+  .dp .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; text-align: center; margin-bottom: 6px; }
+  table.dpt { margin: 0 auto; border-collapse: separate; border-spacing: 6px 3px; }
+  table.dpt td { text-align: center; }
+  .dprl { font-family: var(--font-serif); font-size: 14px; text-align: right; padding-right: 8px; color: var(--text); white-space: nowrap; }
+  .dprl .s { font-size: 10.5px; color: var(--text-muted); font-style: italic; }
+  .dpn { font-family: var(--font-serif); font-size: 16px; width: 44px; height: 29px; border: 1.5px solid var(--rule); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+  .dpq { color: #2b6cb0; } .dpk { color: #c0392b; }
+  .dpp { font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--accent); width: 46px; height: 30px; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .25s; }
+  .dpp.on { opacity: 1; }
+  .dph { font-family: var(--font-sans); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+  .dpscore { text-align: center; font-family: var(--font-serif); font-size: 18px; margin-top: 8px; min-height: 26px; }
+  .dpscore .res { color: var(--accent); font-weight: 700; }
+  .dpcap { text-align: center; font-family: var(--font-sans); font-size: 11.5px; color: var(--text-muted); margin-top: 4px; min-height: 15px; }
+  .dpcap b { color: var(--accent); }
+  .repl { text-align: center; margin-top: 7px; }
+  .repl button { font-family: var(--font-sans); font-size: 11px; padding: 4px 12px; border: 1px solid var(--accent); background: var(--accent-faint); color: var(--accent); border-radius: 5px; cursor: pointer; font-weight: 600; }
+  .repl button:hover { background: var(--accent); color:#fff; }
+
+  .logic { text-align: center; font-family: var(--font-serif); font-size: 14.5px; color: var(--text); margin: 8px auto 0; max-width: 880px; line-height: 1.45; }
+  .logic b { color: var(--accent); }
+  .logic .eq { font-style: normal; }
+
+  .cols { max-width: 880px; margin: 8px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .col { border: 1px solid var(--rule); border-radius: 10px; padding: 8px 16px 10px; }
+  .col.dna { border-top: 4px solid #2b6cb0; }
+  .col.prot { border-top: 4px solid var(--accent); }
+  .col h3 { font-family: var(--font-sans); font-size: 14px; margin: 0 0 2px; font-weight: 600; }
+  .col.dna h3 { color: #2b6cb0; } .col.prot h3 { color: var(--accent); }
+  .col .sub2 { font-family: var(--font-sans); font-size: 10.5px; color: var(--text-muted); margin-bottom: 7px; }
+  .col ul { margin: 0; padding: 0; list-style: none; }
+  .col li { font-family: var(--font-sans); font-size: 12px; line-height: 1.4; padding: 1px 0 1px 14px; position: relative; color: var(--text); }
+  .col li::before { content: "—"; position: absolute; left: 0; color: var(--text-muted); }
+  .col .form { font-family: var(--font-serif); font-size: 17px; text-align: center; margin: 9px 0 5px; }
+  .col .form sub { font-size: 0.6em; }
+  .col.dna .form { color: #2b6cb0; } .col.prot .form { color: var(--accent); }
+  .col .badge { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 700; text-align: center; }
+  .col.dna .badge { color: #2b6cb0; } .col.prot .badge { color: var(--accent); }
+
+  .punch { max-width: 880px; margin: 8px auto 0; border: 1.5px solid var(--accent); border-radius: 10px; background: var(--accent-faint); padding: 8px 18px; }
+  .punch .p { font-family: var(--font-serif); font-size: 14px; line-height: 1.45; text-align: center; color: var(--text); }
+  .punch .p b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>Why Recognition <em>Must</em> Be a Dot Product</h1>
+  <div class="subtitle">DNA you can measure · everything else obeys the same law — so bilinearity is almost forced</div>
+
+  <div class="dp">
+    <div class="lab">a compatibility score is a dot product of two feature vectors</div>
+    <table class="dpt" id="dpt"></table>
+    <div class="dpscore" id="dpscore"></div>
+    <div class="dpcap" id="dpcap"></div>
+  </div>
+  <div class="repl"><button id="play">▶ Replay</button></div>
+
+  <div class="logic">Binding free energy is a <b>sum of interaction terms</b> &rarr; a sum of pairwise terms <em>is</em> a dot product &rarr; so recognition is <b>bilinear</b>: <span class="eq">&Delta;G &asymp; &minus;&thinsp;q&middot;k</span></div>
+
+  <div class="cols">
+    <div class="col dna">
+      <h3>DNA–DNA — you can <em>see</em> it</h3>
+      <div class="sub2">the components are measured, one by one</div>
+      <ul>
+        <li>Calorimetry reads off <b>every per-step energy</b> directly</li>
+        <li>The energy decomposes <b>exactly</b> — contacts independent</li>
+        <li>Look the energies up and sum (slide 17)</li>
+      </ul>
+      <div class="form">&Delta;G = counts &middot; energies<sub>(measured)</sub></div>
+      <div class="badge">given bilinearity</div>
+    </div>
+    <div class="col prot">
+      <h3>Proteins — you must <em>learn</em> it</h3>
+      <div class="sub2">the same law, but the components are hidden</div>
+      <ul>
+        <li>You <b>can't</b> calorimeter every antibody–antigen pair</li>
+        <li>Contacts are <b>not</b> independent (epistasis) — no fixed table</li>
+        <li>So <b>learn</b> a vector for each molecule's landscape</li>
+      </ul>
+      <div class="form">&Delta;G &asymp; &minus;&thinsp;q &middot; k<sub>(learned)</sub></div>
+      <div class="badge">emergent bilinearity</div>
+    </div>
+  </div>
+
+  <div class="punch">
+    <div class="p">Bilinearity is not a modelling choice we impose — it is the <b>logical shadow of additive binding energy</b>. DNA lets us read the components off a calorimeter; for everything else we <b>represent the energy landscape and take the dot product</b>. Same form — measured for DNA, learned for the rest.</div>
+  </div>
+</div>
+
+<script>
+  const FEAT=['electrostatic','shape','hydrophobic','H-bond'];
+  const q=[2,-1,3,1], k=[1,2,2,0];
+  const fmt=v=>(v<0?'−':'')+Math.abs(v);
+  // build grid
+  let h='<tr><td></td>';
+  FEAT.forEach(f=>h+=`<td class="dph">${f}</td>`); h+='</tr>';
+  h+='<tr><td class="dprl"><em>q</em> <span class="s">molecule A</span></td>';
+  q.forEach((v,i)=>h+=`<td><span class="dpn dpq">${fmt(v)}</span></td>`); h+='</tr>';
+  h+='<tr><td class="dprl"><em>k</em> <span class="s">molecule B</span></td>';
+  k.forEach((v,i)=>h+=`<td><span class="dpn dpk">${fmt(v)}</span></td>`); h+='</tr>';
+  h+='<tr><td class="dprl" style="font-size:11px;color:var(--text-muted)">q<sub>i</sub>×k<sub>i</sub></td>';
+  q.forEach((v,i)=>h+=`<td><span class="dpp" id="p${i}">${fmt(q[i]*k[i])}</span></td>`); h+='</tr>';
+  document.getElementById('dpt').innerHTML=h;
+
+  const score=document.getElementById('dpscore'), cap=document.getElementById('dpcap');
+  let timers=[];
+  function play(){
+    timers.forEach(clearTimeout); timers=[];
+    for(let i=0;i<q.length;i++) document.getElementById('p'+i).classList.remove('on');
+    score.innerHTML=''; cap.innerHTML='multiply matching features, then add them up';
+    let t=500, run=0, parts=[];
+    for(let i=0;i<q.length;i++){
+      timers.push(setTimeout(()=>{
+        document.getElementById('p'+i).classList.add('on');
+        run+=q[i]*k[i]; parts.push(fmt(q[i]*k[i]));
+        score.innerHTML=`q &middot; k = ${parts.join(' + ').replace(/\+ −/g,'− ')} <span style="color:var(--text-muted)">= ${fmt(run)}…</span>`;
+      }, t)); t+=600;
+    }
+    timers.push(setTimeout(()=>{
+      score.innerHTML=`q &middot; k = ${parts.join(' + ').replace(/\+ −/g,'− ')} = <span class="res">${fmt(run)}</span>`;
+      cap.innerHTML='matching features <b>add</b>, clashing features <b>subtract</b> → one number, the score';
+    }, t));
+  }
+  document.getElementById('play').addEventListener('click', play);
+  play();
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>

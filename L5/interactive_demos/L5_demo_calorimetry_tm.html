@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MRC L5 — The DNA Sequence Becomes a Dot Product</title>
+<link rel="stylesheet" href="../../mrc_styles.css">
+<style>
+  .stage.wide { padding-top: 8px; }
+  .subtitle { text-transform: uppercase; letter-spacing: 1.2px; }
+
+  /* ① calorimetry (where the numbers come from) */
+  .calo { display: grid; grid-template-columns: 190px 1fr; gap: 16px; align-items: center; max-width: 880px; margin: 2px auto 0; border: 1px solid var(--rule); border-radius: 10px; padding: 6px 16px; }
+  .calo svg { display: block; width: 100%; height: auto; }
+  .calo .lab { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: #2b6cb0; font-weight: 700; margin-bottom: 2px; }
+  .calotext { font-family: var(--font-sans); font-size: 12px; line-height: 1.48; color: var(--text); }
+  .calotext b { color: #2b6cb0; }
+
+  /* ② why steps + sequence */
+  .whystep { text-align: center; font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--text); max-width: 820px; margin: 9px auto 0; }
+  .whystep b { color: var(--accent); }
+  .duplex { text-align: center; font-family: monospace; font-size: 16px; letter-spacing: 5px; line-height: 1.25; margin-top: 4px; }
+  .duplex .hl { background: var(--accent-faint); border-radius: 3px; outline: 2px solid var(--accent); }
+  .duplex .cap { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0; color: var(--text-muted); margin-top: 3px; min-height: 14px; }
+  .duplex .cap b { color: var(--accent); }
+
+  /* the heat-map dot product (Session-2 style) */
+  .mwrap { display: flex; justify-content: center; margin: 5px auto 0; }
+  table.mat { border-collapse: separate; border-spacing: 4px 3px; }
+  table.mat th { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.3px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; text-align: center; padding: 0; }
+  table.mat td { text-align: center; }
+  .rl { font-family: var(--font-serif); font-size: 12.5px; text-align: right; padding-right: 8px; white-space: nowrap; color: var(--text); }
+  .rl .b { font-weight: 700; }
+  .seqlab { font-family: monospace; font-size: 12.5px; color: var(--text); letter-spacing: 1px; font-weight: 700; }
+  .cellbox { width: 46px; height: 24px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center;
+             font-family: var(--font-serif); font-size: 13px; font-variant-numeric: tabular-nums; transition: all .25s; }
+  .empty { background: #f6f6f8; border: 1px solid #eeeef2; }
+  .cntcol { padding-left: 12px; }
+  .legend { text-align: center; font-family: var(--font-sans); font-size: 10px; color: var(--text-muted); margin-top: 5px; }
+  .legend .sw { display: inline-block; width: 22px; height: 10px; border-radius: 2px; vertical-align: middle; margin: 0 2px; }
+
+  /* ③ dot product */
+  .sumline { text-align: center; font-family: var(--font-serif); font-size: 16.5px; margin: 6px auto 0; line-height: 1.4; min-height: 24px; }
+  .sumline .res { color: var(--accent); font-weight: 700; }
+  .sumline .run { color: var(--text-muted); }
+  .sumline .c { color: #c0392b; font-weight: 700; } .sumline .e { color: #2b6cb0; font-weight: 700; }
+  .tagline { text-align: center; font-family: var(--font-sans); font-size: 12px; color: var(--accent); margin-top: 4px; }
+  .tagline b { font-weight: 700; }
+
+  .ctrls { text-align: center; margin-top: 7px; }
+  .pbtn { font-family: var(--font-sans); font-size: 11.5px; letter-spacing: 0.5px; padding: 5px 15px; border: 1px solid var(--accent); background: var(--accent-faint); color: var(--accent); border-radius: 5px; cursor: pointer; font-weight: 600; }
+  .pbtn:hover { background: var(--accent); color: #fff; }
+  .cite { text-align: center; font-family: var(--font-sans); font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
+  .cite a { color: var(--accent); text-decoration: none; border-bottom: 1px solid #d9cdee; }
+</style>
+</head>
+<body>
+
+<div class="stage wide">
+  <h1>The T<sub style="font-size:0.6em">m</sub> You Already Trust <em>Is</em> a Dot Product</h1>
+  <div class="subtitle">What calorimetry measures &rarr; where the numbers come from &rarr; the dot product</div>
+
+  <div class="calo">
+    <div>
+      <div class="lab">① calorimetry measures the energy</div>
+      <svg id="melt" viewBox="0 0 190 92" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="calotext">
+      Heat the duplex; the heat it absorbs as it melts <em>is</em> <b>&Delta;H</b>. The melt midpoint is <b>T<sub>m</sub></b>, giving &Delta;S = &Delta;H/T<sub>m</sub>, so &Delta;G = &Delta;H &minus; T&Delta;S. A <b>direct</b> energy measurement &mdash; heat is energy (1st law), no model, no fit. SantaLucia measured this for <b>every nearest-neighbour pair</b> &mdash; those &Delta;G&deg; values fill the matrix below.
+    </div>
+  </div>
+
+  <div class="whystep">② <b>Your sequence → a vector.</b> Each base pair is held by <b>stacking on its neighbour</b>, so a duplex's energy is the sum over every overlapping <b>2-base step</b> (a "nearest neighbour"). Tally the 5 steps &rarr; a <b>count</b> of each neighbour-type.</div>
+  <div class="duplex">
+    <div id="topstrand"></div>
+    <div id="botstrand"></div>
+    <div class="cap" id="cap">&darr;&nbsp; slide a 2-base window along the sequence</div>
+  </div>
+
+  <div class="mwrap"><table class="mat" id="mat"></table></div>
+  <div class="legend">cell colour = measured &Delta;G&deg;:&nbsp; <span class="sw" id="swblue"></span> favourable (&Delta;G &lt; 0) &nbsp;…&nbsp; <span class="sw" id="swred"></span> unfavourable &mdash; the blue-red heat-map from Session&nbsp;2</div>
+
+  <div class="sumline" id="sumline"></div>
+  <div class="tagline">③ the <b>count</b> vector (your sequence) &middot; the <b>&Delta;G&deg;</b> vector (measured) &mdash; the same <b>q&middot;k</b> from Session&nbsp;2</div>
+
+  <div class="ctrls"><button class="pbtn" id="play">▶ Replay the build</button></div>
+  <div class="cite">nearest-neighbour parameters: <a href="https://doi.org/10.1073/pnas.95.4.1460" target="_blank" rel="noopener">SantaLucia, <i>PNAS</i> 95:1460 (1998)</a></div>
+</div>
+
+<script>
+  const TOP = ['G','C','T','T','T','A'], BOT=['C','G','A','A','A','T'];
+  const BCOL={A:'#3aa35e',C:'#3a6ea3',G:'#d6a13a',T:'#c0392b'};
+  const steps = ['GC','CT','TT','TT','TA'];
+  const TYPE  = { GC:{name:'GC / CG', e:-2.24}, CT:{name:'CT / GA', e:-1.28},
+                  TT:{name:'AA / TT', e:-1.00}, TA:{name:'TA / TA', e:-0.58} };
+  const order=[]; steps.forEach(s=>{ if(!order.includes(s)) order.push(s); });
+  const typeOfStep = steps.map(s=>order.indexOf(s));
+  const fmt = v => (v<0?'−':'')+Math.abs(v).toFixed(2);
+
+  // Session-2 blue↔red heat-map: t<0.5 blue, t>0.5 red
+  function heat(t){ t=Math.max(0,Math.min(1,t)); let r,g,b;
+    if(t<0.5){const u=t/0.5; r=43+(238-43)*u; g=108+(238-108)*u; b=176+(238-176)*u;}
+    else{const u=(t-0.5)/0.5; r=238+(200-238)*u; g=238+(54-238)*u; b=238+(54-238)*u;}
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+  const tE = e => 0.5 + e/4;            // ΔG° → heat position (favourable = blue)
+  const tC = c => Math.max(0.06, 0.45 - 0.13*c);  // count → blue intensity
+  const txt = t => t<0.32 ? '#ffffff' : '#1a1a1a';
+  function paint(el,t,val){ el.style.background=heat(t); el.style.color=txt(t); el.style.border='1px solid rgba(0,0,0,0.06)'; el.textContent=val; el.classList.remove('empty'); }
+
+  document.getElementById('swblue').style.background=heat(0.05);
+  document.getElementById('swred').style.background=heat(0.95);
+
+  // strands
+  document.getElementById('topstrand').innerHTML =
+    '5′–'+TOP.map((b,i)=>`<span id="t${i}" style="color:${BCOL[b]}">${b}</span>`).join('')+'–3′';
+  document.getElementById('botstrand').innerHTML =
+    '3′–'+BOT.map(b=>`<span style="color:${BCOL[b]}">${b}</span>`).join('')+'–5′';
+
+  // matrix scaffold: sequence steps as TOP headers · count vector on right · step numbers at bottom
+  let h='<tr><th></th>';
+  for(let k=0;k<steps.length;k++) h+=`<th><span class="seqlab">${steps[k]}</span></th>`;
+  h+='<th class="cntcol">count</th></tr>';
+  order.forEach((t,r)=>{
+    h+=`<tr><td class="rl"><span class="b">${TYPE[t].name}</span></td>`;
+    for(let k=0;k<steps.length;k++) h+=`<td><span class="cellbox empty" id="c${r}_${k}"></span></td>`;
+    h+=`<td class="cntcol"><span class="cellbox empty" id="cnt${r}"></span></td></tr>`;
+  });
+  h+='<tr><td class="rl" style="font-size:10.5px;color:var(--text-muted)">step →</td>';
+  for(let k=0;k<steps.length;k++) h+=`<td style="font-size:11px;color:var(--text-muted)">${k+1}</td>`;
+  h+='<td></td></tr>';
+  document.getElementById('mat').innerHTML=h;
+
+  const cap=document.getElementById('cap'), sum=document.getElementById('sumline');
+  const counts=order.map(()=>0); let running=0;
+
+  function resetAll(){
+    counts.fill(0); running=0;
+    for(let r=0;r<order.length;r++){
+      const cn=document.getElementById('cnt'+r); cn.className='cellbox empty'; cn.style.cssText=''; cn.textContent='';
+      for(let k=0;k<steps.length;k++){ const c=document.getElementById(`c${r}_${k}`); c.className='cellbox empty'; c.style.cssText=''; c.textContent=''; }
+    }
+    [...document.querySelectorAll('.duplex .hl')].forEach(e=>e.classList.remove('hl'));
+    sum.innerHTML=''; cap.innerHTML='&darr;&nbsp; slide a 2-base window along the sequence';
+  }
+
+  let timers=[];
+  function play(){
+    timers.forEach(clearTimeout); timers=[]; resetAll();
+    let t=400; const step=640;
+    // phase ②: walk the sequence, drop measured ΔG° into the cell, tally the count vector
+    for(let k=0;k<steps.length;k++){
+      timers.push(setTimeout(()=>{
+        [...document.querySelectorAll('.duplex .hl')].forEach(e=>e.classList.remove('hl'));
+        document.getElementById('t'+k).classList.add('hl');
+        document.getElementById('t'+(k+1)).classList.add('hl');
+        const r=typeOfStep[k], e=TYPE[order[r]].e;
+        paint(document.getElementById(`c${r}_${k}`), tE(e), fmt(e));
+        counts[r]++; paint(document.getElementById('cnt'+r), tC(counts[r]), counts[r]);
+        cap.innerHTML=`step ${k+1}: pair <b>${steps[k]}</b> &rarr; its measured <b>&Delta;G&deg;</b> drops in · the <b>count</b> ticks up`;
+      }, t)); t+=step;
+    }
+    // phase ③: dot product = count vector · ΔG° vector
+    timers.push(setTimeout(()=>{
+      [...document.querySelectorAll('.duplex .hl')].forEach(e=>e.classList.remove('hl'));
+      cap.innerHTML='③ multiply each <b>count</b> by its <b>&Delta;G&deg;</b> and add — the dot product';
+    }, t)); t+=step;
+    let parts=[];
+    order.forEach((tp,r)=>{
+      timers.push(setTimeout(()=>{
+        running += counts[r]*TYPE[tp].e;
+        parts.push(`<span class="c">${counts[r]}</span>(<span class="e">${fmt(TYPE[tp].e)}</span>)`);
+        sum.innerHTML=`&Delta;G&deg; = ${parts.join(' + ')} <span class="run">= ${fmt(running)}…</span>`;
+      }, t)); t+=step;
+    });
+    timers.push(setTimeout(()=>{
+      sum.innerHTML=`&Delta;G&deg; = ${parts.join(' + ')} = <span class="res">${fmt(running)}</span> kcal/mol <span style="font-size:11px;color:var(--text-muted)">(+ initiation)</span>`;
+      cap.innerHTML='the sequence became a vector, dotted with the measured energy table &mdash; <b>that is the dot product</b>';
+    }, t));
+  }
+  document.getElementById('play').addEventListener('click', play);
+
+  // small melting curve
+  (function(){
+    const Tm=52,w=3.4,T0=30,T1=74,x0=22,x1=180,yT=10,yB=70;
+    const X=t=>x0+(t-T0)/(T1-T0)*(x1-x0), Y=f=>yB-f*(yB-yT), th=t=>1/(1+Math.exp(-(t-Tm)/w));
+    let p=''; for(let t=T0;t<=T1;t+=0.5){ p+=(t===T0?'M':'L')+X(t).toFixed(1)+' '+Y(th(t)).toFixed(1)+' '; }
+    let s='';
+    s+=`<line x1="${x0}" y1="${yB}" x2="${x1}" y2="${yB}" stroke="#c9ccd1" stroke-width="1.2"/>`;
+    s+=`<line x1="${x0}" y1="${yT}" x2="${x0}" y2="${yB}" stroke="#c9ccd1" stroke-width="1.2"/>`;
+    s+=`<line x1="${X(Tm)}" y1="${Y(0.5)}" x2="${X(Tm)}" y2="${yB}" stroke="#5e3aa3" stroke-width="1" stroke-dasharray="3 3"/>`;
+    s+=`<path d="${p}" fill="none" stroke="#2b6cb0" stroke-width="2.2"/>`;
+    s+=`<circle cx="${X(Tm)}" cy="${Y(0.5)}" r="3" fill="#5e3aa3"/>`;
+    s+=`<text x="${X(Tm)+5}" y="${Y(0.5)-3}" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#5e3aa3">T<tspan baseline-shift="sub" font-size="6">m</tspan></text>`;
+    s+=`<text x="${(x0+x1)/2}" y="${yB+15}" font-family="sans-serif" font-size="8" fill="#6b7280" text-anchor="middle">heat → · melt</text>`;
+    document.getElementById('melt').innerHTML=s;
+  })();
+
+  play();  // autoplay on load
+
+  if (window.parent && window.parent !== window) {
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) return;
+      const nx=['ArrowRight','PageDown',' ','ArrowDown'], pv=['ArrowLeft','PageUp','ArrowUp'];
+      if (nx.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'next'},'*'); }
+      else if (pv.includes(e.key)){ e.preventDefault(); window.parent.postMessage({type:'mrc-deck-advance',direction:'prev'},'*'); }
+    });
+  }
+</script>
+
+</body>
+</html>
