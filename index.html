@@ -347,7 +347,7 @@
   </div>
 
   <h2 class="sec"><span class="num">6</span>Final Project — Build Your Own SFM</h2>
-  <p>After Session 4, each of you builds an SFM on your own molecular-recognition data — antibody–antigen, TCR–pMHC, peptide–MHC, cytokine–receptor, TF–DNA, drug–target, microRNA–mRNA, CRISPR off-target, enzyme–substrate, whatever fits your project — using <strong>Claude Code</strong> with the <code>mrc-sfm-template</code> as the starting scaffold. You decide the domain-expert questions: encoder selection, data curation, masking, train/test split and leakage prevention, hard-negative strategy, evaluation. The architecture itself does not change — it is prescribed by the convergence equation. The finished project is a citable research artifact, comparable to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">GenLoop</a> — with a Zenodo DOI and Hugging Face weights, archived at <code>github.com/MRC-ETHZ-BIIE</code>. <em>The only test of understanding that matters: did you build a model that works on data nobody has seen before?</em></p>
+  <p>After Session 4, each of you builds an SFM on your own molecular-recognition data — antibody–antigen, TCR–pMHC, peptide–MHC, cytokine–receptor, TF–DNA, drug–target, microRNA–mRNA, CRISPR off-target, enzyme–substrate, whatever fits your project — using <strong>Claude Code</strong> with the <a href="https://github.com/MRC-Open/mrc-sfm-template"><code>mrc-sfm-template</code></a> as the starting scaffold. You decide the domain-expert questions: encoder selection, data curation, masking, train/test split and leakage prevention, hard-negative strategy, evaluation. The architecture itself does not change — it is prescribed by the convergence equation. The finished project is a citable research artifact, comparable to <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">dtSFM</a> or <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">GenLoop</a> — with a Zenodo DOI and Hugging Face weights, archived in a shared MRC course repository. <em>The only test of understanding that matters: did you build a model that works on data nobody has seen before?</em></p>
 
   <div class="readings-label">Reading for the build</div>
   <ul class="readings">
@@ -356,10 +356,44 @@
     <li>Lee H, et al. Contrastive learning for antibody–antigen sequence-to-specificity prediction (CALM). <em>bioRxiv</em> (2026) — the reference SFM implementation. <a href="https://www.biorxiv.org/content/10.64898/2026.02.25.707916v1">biorxiv.org</a></li>
     <li class="supp">Reddy ST. dtSFM. <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.06.08.730844v1">biorxiv.org</a> <span class="supp-tag">worked example — encoder + decoder</span></li>
     <li class="supp">Reddy ST. Generative Drug Design in a Loop with dtSFM (GenLoop). <em>bioRxiv</em> (2026). <a href="https://www.biorxiv.org/content/10.64898/2026.06.10.731501v1">biorxiv.org</a> <span class="supp-tag">worked example — generative loop + AF3 verifier</span></li>
-    <li>The <code>mrc-sfm-template</code> repository — <code>README.md</code> + <code>CLAUDE.md</code> + audit protocol.</li>
+    <li>The <a href="https://github.com/MRC-Open/mrc-sfm-template"><code>mrc-sfm-template</code></a> repository — start at <code>START_HERE.md</code>; also <code>CLAUDE.md</code> + the audit protocol.</li>
   </ul>
 
-  <h2 class="sec"><span class="num">7</span>Compute</h2>
+  <h2 class="sec"><span class="num">7</span>Getting Started — Step by Step</h2>
+  <p>You do <strong>not</strong> need to know GitHub, and you do <strong>not</strong> need to know how to code — that is what Claude Code is for. Here is the whole process in plain steps. When the project starts we will also run a hands-on setup session together.</p>
+
+  <div class="caps">
+    <div class="cap"><div class="n">1</div><div class="t"><b>Get a free GitHub account.</b> Go to <a href="https://github.com/signup">github.com/signup</a> and sign up with your email — it is free. GitHub is simply where your project lives online (think of it as a shared Drive for code). Already have one? Skip this.</div></div>
+    <div class="cap"><div class="n">2</div><div class="t"><b>Write a one-page proposal — first, before any code.</b> Open the <a href="https://github.com/MRC-Open/mrc-sfm-template/blob/main/PROPOSAL.md">proposal template</a> and fill it in: your question or engineering problem, the data you will use, and how you will test it. About an hour — it is a sketch, not a commitment.</div></div>
+    <div class="cap"><div class="n">3</div><div class="t"><b>Post your proposal where everyone can see it.</b> Put it on the <a href="https://github.com/MRC-Open/proposals/discussions">proposals board</a> (one post per project) so the whole lab knows who is working on what — <em>not a competition, no grades</em>. Want private feedback instead? Send it to me on <strong>Slack</strong>. Wait for my go-ahead before you start building.</div></div>
+    <div class="cap"><div class="n">4</div><div class="t"><b>Build your SFM with Claude Code — in your own GitHub.</b> On the <a href="https://github.com/MRC-Open/mrc-sfm-template">template repo</a>, click <em>“Use this template”</em> to make your own copy in your account. Open it in Claude Code and paste in the start prompt. Claude writes and runs the code; you make the biology decisions. The architecture is already fixed.</div></div>
+    <div class="cap"><div class="n">5</div><div class="t"><b>Audit it — an independent second check.</b> Freeze your results, then open a <em>fresh</em> Claude Code session that re-checks every number on its own. Agreement between your model and an independent check is the real result — the protocol ships inside the template.</div></div>
+    <div class="cap"><div class="n">6</div><div class="t"><b>Submit the finished SFM.</b> When it is built and audited, we push it together to a shared MRC course archive (a public repository we set up) — with its own DOI, so your project becomes a real, citable result that future students build on.</div></div>
+  </div>
+
+  <div class="links" style="margin-top: 18px;">
+    <a class="link" href="https://github.com/signup">
+      <div class="lk">Step 1</div>
+      <div class="lt">Create a GitHub account</div>
+      <div class="ls">free · sign up with email →</div>
+    </a>
+    <a class="link" href="https://github.com/MRC-Open/mrc-sfm-template">
+      <div class="lk">Steps 2 &amp; 4</div>
+      <div class="lt">SFM template — start here</div>
+      <div class="ls">“Use this template” to begin →</div>
+    </a>
+    <a class="link" href="https://github.com/MRC-Open/proposals/discussions">
+      <div class="lk">Step 3</div>
+      <div class="lt">Proposals board</div>
+      <div class="ls">post yours · see everyone's →</div>
+    </a>
+  </div>
+
+  <div class="note">
+    <strong>New to GitHub? That's expected</strong> — most of the lab is, and it is completely fine. You never write code yourself; Claude Code does that while you make the scientific calls. When the final project kicks off we will help everyone get their account, template, and compute working. For private questions or feedback on your proposal, just message me on <strong>Slack</strong>.
+  </div>
+
+  <h2 class="sec"><span class="num">8</span>Compute</h2>
   <p>For the final project you will need a GPU. The course supports two paths — pick whichever you have access to. Both can comfortably train at CALM scale (a few thousand pairs).</p>
 
   <div class="links" style="grid-template-columns: 1fr 1fr; margin-top: 14px;">
@@ -377,10 +411,10 @@
 
   <p style="font-size: 14px; color: var(--text-muted); font-style: italic; margin-top: 16px;">If you have access to other compute (a lab GPU workstation, an HPC allocation elsewhere), it works too — the template is portable. Detailed setup notes ship with the template.</p>
 
-  <h2 class="sec"><span class="num">8</span>Why SFMs Become a Method Like PCR or CRISPR</h2>
+  <h2 class="sec"><span class="num">9</span>Why SFMs Become a Method Like PCR or CRISPR</h2>
   <p><strong>Broad applicability:</strong> the framework prescribes an SFM for any molecular recognition system at thermal equilibrium — antibodies, TCRs, MHC, transcription factors, microRNAs, CRISPR guides, enzymes, drug–target pairs. <strong>Low resource:</strong> SFMs train on tens of thousands of pairs on a single GPU node using pretrained encoders — CALM achieved its results with ~4,000 pairs where CLIP needed ~400,000,000. The bottleneck is data curation by a domain expert, not compute. <strong>Open source:</strong> CALM, the SFM template, the pipelines, and the pretrained encoders are all public. PCR and CRISPR became foundational because they were broadly applicable, low-resource, and open — and unlike them, building an SFM needs no wet-lab step, only a domain expert who understands their own data.</p>
 
-  <h2 class="sec"><span class="num">9</span>SFMs as Infrastructure</h2>
+  <h2 class="sec"><span class="num">10</span>SFMs as Infrastructure</h2>
   <p>AlphaFold solved structure prediction. ESM and the protein language models solved sequence representation. Neither solves <strong>specificity</strong> — given a molecule and a pool of candidates, which partner does it actually recognize? Specificity is the central question of immunology, drug discovery, and synthetic biology, and it is what SFMs are built to answer. The natural division of labour: structure predictors provide structure, language models provide sequence representations, and <strong>SFMs sit on top and produce the specificity prediction itself</strong>. AlphaFold and ESM are tools you use; SFMs are the framework you build in.</p>
 
   <p class="closing">Anyone in the lab can take this course. The math is at the level of college algebra and basic calculus. You do not need to know how to code — that is what Claude Code is for. The only thing you need is your own domain expertise and your own data.</p>
